@@ -1,6 +1,6 @@
 # Пульс — самоэволюционирующий HR‑агент
 
-[![version](https://img.shields.io/badge/version-0.1.2-blue)](VERSION)
+[![version](https://img.shields.io/badge/version-0.1.3-blue)](VERSION)
 
 Пульс — становящийся цифровой ассистент сотрудника крупного банка. Помогает отслеживать «оптимальное боевое состояние»: эффективность, нагрузку, риск выгорания, маршруты роста. Идеологически наследник [Ouroboros](https://github.com/joi-lab/ouroboros-desktop), но без desktop‑овой инфраструктуры и с одним LLM‑бэкендом — Claude Agent SDK через OAuth Max‑подписку.
 
@@ -34,6 +34,8 @@ UI открывается на `http://VM:8080`.
 - `docs/DEVELOPMENT.md` — как разрабатывать.
 
 ## Changelog
+
+- `v0.1.3` — `.env.example` now documents `HTTPS_PROXY`/`HTTP_PROXY`/`NO_PROXY` for installs in regions where Anthropic OAuth Max is blocked. The `claude` CLI honors these env vars (HTTP CONNECT only, no SOCKS) and the SDK subprocess inherits them through systemd's `EnvironmentFile=.env`. Fixes `403 Request not allowed` on Yandex Cloud.
 
 - `v0.1.2` — bootstrap.sh now generates a tailored systemd/pulse.service.generated with the correct User= and WorkingDirectory= for the local install. Removes the manual sed-patching step (was failing on dev installs where the pulse user does not exist).
 
