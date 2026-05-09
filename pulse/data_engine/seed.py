@@ -295,14 +295,21 @@ def gen_employees(rng: np.random.Generator, fake: Faker,
             "archetype": arc.name,
         })
 
-    # pick 8 terminations from tired/drifting (and a couple from others)
-    candidates = [i for i, e in enumerate(employees)
-                  if e["archetype"] in ("tired_midfielder", "drifting_veteran",
-                                         "overwhelmed_manager", "isolated_newbie")]
+    # Pick 8 terminations from tired/drifting/overworked archetypes only —
+    # and only from employees with ≥ 18 months of tenure so the 60-day decline
+    # window fits cleanly into their history.
+    min_tenure_days = 540
+    candidates = [
+        i for i, e in enumerate(employees)
+        if e["archetype"] in ("tired_midfielder", "drifting_veteran", "overwhelmed_manager")
+        and (end - date.fromisoformat(e["hire_date"])).days >= min_tenure_days
+    ]
     chosen = list(rng.choice(candidates, size=TERMINATIONS_TARGET, replace=False))
     for idx in chosen:
-        # term_date in last 12 months
-        offset = int(rng.integers(7, 360))
+        hire_d = date.fromisoformat(employees[idx]["hire_date"])
+        # term offset between 7 and 360 days from END, but never before hire+180.
+        max_offset = min(360, (end - hire_d).days - 180)
+        offset = int(rng.integers(7, max(8, max_offset)))
         td = end - timedelta(days=offset)
         employees[idx]["term_date"] = _iso(td)
         employees[idx]["status"] = "terminated"
