@@ -50,3 +50,6 @@ backups/
 
 # Local IDE / Claude Code settings
 .claude/
+
+# Tailored systemd unit produced by bootstrap.sh (per-host)
+systemd/pulse.service.generated

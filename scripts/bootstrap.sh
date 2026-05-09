@@ -79,6 +79,17 @@ else
     "$REPO_DIR/.venv/bin/pip" install -r "$REPO_DIR/requirements.txt"
 fi
 
+# --- generate a tailored systemd unit -------------------------------------
+# The repo ships a template with User=pulse and WorkingDirectory=
+# /home/pulse/pulse-agent. We materialise a substituted copy at
+# $REPO_DIR/systemd/pulse.service.generated so the user can `sudo cp` it
+# directly without sed-patching by hand.
+GENERATED_UNIT="$REPO_DIR/systemd/pulse.service.generated"
+sed -e "s|User=pulse|User=$INSTALL_USER|g" \
+    -e "s|/home/pulse/pulse-agent|$REPO_DIR|g" \
+    "$REPO_DIR/systemd/pulse.service" > "$GENERATED_UNIT"
+echo "==> wrote tailored systemd unit: $GENERATED_UNIT"
+
 # --- next-step instructions -----------------------------------------------
 cat <<EOF
 
@@ -87,17 +98,13 @@ Next steps:
   2. cp $REPO_DIR/.env.example $REPO_DIR/.env  &&  put the OAuth token into it
   3. $REPO_DIR/.venv/bin/python -m scripts.seed --force
   4. $REPO_DIR/.venv/bin/python -m pulse.data_engine.ml_train
-EOF
 
-if [[ "$MODE" == "system" ]]; then
-    cat <<EOF
-  5. sudo cp $REPO_DIR/systemd/pulse.service /etc/systemd/system/
-  6. sudo systemctl daemon-reload && sudo systemctl enable --now pulse
-  Then: http://VM_IP:8080
+To run interactively (foreground):
+  $REPO_DIR/.venv/bin/python -m pulse.server      # → http://127.0.0.1:8080
+
+To install as a systemd service (background, auto-restart):
+  sudo cp $GENERATED_UNIT /etc/systemd/system/pulse.service
+  sudo systemctl daemon-reload
+  sudo systemctl enable --now pulse
+  sudo systemctl status pulse --no-pager
 EOF
-else
-    cat <<EOF
-  5. $REPO_DIR/.venv/bin/python -m pulse.server
-  Then: http://127.0.0.1:8080
-EOF
-fi
