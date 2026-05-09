@@ -11,9 +11,19 @@ prompt is assembled from:
   + Data Sources Registry (computed inline)
   + last 5 entries of improvement-backlog.md (if any)
 
-`handle_chat` returns `{message_id, answer, meta}`. Both question and answer
-are appended to `data/logs/chat.jsonl` as a single record so feedback can
-later refer to that message_id.
+Two consumer surfaces over the SDK loop:
+
+* `stream_chat_events` — async generator yielding event dicts as the SDK
+  produces them (status, tool_call, tool_result, text, done, error). Used
+  by POST /api/chat/stream so the UI can show progress during the 1–4
+  minute turns instead of a static "думаю…".
+* `handle_chat` — thin wrapper that drains the generator and returns the
+  final `{message_id, answer, meta}` dict. Used by POST /api/chat (and by
+  the test fixtures that monkeypatch this entry point directly).
+
+Logging side effects (chat.jsonl, tools.jsonl, budget.jsonl, reflection)
+all happen inside `stream_chat_events` so both surfaces produce identical
+on-disk traces.
 """
 from __future__ import annotations
 
@@ -23,7 +33,7 @@ import os
 import secrets
 from datetime import date, datetime, timezone
 from pathlib import Path
-from typing import Any, AsyncIterator
+from typing import Any, AsyncIterator, Iterable
 
 from .config import PATHS
 from .llm import MODEL_LIGHT, _extract_text, _extract_usage, build_options, log_usage, normalize_model
@@ -132,19 +142,73 @@ def log_tool_call(name: str, args: dict[str, Any], message_id: str) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Chat handler
+# Block classification — pure helpers over SDK content blocks
 # ---------------------------------------------------------------------------
 
-async def handle_chat(question: str, history: list[dict[str, str]] | None = None,
-                      *, model: str = "sonnet") -> dict[str, Any]:
-    """One chat turn. Returns {message_id, answer, meta}.
+_ARGS_SUMMARY_LIMIT = 200
 
-    `history` is currently informational — the SDK keeps its own session via
-    ClaudeSDKClient context. We pass it through `meta` for the chat log only.
+
+def _summarize_args(args: Any) -> Any:
+    """Return a JSON-serialisable summary of tool args, capped for UI display.
+
+    Full args still go to tools.jsonl via `log_tool_call`; this is just for
+    the live progress feed.
+    """
+    if args is None:
+        return None
+    try:
+        s = json.dumps(args, ensure_ascii=False)
+    except (TypeError, ValueError):
+        return {"_repr": repr(args)[:_ARGS_SUMMARY_LIMIT]}
+    if len(s) <= _ARGS_SUMMARY_LIMIT:
+        return args
+    return {"_truncated": s[: _ARGS_SUMMARY_LIMIT - 1] + "…"}
+
+
+def _classify_block(block: Any) -> tuple[str, dict[str, Any]]:
+    """Map an SDK content block to ('text'|'tool_use'|'tool_result'|'other', payload)."""
+    name = getattr(block, "name", None)
+    inp = getattr(block, "input", None)
+    if isinstance(name, str) and name and inp is not None:
+        return "tool_use", {"name": name, "input": inp,
+                              "id": getattr(block, "id", None)}
+    tool_use_id = getattr(block, "tool_use_id", None)
+    if tool_use_id:
+        return "tool_result", {
+            "tool_use_id": tool_use_id,
+            "is_error": bool(getattr(block, "is_error", False)),
+        }
+    txt = getattr(block, "text", None)
+    if isinstance(txt, str) and txt:
+        return "text", {"text": txt}
+    return "other", {}
+
+
+# ---------------------------------------------------------------------------
+# Streaming chat handler — async generator of event dicts
+# ---------------------------------------------------------------------------
+
+async def stream_chat_events(question: str,
+                             history: list[dict[str, str]] | None = None,
+                             *, model: str = "sonnet") -> AsyncIterator[dict[str, Any]]:
+    """Run one chat turn and yield events as the SDK produces them.
+
+    Event shapes:
+      {"type": "status",     "phase": "starting", "model": "<full-id>"}
+      {"type": "tool_call",  "name": "<mcp-id>", "args": <summary>, "id": <str|null>}
+      {"type": "tool_result","tool_use_id": "<id>", "ok": <bool>}
+      {"type": "text",       "text": "<chunk>"}
+      {"type": "done",       "message_id": "<id>", "answer": "<full>", "meta": {...}}
+      {"type": "error",      "message": "<repr>"}
+
+    Side effects (chat.jsonl/tools.jsonl/budget.jsonl/reflection) fire here
+    so both `stream_chat_events` and `handle_chat` produce identical traces.
     """
     from claude_agent_sdk import ClaudeSDKClient  # type: ignore
 
     full_model = normalize_model(model)
+    yield {"type": "status", "phase": "starting", "model": full_model}
+
     system_prompt = build_system_prompt()
     mcp = {"pulse-tools": build_chat_server()}
     options = build_options(
@@ -157,57 +221,98 @@ async def handle_chat(question: str, history: list[dict[str, str]] | None = None
         cwd=str(PATHS.repo),
     )
 
-    answer_chunks: list[str] = []
-    tool_calls: list[dict[str, Any]] = []
-    usage = None
-
-    # IMPORTANT: this OAuth env-var must be set for the SDK to authenticate via the Max plan.
     if not os.environ.get("CLAUDE_CODE_OAUTH_TOKEN"):
         log.warning("CLAUDE_CODE_OAUTH_TOKEN not set — SDK call will fail.")
 
-    async with ClaudeSDKClient(options=options) as client:
-        await client.query(question)
-        async for msg in client.receive_response():
-            txt = _extract_text(msg)
-            if txt:
-                answer_chunks.append(txt)
-            # Some SDK versions emit ToolUseBlock items inside content — pull tool names if present.
-            content = getattr(msg, "content", None)
-            if content and not isinstance(content, str):
-                for block in content:
-                    name = getattr(block, "name", None)
-                    inp = getattr(block, "input", None)
-                    if name and inp is not None:
-                        tool_calls.append({"name": name, "input": inp})
-            u = _extract_usage(msg, full_model)
-            if u:
-                usage = u
-    answer = "".join(answer_chunks).strip()
+    answer_chunks: list[str] = []
+    tool_calls: list[dict[str, Any]] = []
+    usage = None
+    failed = False
 
+    try:
+        async with ClaudeSDKClient(options=options) as client:
+            await client.query(question)
+            async for msg in client.receive_response():
+                content = getattr(msg, "content", None)
+                if content and not isinstance(content, str):
+                    for block in content:
+                        kind, data = _classify_block(block)
+                        if kind == "tool_use":
+                            tool_calls.append({"name": data["name"], "input": data["input"]})
+                            yield {"type": "tool_call",
+                                    "name": data["name"],
+                                    "args": _summarize_args(data["input"]),
+                                    "id": data.get("id")}
+                        elif kind == "tool_result":
+                            yield {"type": "tool_result",
+                                    "tool_use_id": data["tool_use_id"],
+                                    "ok": not data["is_error"]}
+                        elif kind == "text":
+                            answer_chunks.append(data["text"])
+                            yield {"type": "text", "text": data["text"]}
+                u = _extract_usage(msg, full_model)
+                if u:
+                    usage = u
+    except Exception as ex:
+        failed = True
+        log.exception("chat stream failed")
+        yield {"type": "error", "message": f"{type(ex).__name__}: {ex}"}
+
+    answer = "".join(answer_chunks).strip()
     message_id = _new_message_id()
-    meta = {"model": full_model, "tool_calls": tool_calls, "history_len": len(history or [])}
+    meta = {"model": full_model, "tool_calls": tool_calls,
+            "history_len": len(history or [])}
+
+    # Persist trace even on partial/failed turns so feedback can still pin them.
     log_chat(question, answer, message_id, meta)
     for tc in tool_calls:
         log_tool_call(tc["name"], tc["input"], message_id)
     if usage is not None:
         log_usage(usage, kind="chat")
 
-    # Phase-6 hook: post-task reflection when the turn was rich or had errors.
-    try:
-        from .reflection import reflect, should_reflect
-        had_error = "is_error" in answer.lower() or "ошибк" in answer.lower()
-        if should_reflect(n_tool_calls=len(tool_calls), had_error=had_error):
-            await reflect(question=question, answer=answer, tool_calls=tool_calls,
-                          message_id=message_id)
-    except Exception as ex:
-        log.warning("reflection failed: %s", ex)
+    if not failed:
+        try:
+            from .reflection import reflect, should_reflect
+            had_error = "is_error" in answer.lower() or "ошибк" in answer.lower()
+            if should_reflect(n_tool_calls=len(tool_calls), had_error=had_error):
+                await reflect(question=question, answer=answer, tool_calls=tool_calls,
+                              message_id=message_id)
+        except Exception as ex:
+            log.warning("reflection failed: %s", ex)
 
-    return {"message_id": message_id, "answer": answer, "meta": meta}
+        yield {"type": "done", "message_id": message_id, "answer": answer, "meta": meta}
+
+
+# ---------------------------------------------------------------------------
+# Non-streaming wrapper — preserves the original handle_chat contract
+# ---------------------------------------------------------------------------
+
+async def handle_chat(question: str, history: list[dict[str, str]] | None = None,
+                      *, model: str = "sonnet") -> dict[str, Any]:
+    """One chat turn. Returns {message_id, answer, meta}.
+
+    Drains `stream_chat_events` and returns the final `done` payload. If the
+    turn errored before producing `done`, raises so FastAPI returns 500 —
+    matches pre-streaming behavior.
+    """
+    final: dict[str, Any] | None = None
+    error_msg: str | None = None
+    async for ev in stream_chat_events(question, history, model=model):
+        if ev["type"] == "done":
+            final = {"message_id": ev["message_id"],
+                      "answer": ev["answer"],
+                      "meta": ev["meta"]}
+        elif ev["type"] == "error":
+            error_msg = ev["message"]
+    if final is None:
+        raise RuntimeError(error_msg or "chat stream ended without a done event")
+    return final
 
 
 __all__ = [
     "build_system_prompt",
     "handle_chat",
+    "stream_chat_events",
     "log_chat",
     "log_tool_call",
     "_new_message_id",

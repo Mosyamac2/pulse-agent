@@ -4,6 +4,7 @@ Endpoints:
   GET  /                         → web UI (static index.html)
   GET  /health                   → status JSON
   POST /api/chat                 → chat turn, returns {message_id, answer}
+  POST /api/chat/stream          → same turn as SSE (status/tool_call/text/done)
   POST /api/feedback             → record like/dislike + optional comment
   GET  /api/history?limit=N      → last N chat turns
   GET  /api/employees/{emp_id}   → debug: full row from `employees`
@@ -19,7 +20,7 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -84,6 +85,38 @@ async def api_chat(req: ChatRequest) -> JSONResponse:
         raise HTTPException(503, "DB missing — run `python -m scripts.seed --force` first.")
     out = await handle_chat(req.question, history=req.history, model=req.model or "sonnet")
     return JSONResponse(out)
+
+
+@app.post("/api/chat/stream")
+async def api_chat_stream(req: ChatRequest) -> StreamingResponse:
+    """Same turn as /api/chat, served as Server-Sent Events.
+
+    Lets the UI render tool calls and intermediate text as they arrive
+    instead of staring at "думаю…" for minutes. Each event is one SSE
+    frame: `data: <json>\\n\\n`.
+    """
+    from .chat import stream_chat_events
+    if not PATHS.db.exists():
+        raise HTTPException(503, "DB missing — run `python -m scripts.seed --force` first.")
+
+    async def sse() -> Any:
+        try:
+            async for ev in stream_chat_events(req.question, history=req.history,
+                                                model=req.model or "sonnet"):
+                yield f"data: {json.dumps(ev, ensure_ascii=False)}\n\n"
+        except Exception as ex:  # last-resort guard — stream_chat_events normally yields error events itself
+            log.exception("chat stream crashed")
+            payload = json.dumps({"type": "error", "message": f"{type(ex).__name__}: {ex}"},
+                                  ensure_ascii=False)
+            yield f"data: {payload}\n\n"
+
+    return StreamingResponse(
+        sse(),
+        media_type="text/event-stream",
+        # Disable proxy buffering so events flush in real time.
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no",
+                 "Connection": "keep-alive"},
+    )
 
 
 # ---------------------------------------------------------------------------

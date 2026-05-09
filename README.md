@@ -1,6 +1,6 @@
 # Пульс — самоэволюционирующий HR‑агент
 
-[![version](https://img.shields.io/badge/version-0.1.3-blue)](VERSION)
+[![version](https://img.shields.io/badge/version-0.1.4-blue)](VERSION)
 
 Пульс — становящийся цифровой ассистент сотрудника крупного банка. Помогает отслеживать «оптимальное боевое состояние»: эффективность, нагрузку, риск выгорания, маршруты роста. Идеологически наследник [Ouroboros](https://github.com/joi-lab/ouroboros-desktop), но без desktop‑овой инфраструктуры и с одним LLM‑бэкендом — Claude Agent SDK через OAuth Max‑подписку.
 
@@ -34,6 +34,8 @@ UI открывается на `http://VM:8080`.
 - `docs/DEVELOPMENT.md` — как разрабатывать.
 
 ## Changelog
+
+- `v0.1.4` — `POST /api/chat/stream` serves the same chat turn as Server-Sent Events (status → tool_call → tool_result → text → done) so the UI can show live progress instead of a static "думаю…". `web/index.html` renders an activity log inside the placeholder bubble while events arrive, swaps to the final answer on `done`, and keeps the run trace under a collapsed `<details>`. `/api/chat` (non-streaming) preserved unchanged for tests/scripts.
 
 - `v0.1.3` — `.env.example` now documents `HTTPS_PROXY`/`HTTP_PROXY`/`NO_PROXY` for installs in regions where Anthropic OAuth Max is blocked. The `claude` CLI honors these env vars (HTTP CONNECT only, no SOCKS) and the SDK subprocess inherits them through systemd's `EnvironmentFile=.env`. Fixes `403 Request not allowed` on Yandex Cloud.
 

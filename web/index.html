@@ -58,6 +58,18 @@
              color: #fff; padding: 0.5rem 0.9rem; border-radius: 8px;
              font-size: 0.85rem; opacity: 0; transition: opacity 0.3s; }
     .toast.show { opacity: 1; }
+    .activity { font-size: 0.85rem; color: var(--muted); display: flex;
+                flex-direction: column; gap: 0.2rem; }
+    .activity .step { display: flex; gap: 0.4rem; align-items: baseline;
+                       opacity: 0; animation: fadeIn 0.2s ease forwards; }
+    .activity .step .arg { font-family: ui-monospace, monospace;
+                            font-size: 0.78rem; opacity: 0.8; }
+    .activity .pulsing::after { content: '…'; animation: blink 1.2s infinite; }
+    @keyframes fadeIn { to { opacity: 1; } }
+    @keyframes blink  { 50% { opacity: 0.3; } }
+    details.trace { margin-top: 0.5rem; font-size: 0.78rem; color: var(--muted); }
+    details.trace summary { cursor: pointer; user-select: none; }
+    details.trace .activity { margin-top: 0.3rem; }
   </style>
 </head>
 <body>
@@ -134,25 +146,169 @@ async function sendFeedback(msgId, verdict, comment, btnActive, btnOther) {
   }
 }
 
+// --- Streaming chat plumbing ------------------------------------------------
+
+const TOOL_LABELS = {
+  'mcp__pulse-tools__get_employee_profile':  'профиль сотрудника',
+  'mcp__pulse-tools__get_employee_metrics':  'метрики сотрудника',
+  'mcp__pulse-tools__list_employees':        'список сотрудников',
+  'mcp__pulse-tools__get_collab_neighbors':  'связи с коллегами',
+  'mcp__pulse-tools__query_jira':            'JIRA',
+  'mcp__pulse-tools__query_confluence':      'Confluence',
+  'mcp__pulse-tools__predict_attrition':     'прогноз оттока',
+  'mcp__pulse-tools__recommend_courses':     'рекомендация курсов',
+  'mcp__pulse-tools__predict_role_success':  'прогноз успешности',
+  'mcp__pulse-tools__update_scratchpad':     'правка scratchpad',
+  'mcp__pulse-tools__update_identity':       'правка identity',
+  'mcp__pulse-tools__knowledge_read':        'чтение knowledge',
+  'mcp__pulse-tools__knowledge_write':       'запись в knowledge',
+  'mcp__pulse-tools__knowledge_list':        'список knowledge',
+};
+
+function humanizeTool(name) {
+  if (TOOL_LABELS[name]) return TOOL_LABELS[name];
+  // strip the SDK MCP prefix and snake_case → spaces
+  return String(name).replace(/^mcp__[^_]+__/, '').replace(/_/g, ' ');
+}
+
+function summarizeArgs(args) {
+  if (args == null) return '';
+  if (typeof args !== 'object') return String(args);
+  if (args._truncated) return args._truncated;
+  if (args._repr) return args._repr;
+  const eid = args.emp_id || args.employee_id || args.id;
+  if (eid) return String(eid);
+  const k = Object.keys(args)[0];
+  if (k && typeof args[k] !== 'object') return `${k}=${String(args[k]).slice(0, 30)}`;
+  return '';
+}
+
+function makeActivity() {
+  const wrap = document.createElement('div');
+  wrap.className = 'activity';
+  return wrap;
+}
+
+function addStep(activity, icon, label, arg) {
+  const row = document.createElement('div');
+  row.className = 'step';
+  row.append(Object.assign(document.createElement('span'), { textContent: icon }));
+  row.append(Object.assign(document.createElement('span'), { textContent: label }));
+  if (arg) {
+    row.append(Object.assign(document.createElement('span'),
+                              { className: 'arg', textContent: arg }));
+  }
+  activity.appendChild(row);
+  return row;
+}
+
+function attachFeedback(wrap, msgId) {
+  const meta = document.createElement('div');
+  meta.className = 'meta';
+  const upBtn = document.createElement('button'); upBtn.textContent = '👍';
+  const downBtn = document.createElement('button'); downBtn.textContent = '👎';
+  const commentInput = document.createElement('input');
+  commentInput.type = 'text'; commentInput.placeholder = 'комментарий (опц.)';
+  meta.append(upBtn, downBtn, commentInput);
+  meta.append(Object.assign(document.createElement('span'),
+                             { textContent: msgId,
+                               style: 'font-family:monospace; font-size:0.75rem' }));
+  wrap.appendChild(meta);
+  upBtn.addEventListener('click', () => sendFeedback(msgId, 'up', commentInput.value, upBtn, downBtn));
+  downBtn.addEventListener('click', () => sendFeedback(msgId, 'down', commentInput.value, downBtn, upBtn));
+}
+
 async function ask(question) {
   send.disabled = true;
   appendUser(question);
   q.value = '';
-  const placeholder = document.createElement('div');
-  placeholder.className = 'msg pulse';
-  placeholder.textContent = 'думаю…';
-  thread.appendChild(placeholder);
+
+  // Placeholder bubble: live activity log replaces "думаю…" as events arrive,
+  // then the bubble's body is swapped for the final answer on `done`.
+  const wrap = document.createElement('div');
+  const body = document.createElement('div');
+  body.className = 'msg pulse';
+  const activity = makeActivity();
+  const thinking = addStep(activity, '🧠', 'думаю');
+  thinking.classList.add('pulsing');
+  body.appendChild(activity);
+  wrap.appendChild(body);
+  thread.appendChild(wrap);
+  wrap.scrollIntoView({ behavior: 'smooth', block: 'end' });
+
+  // Snapshot the activity steps for the post-answer trace details panel.
+  const traceSteps = [];
+
   try {
-    const r = await fetch('/api/chat', {
+    const r = await fetch('/api/chat/stream', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ question }),
     });
     if (!r.ok) throw new Error(await r.text());
-    const data = await r.json();
-    placeholder.remove();
-    appendPulse(data.answer || '(пустой ответ)', data.message_id);
+
+    const reader = r.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let buf = '';
+    let finalEv = null;
+
+    const handleEvent = (ev) => {
+      if (ev.type === 'tool_call') {
+        const label = humanizeTool(ev.name);
+        const arg = summarizeArgs(ev.args);
+        addStep(activity, '🔧', label, arg);
+        traceSteps.push({ icon: '🔧', label, arg });
+      } else if (ev.type === 'text' && ev.text && ev.text.trim()) {
+        const snippet = ev.text.trim().slice(0, 60);
+        addStep(activity, '💭', snippet + (ev.text.length > 60 ? '…' : ''));
+        traceSteps.push({ icon: '💭', label: snippet });
+      } else if (ev.type === 'status' && ev.phase === 'starting') {
+        thinking.firstChild.nextSibling.textContent =
+          `думаю · ${(ev.model || '').replace(/^claude-/, '')}`;
+      } else if (ev.type === 'error') {
+        addStep(activity, '⚠️', 'ошибка', ev.message);
+        traceSteps.push({ icon: '⚠️', label: 'ошибка', arg: ev.message });
+      } else if (ev.type === 'done') {
+        finalEv = ev;
+      }
+      wrap.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    };
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      // SSE frames are separated by a blank line. Process all complete frames.
+      let idx;
+      while ((idx = buf.indexOf('\n\n')) !== -1) {
+        const frame = buf.slice(0, idx);
+        buf = buf.slice(idx + 2);
+        for (const line of frame.split('\n')) {
+          if (!line.startsWith('data:')) continue;
+          const payload = line.slice(5).trimStart();
+          if (!payload) continue;
+          try { handleEvent(JSON.parse(payload)); }
+          catch (err) { console.warn('bad SSE payload', payload, err); }
+        }
+      }
+    }
+
+    if (!finalEv) throw new Error('Стрим закрылся без финального события.');
+
+    // Replace the activity log with the final answer; keep the trace under <details>.
+    body.textContent = finalEv.answer || '(пустой ответ)';
+    if (traceSteps.length) {
+      const det = document.createElement('details');
+      det.className = 'trace';
+      const sum = document.createElement('summary');
+      sum.textContent = `шаги (${traceSteps.length})`;
+      const inner = makeActivity();
+      for (const s of traceSteps) addStep(inner, s.icon, s.label, s.arg);
+      det.append(sum, inner);
+      wrap.appendChild(det);
+    }
+    attachFeedback(wrap, finalEv.message_id);
   } catch (e) {
-    placeholder.textContent = 'Ошибка: ' + e.message;
+    body.textContent = 'Ошибка: ' + e.message;
   } finally {
     send.disabled = false;
     q.focus();
