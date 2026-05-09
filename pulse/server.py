@@ -159,6 +159,27 @@ def api_evolution_status() -> JSONResponse:
                           "ml": state.get("ml", {})})
 
 
+class EvolutionStartRequest(BaseModel):
+    force: bool = False
+    sdk_apply: bool = True
+
+
+@app.post("/api/evolution")
+async def api_evolution_start(req: EvolutionStartRequest) -> JSONResponse:
+    from .evolution import evolution_cycle
+    result = await evolution_cycle(force=req.force, sdk_apply=req.sdk_apply)
+    return JSONResponse({
+        "triggered": result.triggered,
+        "skipped_reason": result.skipped_reason,
+        "self_test_ok": result.self_test_ok,
+        "committed": result.committed,
+        "version": result.version,
+        "notes": result.notes,
+        "plan_intent": result.plan.intent if result.plan else None,
+        "class_addressed": result.plan.class_addressed if result.plan else None,
+    })
+
+
 @app.get("/api/consciousness")
 def api_consciousness_status() -> JSONResponse:
     from .state import load_state

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pulse-agent"
-version = "0.1.0-rc.7"
+version = "0.1.0-rc.8"
 description = "Pulse — self-evolving HR agent for Sber on Claude Agent SDK (Ouroboros lineage)"
 readme = "README.md"
 requires-python = ">=3.10"
