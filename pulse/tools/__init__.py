@@ -17,6 +17,7 @@ from .data_tools import (
     get_employee_profile,
     list_employees,
 )
+from .exec_tools import run_python_analysis
 from .feedback_tools import get_recent_feedback
 from .jira_tools import query_confluence, query_jira
 from .knowledge_tools import knowledge_list, knowledge_read, knowledge_write
@@ -54,6 +55,8 @@ CHAT_TOOLS = [
     aggregate_metric_by_tool,
     top_collab_connectors_tool,
     efficiency_ranking_tool,
+    # v1.2.0 — sandboxed pandas/numpy execution for one-shot analyses
+    run_python_analysis,
 ]
 
 EVOLUTION_TOOLS = CHAT_TOOLS + [

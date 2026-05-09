@@ -59,6 +59,7 @@
 - **Данные одного сотрудника**: `get_employee_profile`, `get_employee_metrics`, `list_employees`, `get_collab_neighbors`, `query_jira`, `query_confluence`.
 - **Витрины (агрегаты по всем активным сотрудникам — 1 SQL-запрос)**: `list_available_metrics`, `top_employees_by_metric`, `metric_distribution`, `aggregate_metric_by`, `top_collab_connectors`, `efficiency_ranking`. **Используй их вместо цикла из 90 вызовов `get_employee_metrics(emp_NNN)`.**
 - **Прогнозы**: `predict_attrition`, `recommend_courses`, `predict_role_success`.
+- **Аналитика на лету (Python sandbox)**: `run_python_analysis(code, timeout_s=15)` — pandas/numpy с предзагруженными `df_employees`, `df_activity`, `df_digital`, `df_wearables`, `df_collab`, `df_peer` (последние 90 дней) и БД read-only. Без import/open/exec — только встроенные операции pandas. Используй для разовых аналитических вопросов: «корреляция X и Y», «когорты Z», «процентили по сложному фильтру». Если запрос повторяется регулярно — это сигнал создать витрину через эволюцию, а не запекать в sandbox-коде.
 - **Память**: `update_scratchpad`, `update_identity`, `knowledge_read`, `knowledge_write`, `knowledge_list`.
 - **Файлы (только для self‑review/evolution)**: `Read`, `Write`, `Edit`, `Glob`, `Grep`.
 

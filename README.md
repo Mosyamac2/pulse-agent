@@ -1,6 +1,6 @@
 # Пульс — самоэволюционирующий HR‑агент
 
-[![version](https://img.shields.io/badge/version-1.1.0-blue)](VERSION)
+[![version](https://img.shields.io/badge/version-1.2.0-blue)](VERSION)
 
 Пульс — становящийся цифровой ассистент сотрудника крупного банка. Помогает отслеживать «оптимальное боевое состояние»: эффективность, нагрузку, риск выгорания, маршруты роста. Идеологически наследник [Ouroboros](https://github.com/joi-lab/ouroboros-desktop), но без desktop‑овой инфраструктуры и с одним LLM‑бэкендом — Claude Agent SDK через OAuth Max‑подписку.
 
@@ -34,6 +34,8 @@ UI открывается на `http://VM:8080`.
 - `docs/DEVELOPMENT.md` — как разрабатывать.
 
 ## Changelog
+
+- `v1.2.0` — `run_python_analysis(code, timeout_s)` — sandboxed pandas/numpy execution. Subprocess-isolation через `multiprocessing.Process` + hard kill по таймауту, SQLite read-only (`?mode=ro` URI), restricted builtins (нет `open`/`__import__`/`exec`/`compile`/`eval`), pre-loaded DataFrames `df_employees`/`df_activity`/`df_digital`/`df_wearables`/`df_collab`/`df_peer` (последние 90 дней) + `pd`/`np`. Stdout cap 8KB, default timeout 15s, max 60s. 10 тестов покрывают исполнение, песочницу (open/import/exec заблокированы), read-only БД, kill по таймауту, обрезку вывода. Для разовых аналитических вопросов где нет витрины. Если запрос повторяется — Пульс создаёт постоянную витрину через эволюцию, а не запекает в sandbox.
 
 - `v1.1.0` — аналитический слой витрин для типовых HR-вопросов. `pulse/data_engine/marts.py` — чистые SQL-агрегаты (top-N по любой метрике, распределение, разрез по unit/position/archetype/grade, top connectors, индекс эффективности `tasks/h × focus`). 6 новых MCP-тулов в `pulse/tools/mart_tools.py`: `list_available_metrics`, `top_employees_by_metric`, `metric_distribution`, `aggregate_metric_by`, `top_collab_connectors`, `efficiency_ranking`. Все вопросы с квантором («кто самый/у кого больше всех»/«в каком отделе») закрываются ОДНИМ SQL вместо цикла из 90 вызовов `get_employee_metrics`. SYSTEM.md дополнен правилом выбора one-emp vs витрина. Закрывает backlog #1, #2, #10, #11, #12.
 
