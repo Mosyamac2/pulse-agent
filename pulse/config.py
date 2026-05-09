@@ -97,14 +97,15 @@ class Settings:
 SETTINGS: Settings = Settings()
 
 
-# Protected paths — used by safety.py and commit_review.py.
+# Protected paths — kept tight on purpose. Lifted the broad pulse/*.py block
+# in v1.0.0 (BIBLE Principle 13). Only the immune-system core stays armoured:
+# the constitution, the safety prompt, and the DB schema (which any uncoordinated
+# change would corrupt the synthetic dataset).
 PROTECTED_PATHS: tuple[str, ...] = (
     "BIBLE.md",
-    "pulse/safety.py",
     "prompts/SAFETY.md",
     "pulse/data_engine/schema.py",
 )
-PROTECTED_PYTHON_GLOB: str = "pulse/*.py"  # in v0.1 all python in pulse/ is protected
 
 
 def configure_logging() -> None:
@@ -134,7 +135,6 @@ __all__ = [
     "Paths",
     "Settings",
     "PROTECTED_PATHS",
-    "PROTECTED_PYTHON_GLOB",
     "configure_logging",
     "read_version",
 ]

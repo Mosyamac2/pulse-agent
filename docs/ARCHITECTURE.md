@@ -1,4 +1,4 @@
-# Pulse v0.2.1 — Architecture Map
+# Pulse v1.0.0 — Architecture Map
 
 Это операционная карта Пульса. Single source of truth для разработки, отладки и саморевью.
 
@@ -42,13 +42,13 @@ FastAPI (uvicorn) → chat_loop / evolution_loop / consciousness_loop
 
 ## Защищённые пути (immune system)
 
-Сборное понятие, шарится между `pulse/safety.py` и `pulse/commit_review.py`:
+Узкий immune core (с v1.0.0). `pulse/git_ops.py::is_protected_path` сверяется с этим списком и больше ни с чем:
 
-- `BIBLE.md`
-- `pulse/safety.py`
-- `prompts/SAFETY.md`
-- `pulse/data_engine/schema.py`
-- `pulse/*.py` (в v0.1; снимется в v0.x)
+- `BIBLE.md` — конституция
+- `prompts/SAFETY.md` — нерушимые запреты
+- `pulse/data_engine/schema.py` — схема БД
+
+Остальной Python-код в `pulse/` редактируется эволюцией; фильтрами достаточности служат self-test (pytest + replay) и Opus commit-review против `docs/CHECKLISTS.md`.
 
 ## Версионирование
 

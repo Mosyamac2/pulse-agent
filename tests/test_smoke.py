@@ -34,9 +34,12 @@ def test_arch_doc_header_in_sync():
 
 
 def test_protected_paths_listed():
+    """v1.0.0 narrowed the immune core to: BIBLE.md, prompts/SAFETY.md,
+    pulse/data_engine/schema.py. `pulse/safety.py` was in the original spec
+    but never created; it's no longer referenced as a protected path."""
     bible = (REPO_ROOT / "BIBLE.md").read_text(encoding="utf-8")
-    for p in ["BIBLE.md", "pulse/safety.py", "prompts/SAFETY.md", "pulse/data_engine/schema.py"]:
-        assert p in bible
+    for p in ["BIBLE.md", "prompts/SAFETY.md", "pulse/data_engine/schema.py"]:
+        assert p in bible, f"{p} should be referenced as protected in BIBLE.md"
 
 
 def test_pulse_imports():

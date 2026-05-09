@@ -2,23 +2,33 @@
 
 Operations we need:
   * commit_all_with_msg(msg) — add everything and commit
-  * create_annotated_tag(tag_name, msg)
+  * create_annotated_tag(tag_name, msg) — author/committer ident is forced
+    to the project convention via custom_environment so a systemd-launched
+    process without global git config can still produce a tag (this used
+    to crash with "empty ident name"; see backlog #6).
   * rollback_workdir() — `git checkout -- .` + `git clean -fd`
   * current_branch()
   * staged_diff_text() / unstaged_diff_text()
-  * is_protected_path(path) — checked against PROTECTED_PATHS plus pulse/*.py
+  * is_protected_path(path) — checked against PROTECTED_PATHS only;
+    the broad `pulse/*.py` block was lifted in v1.0.0.
 
 We deliberately do NOT push; remote is out of scope for v0.1.
 """
 from __future__ import annotations
 
-import fnmatch
 import logging
 from pathlib import Path
 
-from git import GitCommandError, Repo
+from git import Actor, GitCommandError, Repo
 
 from .config import PATHS, PROTECTED_PATHS
+
+# Author/committer used by Pulse-driven commits and tags. Matches the
+# convention visible in `git log` for prior releases. We force this rather
+# than relying on global git config because the systemd unit runs as a
+# user without ~/.gitconfig.
+PULSE_GIT_NAME = "Pulse Builder"
+PULSE_GIT_EMAIL = "pulse@local"
 
 log = logging.getLogger(__name__)
 
@@ -68,15 +78,14 @@ def diff_with_head(*, max_chars: int = 40_000) -> str:
 
 
 def is_protected_path(path: str) -> bool:
-    if path in PROTECTED_PATHS:
-        return True
-    # In v0.1 every Python file in pulse/ is protected.
-    if fnmatch.fnmatch(path, "pulse/*.py") or fnmatch.fnmatch(path, "pulse/**/*.py"):
-        return True
-    # Also data_engine/ subpaths
-    if fnmatch.fnmatch(path, "pulse/data_engine/*.py"):
-        return True
-    return False
+    """Return True if the given repo-relative path is in the immune core.
+
+    v1.0.0 narrowed this to an explicit allowlist (`PROTECTED_PATHS`):
+    the constitution, the safety prompt, and the DB schema. Other Python
+    files in `pulse/` are now editable by the evolution loop, gated only
+    by self-test and commit-review.
+    """
+    return path in PROTECTED_PATHS
 
 
 def protected_paths_in_changes() -> list[str]:
@@ -90,13 +99,28 @@ def protected_paths_in_changes() -> list[str]:
 def commit_all_with_msg(message: str) -> str:
     r = repo()
     r.git.add("-A")
-    r.index.commit(message)
+    actor = Actor(PULSE_GIT_NAME, PULSE_GIT_EMAIL)
+    r.index.commit(message, author=actor, committer=actor)
     return r.head.commit.hexsha
 
 
 def create_annotated_tag(tag_name: str, msg: str) -> None:
+    """Create an annotated tag with Pulse Builder ident forced via env.
+
+    `git tag -m` reads ident from config or environment; on a systemd
+    user without ~/.gitconfig it bails with "empty ident name". We wrap
+    the call in `custom_environment` so the four GIT_*_NAME / GIT_*_EMAIL
+    vars are present for this invocation only (no config mutation).
+    """
     r = repo()
-    r.create_tag(tag_name, message=msg)
+    env = {
+        "GIT_AUTHOR_NAME": PULSE_GIT_NAME,
+        "GIT_AUTHOR_EMAIL": PULSE_GIT_EMAIL,
+        "GIT_COMMITTER_NAME": PULSE_GIT_NAME,
+        "GIT_COMMITTER_EMAIL": PULSE_GIT_EMAIL,
+    }
+    with r.git.custom_environment(**env):
+        r.create_tag(tag_name, message=msg)
 
 
 def rollback_workdir() -> None:

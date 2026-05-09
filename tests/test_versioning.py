@@ -75,11 +75,19 @@ def test_assert_in_sync(tmp_repo: Path):
 
 
 def test_protected_path_match():
+    """v1.0.0: immune core narrowed to BIBLE.md, prompts/SAFETY.md,
+    pulse/data_engine/schema.py. Other pulse/*.py is now editable by the
+    evolution loop, gated only by self-test + commit review (P13)."""
     from pulse.git_ops import is_protected_path
+    # Still protected — the immune core
     assert is_protected_path("BIBLE.md")
-    assert is_protected_path("pulse/safety.py")
+    assert is_protected_path("prompts/SAFETY.md")
     assert is_protected_path("pulse/data_engine/schema.py")
-    assert is_protected_path("pulse/llm.py")
+    # No longer protected since v1.0.0
+    assert not is_protected_path("pulse/llm.py")
+    assert not is_protected_path("pulse/chat.py")
+    assert not is_protected_path("pulse/data_engine/seed.py")
+    # Never were protected
     assert not is_protected_path("prompts/SYSTEM.md")
     assert not is_protected_path("data/memory/identity.md")
 

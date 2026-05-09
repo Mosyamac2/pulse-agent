@@ -43,13 +43,19 @@ if WEB_DIR.exists():
 @app.get("/", response_class=HTMLResponse)
 def index() -> Any:
     idx = WEB_DIR / "index.html"
+    # Block browser caching: every release potentially changes the JS that
+    # talks to /api/chat/stream. A stale index.html silently breaks features
+    # like multi-turn history (we hit this with v0.2.1).
+    headers = {"Cache-Control": "no-cache, no-store, must-revalidate",
+               "Pragma": "no-cache", "Expires": "0"}
     if idx.exists():
-        return FileResponse(str(idx))
+        return FileResponse(str(idx), headers=headers)
     return HTMLResponse(
         "<html><body style='font-family:system-ui;padding:2rem'>"
         f"<h1>Пульс {read_version()}</h1>"
         "<p>UI отсутствует. Файл web/index.html не найден.</p>"
-        "</body></html>"
+        "</body></html>",
+        headers=headers,
     )
 
 
