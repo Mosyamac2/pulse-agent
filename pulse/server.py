@@ -182,9 +182,39 @@ async def api_evolution_start(req: EvolutionStartRequest) -> JSONResponse:
 
 @app.get("/api/consciousness")
 def api_consciousness_status() -> JSONResponse:
+    from . import consciousness
     from .state import load_state
     state = load_state()
-    return JSONResponse({"consciousness": state.get("consciousness", {})})
+    return JSONResponse({
+        "consciousness": state.get("consciousness", {}),
+        "thread_alive": consciousness.is_alive(),
+    })
+
+
+class DeepReviewRequest(BaseModel):
+    confirm: bool = False
+
+
+@app.post("/api/deep_self_review")
+async def api_deep_self_review(req: DeepReviewRequest) -> JSONResponse:
+    if not req.confirm:
+        raise HTTPException(400, "send {confirm: true} to run a heavy Opus call")
+    from .deep_self_review import deep_self_review
+    out = await deep_self_review()
+    return JSONResponse({"ok": True, "ts": out["ts"]})
+
+
+@app.on_event("startup")
+def _start_background_loops() -> None:
+    """Kick off the consciousness loop on app start. Idempotent."""
+    from . import consciousness
+    consciousness.start()
+
+
+@app.on_event("shutdown")
+def _stop_background_loops() -> None:
+    from . import consciousness
+    consciousness.stop()
 
 
 # ---------------------------------------------------------------------------
