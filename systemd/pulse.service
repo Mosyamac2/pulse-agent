@@ -1,0 +1,20 @@
+[Unit]
+Description=Pulse HR Agent
+After=network.target
+
+[Service]
+Type=simple
+User=pulse
+WorkingDirectory=/home/pulse/pulse-agent
+EnvironmentFile=/home/pulse/pulse-agent/.env
+# CRITICAL: blank ANTHROPIC_API_KEY so the SDK falls through to the OAuth token.
+# If a value is set, the SDK ignores CLAUDE_CODE_OAUTH_TOKEN and bills per-request.
+Environment=ANTHROPIC_API_KEY=
+ExecStart=/home/pulse/pulse-agent/.venv/bin/python -m pulse.server
+Restart=on-failure
+RestartSec=5s
+KillSignal=SIGTERM
+TimeoutStopSec=20
+
+[Install]
+WantedBy=multi-user.target

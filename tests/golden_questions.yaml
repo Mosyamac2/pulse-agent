@@ -1,0 +1,29 @@
+# Five prepared questions used to spot-check Pulse before each release.
+# Run with: python -m scripts.replay_golden  (reads answers from /api/chat).
+# Each item documents: the question, what tools we expect Pulse to invoke,
+# and a short heuristic for what a "good" answer looks like.
+
+- question: "Расскажи про сотрудника emp_017, что с ним сейчас?"
+  expected_tools: ["get_employee_profile", "get_employee_metrics", "predict_attrition"]
+  good_answer_contains: ["emp_017"]
+  notes: "Базовый профиль + последние метрики + вероятность оттока."
+
+- question: "Кто из подразделения unit_it_back в группе риска по выгоранию?"
+  expected_tools: ["list_employees", "predict_attrition", "get_employee_metrics"]
+  good_answer_contains: ["unit_it_back"]
+  notes: "Список + предсказания + объяснение по топ-3."
+
+- question: "Подбери курсы для emp_001."
+  expected_tools: ["get_employee_profile", "recommend_courses"]
+  good_answer_contains: ["курс"]
+  notes: "Без догадок про эффективность — рекомендация на основе соседей."
+
+- question: "Если перевести emp_023 на pos_IT_4, какой шанс что он там получится?"
+  expected_tools: ["get_employee_profile", "predict_role_success"]
+  good_answer_contains: ["вероятность", "%"]
+  notes: "Учёт грейд-разрыва."
+
+- question: "Сравни emp_017 и emp_042 по эффективности за последний месяц."
+  expected_tools: ["get_employee_metrics"]
+  good_answer_contains: ["emp_017", "emp_042"]
+  notes: "Не должен выдумывать данные — только из тулов."
