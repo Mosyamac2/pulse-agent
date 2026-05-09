@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>Пульс</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {
+      color-scheme: light dark;
+      --fg: #1a1a1a;
+      --bg: #fafafa;
+      --bubble-user: #d8e7ff;
+      --bubble-pulse: #ffffff;
+      --border: #d0d0d0;
+      --accent: #1f6feb;
+      --muted: #5f6368;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --fg: #e8eaed;
+        --bg: #131316;
+        --bubble-user: #25334f;
+        --bubble-pulse: #1c1d22;
+        --border: #2c2e35;
+        --accent: #4c8bf5;
+        --muted: #9aa0a6;
+      }
+    }
+    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+           background: var(--bg); color: var(--fg); margin: 0; }
+    main { max-width: 820px; margin: 0 auto; padding: 1rem 1rem 8rem; }
+    h1 { display: flex; align-items: baseline; gap: 0.6rem; }
+    h1 small { font-size: 0.7rem; color: var(--muted); font-weight: normal; }
+    .msg { padding: 0.9rem 1rem; border-radius: 12px; margin: 0.5rem 0;
+           border: 1px solid var(--border); white-space: pre-wrap; line-height: 1.5; }
+    .msg.user { background: var(--bubble-user); }
+    .msg.pulse { background: var(--bubble-pulse); }
+    .meta { font-size: 0.78rem; color: var(--muted); display: flex;
+            gap: 0.6rem; align-items: center; margin-top: 0.4rem; }
+    .meta button { font-size: 0.95rem; cursor: pointer; background: none;
+                   border: 1px solid var(--border); border-radius: 6px;
+                   padding: 0.1rem 0.5rem; color: var(--fg); }
+    .meta button.active { border-color: var(--accent); }
+    .meta input { flex: 1; padding: 0.3rem 0.5rem; border: 1px solid var(--border);
+                  border-radius: 6px; background: var(--bg); color: var(--fg); }
+    form#composer { position: fixed; left: 0; right: 0; bottom: 0;
+                     padding: 0.75rem; background: var(--bg);
+                     border-top: 1px solid var(--border); }
+    form#composer .row { max-width: 820px; margin: 0 auto;
+                          display: flex; gap: 0.5rem; }
+    textarea { flex: 1; padding: 0.6rem; border: 1px solid var(--border);
+               border-radius: 8px; background: var(--bg); color: var(--fg);
+               resize: none; min-height: 2.6rem; font: inherit; }
+    button.primary { background: var(--accent); border: none; color: white;
+                     padding: 0 1.1rem; border-radius: 8px; cursor: pointer; }
+    button.primary[disabled] { opacity: 0.5; cursor: not-allowed; }
+    .toast { position: fixed; right: 1rem; bottom: 5rem; background: #333;
+             color: #fff; padding: 0.5rem 0.9rem; border-radius: 8px;
+             font-size: 0.85rem; opacity: 0; transition: opacity 0.3s; }
+    .toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Пульс <small id="version">— загружается…</small></h1>
+    <div id="thread"></div>
+  </main>
+  <form id="composer">
+    <div class="row">
+      <textarea id="q" placeholder="Спроси что-нибудь про сотрудника… (Ctrl+Enter — отправить)"
+                rows="1"></textarea>
+      <button type="submit" class="primary" id="send">→</button>
+    </div>
+  </form>
+  <div id="toast" class="toast"></div>
+
+<script>
+const thread = document.getElementById('thread');
+const q = document.getElementById('q');
+const send = document.getElementById('send');
+const composer = document.getElementById('composer');
+const toast = document.getElementById('toast');
+
+function showToast(text) {
+  toast.textContent = text;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 1800);
+}
+
+function appendUser(text) {
+  const d = document.createElement('div');
+  d.className = 'msg user';
+  d.textContent = text;
+  thread.appendChild(d);
+  d.scrollIntoView({ behavior: 'smooth', block: 'end' });
+}
+
+function appendPulse(text, msgId) {
+  const wrap = document.createElement('div');
+  const body = document.createElement('div');
+  body.className = 'msg pulse';
+  body.textContent = text;
+  wrap.appendChild(body);
+
+  const meta = document.createElement('div');
+  meta.className = 'meta';
+  const upBtn = document.createElement('button'); upBtn.textContent = '👍';
+  const downBtn = document.createElement('button'); downBtn.textContent = '👎';
+  const commentInput = document.createElement('input');
+  commentInput.type = 'text'; commentInput.placeholder = 'комментарий (опц.)';
+  meta.append(upBtn, downBtn, commentInput);
+  meta.append(Object.assign(document.createElement('span'),
+                             { textContent: msgId, style: 'font-family:monospace; font-size:0.75rem' }));
+  wrap.appendChild(meta);
+  thread.appendChild(wrap);
+  wrap.scrollIntoView({ behavior: 'smooth', block: 'end' });
+
+  upBtn.addEventListener('click', () => sendFeedback(msgId, 'up', commentInput.value, upBtn, downBtn));
+  downBtn.addEventListener('click', () => sendFeedback(msgId, 'down', commentInput.value, downBtn, upBtn));
+}
+
+async function sendFeedback(msgId, verdict, comment, btnActive, btnOther) {
+  try {
+    const r = await fetch('/api/feedback', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message_id: msgId, verdict, comment }),
+    });
+    if (!r.ok) throw new Error(await r.text());
+    btnActive.classList.add('active');
+    btnOther.classList.remove('active');
+    showToast(verdict === 'up' ? 'Учтено как лайк' : 'Учтено как дизлайк');
+  } catch (e) {
+    showToast('Ошибка: ' + e.message);
+  }
+}
+
+async function ask(question) {
+  send.disabled = true;
+  appendUser(question);
+  q.value = '';
+  const placeholder = document.createElement('div');
+  placeholder.className = 'msg pulse';
+  placeholder.textContent = 'думаю…';
+  thread.appendChild(placeholder);
+  try {
+    const r = await fetch('/api/chat', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question }),
+    });
+    if (!r.ok) throw new Error(await r.text());
+    const data = await r.json();
+    placeholder.remove();
+    appendPulse(data.answer || '(пустой ответ)', data.message_id);
+  } catch (e) {
+    placeholder.textContent = 'Ошибка: ' + e.message;
+  } finally {
+    send.disabled = false;
+    q.focus();
+  }
+}
+
+composer.addEventListener('submit', (ev) => {
+  ev.preventDefault();
+  const text = q.value.trim();
+  if (text) ask(text);
+});
+q.addEventListener('keydown', (ev) => {
+  if (ev.ctrlKey && ev.key === 'Enter') {
+    ev.preventDefault();
+    composer.requestSubmit();
+  }
+});
+
+(async () => {
+  try {
+    const r = await fetch('/health');
+    const data = await r.json();
+    document.getElementById('version').textContent = '— v' + data.version
+      + (data.oauth_token_present ? '' : ' · ⚠ нет OAuth токена');
+  } catch (e) { /* ignore */ }
+  try {
+    const r = await fetch('/api/history?limit=10');
+    const { items } = await r.json();
+    for (const it of items) {
+      appendUser(it.question);
+      appendPulse(it.answer || '(пусто)', it.message_id);
+    }
+  } catch (e) { /* ignore */ }
+})();
+</script>
+</body>
+</html>
