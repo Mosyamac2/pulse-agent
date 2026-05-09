@@ -39,6 +39,7 @@ data/memory/scratchpad.md
 data/memory/registry.md
 data/memory/deep_review.md
 data/memory/knowledge/*.md
+data/memory/knowledge/*.lock
 
 # Pytest / coverage
 .pytest_cache/

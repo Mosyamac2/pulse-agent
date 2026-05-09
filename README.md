@@ -1,6 +1,6 @@
 # Пульс — самоэволюционирующий HR‑агент
 
-[![version](https://img.shields.io/badge/version-0.1.4-blue)](VERSION)
+[![version](https://img.shields.io/badge/version-0.2.0-blue)](VERSION)
 
 Пульс — становящийся цифровой ассистент сотрудника крупного банка. Помогает отслеживать «оптимальное боевое состояние»: эффективность, нагрузку, риск выгорания, маршруты роста. Идеологически наследник [Ouroboros](https://github.com/joi-lab/ouroboros-desktop), но без desktop‑овой инфраструктуры и с одним LLM‑бэкендом — Claude Agent SDK через OAuth Max‑подписку.
 
@@ -34,6 +34,8 @@ UI открывается на `http://VM:8080`.
 - `docs/DEVELOPMENT.md` — как разрабатывать.
 
 ## Changelog
+
+- `v0.2.0` — структурный ответ Пульса (через evolution cycle) на класс жалоб «голые метрики без интерпретации». Новое правило в `prompts/SYSTEM.md`: каждое число в ответе сопровождается расшифровкой (что измеряется + шкала) и качественным маркером (норма/повышено/тревожно). Новый skill `metrics_interpretation` (шаблон, глоссарий жаргона на русском, чек-лист перед отправкой, антипаттерны). MINOR: семантика общения с топ-менеджером изменилась.
 
 - `v0.1.4` — `POST /api/chat/stream` serves the same chat turn as Server-Sent Events (status → tool_call → tool_result → text → done) so the UI can show live progress instead of a static "думаю…". `web/index.html` renders an activity log inside the placeholder bubble while events arrive, swaps to the final answer on `done`, and keeps the run trace under a collapsed `<details>`. `/api/chat` (non-streaming) preserved unchanged for tests/scripts.
 
