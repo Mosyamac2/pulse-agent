@@ -1,48 +1,103 @@
 #!/usr/bin/env bash
-# Bootstrap a fresh Ubuntu VM for Pulse.
-# Idempotent — safe to re-run.
+# Bootstrap a Pulse install on Ubuntu (or any Debian-derivative with apt).
+#
+# Default mode (no flags): "dev" install — uses the current user, sets up the
+# venv inside whatever repo this script lives in, picks the system's default
+# python3 (3.10 on Jammy, 3.11 on Bookworm, 3.12 on Noble — anything ≥ 3.10
+# satisfies pyproject.toml). Good for laptop / single-user VMs.
+#
+# `--system` mode — creates a 'pulse' system user, expects the repo at
+# /home/pulse/pulse-agent (override with PULSE_REPO_DIR), and prepares the
+# systemd path. Good for production.
+#
+# Override the python interpreter explicitly with PULSE_PYTHON, e.g.
+#   PULSE_PYTHON=python3.11 bash scripts/bootstrap.sh
+#
+# Idempotent: safe to re-run.
 set -euo pipefail
 
-REPO_DIR="${PULSE_REPO_DIR:-/home/pulse/pulse-agent}"
-PYTHON_VERSION="3.11"
+MODE="dev"
+[[ "${1:-}" == "--system" ]] && MODE="system"
 
-echo "==> apt deps"
+# --- Pick a python: explicit override → 3.12 → 3.11 → 3.10 → system python3 -
+pick_python() {
+    if [[ -n "${PULSE_PYTHON:-}" ]] && command -v "$PULSE_PYTHON" >/dev/null 2>&1; then
+        echo "$PULSE_PYTHON"; return
+    fi
+    for v in python3.12 python3.11 python3.10 python3; do
+        if command -v "$v" >/dev/null 2>&1; then
+            echo "$v"; return
+        fi
+    done
+    echo "ERROR: no python3.10+ found on PATH" >&2
+    return 1
+}
+
+# --- Pick repo dir + install user from mode -------------------------------
+if [[ "$MODE" == "system" ]]; then
+    REPO_DIR="${PULSE_REPO_DIR:-/home/pulse/pulse-agent}"
+    INSTALL_USER="pulse"
+else
+    REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+    INSTALL_USER="$(id -un)"
+fi
+
+echo "==> mode=$MODE  repo=$REPO_DIR  user=$INSTALL_USER"
+
+echo "==> apt deps (unversioned — resolves to whichever python3 your distro ships)"
 sudo apt-get update -y
-sudo apt-get install -y \
-    "python${PYTHON_VERSION}" "python${PYTHON_VERSION}-venv" "python${PYTHON_VERSION}-dev" \
-    git curl build-essential
+sudo apt-get install -y python3 python3-venv python3-dev git curl build-essential
 
-echo "==> Node.js (for the claude CLI subprocess)"
+PYTHON="$(pick_python)"
+echo "==> selected python: $PYTHON ($("$PYTHON" --version 2>&1))"
+
+echo "==> Node.js LTS 20.x (for the claude CLI subprocess)"
 if ! command -v node >/dev/null 2>&1; then
     curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
     sudo apt-get install -y nodejs
 fi
 sudo npm install -g @anthropic-ai/claude-code
 
-echo "==> 'pulse' user"
-if ! id -u pulse >/dev/null 2>&1; then
-    sudo useradd -m -s /bin/bash pulse
+# --- venv + pip ------------------------------------------------------------
+if [[ "$MODE" == "system" ]]; then
+    echo "==> 'pulse' system user"
+    if ! id -u pulse >/dev/null 2>&1; then
+        sudo useradd -m -s /bin/bash pulse
+    fi
+    sudo mkdir -p "$(dirname "$REPO_DIR")"
+    sudo chown -R pulse:pulse "$(dirname "$REPO_DIR")"
+    if [ ! -d "$REPO_DIR" ]; then
+        echo "  NOTE: clone the repo to $REPO_DIR as user pulse, then re-run this script."
+        exit 0
+    fi
+    sudo -u pulse "$PYTHON" -m venv "$REPO_DIR/.venv"
+    sudo -u pulse "$REPO_DIR/.venv/bin/pip" install --upgrade pip
+    sudo -u pulse "$REPO_DIR/.venv/bin/pip" install -r "$REPO_DIR/requirements.txt"
+else
+    "$PYTHON" -m venv "$REPO_DIR/.venv"
+    "$REPO_DIR/.venv/bin/pip" install --upgrade pip
+    "$REPO_DIR/.venv/bin/pip" install -r "$REPO_DIR/requirements.txt"
 fi
 
-echo "==> repo dir + venv"
-sudo mkdir -p "$(dirname "$REPO_DIR")"
-sudo chown -R pulse:pulse "$(dirname "$REPO_DIR")"
-if [ ! -d "$REPO_DIR" ]; then
-    echo "  NOTE: clone the repo to $REPO_DIR before re-running this script."
-    exit 0
+# --- next-step instructions -----------------------------------------------
+cat <<EOF
+
+Next steps:
+  1. claude setup-token              # one-time; paste sk-ant-oat01-...
+  2. cp $REPO_DIR/.env.example $REPO_DIR/.env  &&  put the OAuth token into it
+  3. $REPO_DIR/.venv/bin/python -m scripts.seed --force
+  4. $REPO_DIR/.venv/bin/python -m pulse.data_engine.ml_train
+EOF
+
+if [[ "$MODE" == "system" ]]; then
+    cat <<EOF
+  5. sudo cp $REPO_DIR/systemd/pulse.service /etc/systemd/system/
+  6. sudo systemctl daemon-reload && sudo systemctl enable --now pulse
+  Then: http://VM_IP:8080
+EOF
+else
+    cat <<EOF
+  5. $REPO_DIR/.venv/bin/python -m pulse.server
+  Then: http://127.0.0.1:8080
+EOF
 fi
-
-sudo -u pulse "python${PYTHON_VERSION}" -m venv "$REPO_DIR/.venv"
-sudo -u pulse "$REPO_DIR/.venv/bin/pip" install --upgrade pip
-sudo -u pulse "$REPO_DIR/.venv/bin/pip" install -r "$REPO_DIR/requirements.txt"
-
-echo
-echo "Next steps (as user 'pulse'):"
-echo "  1. claude setup-token   # paste sk-ant-oat01-..."
-echo "  2. cp $REPO_DIR/.env.example $REPO_DIR/.env  &&  edit token in .env"
-echo "  3. $REPO_DIR/.venv/bin/python -m scripts.seed --force"
-echo "  4. $REPO_DIR/.venv/bin/python -m pulse.data_engine.ml_train"
-echo "  5. sudo cp $REPO_DIR/systemd/pulse.service /etc/systemd/system/"
-echo "  6. sudo systemctl daemon-reload && sudo systemctl enable --now pulse"
-echo
-echo "Then check http://VM_IP:8080 in a browser."
