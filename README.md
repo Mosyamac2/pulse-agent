@@ -1,6 +1,6 @@
 # Пульс — самоэволюционирующий HR‑агент
 
-[![version](https://img.shields.io/badge/version-1.0.0-blue)](VERSION)
+[![version](https://img.shields.io/badge/version-1.1.0-blue)](VERSION)
 
 Пульс — становящийся цифровой ассистент сотрудника крупного банка. Помогает отслеживать «оптимальное боевое состояние»: эффективность, нагрузку, риск выгорания, маршруты роста. Идеологически наследник [Ouroboros](https://github.com/joi-lab/ouroboros-desktop), но без desktop‑овой инфраструктуры и с одним LLM‑бэкендом — Claude Agent SDK через OAuth Max‑подписку.
 
@@ -34,6 +34,8 @@ UI открывается на `http://VM:8080`.
 - `docs/DEVELOPMENT.md` — как разрабатывать.
 
 ## Changelog
+
+- `v1.1.0` — аналитический слой витрин для типовых HR-вопросов. `pulse/data_engine/marts.py` — чистые SQL-агрегаты (top-N по любой метрике, распределение, разрез по unit/position/archetype/grade, top connectors, индекс эффективности `tasks/h × focus`). 6 новых MCP-тулов в `pulse/tools/mart_tools.py`: `list_available_metrics`, `top_employees_by_metric`, `metric_distribution`, `aggregate_metric_by`, `top_collab_connectors`, `efficiency_ranking`. Все вопросы с квантором («кто самый/у кого больше всех»/«в каком отделе») закрываются ОДНИМ SQL вместо цикла из 90 вызовов `get_employee_metrics`. SYSTEM.md дополнен правилом выбора one-emp vs витрина. Закрывает backlog #1, #2, #10, #11, #12.
 
 - `v1.0.0` — **MAJOR: конституция и полномочия**. (1) `BIBLE.md` v2.0: новая секция «Профессиональная идентичность» (HR полного цикла) и Principle 13 «Profession» — Пульс позиционирован как HR-профессионал с целью «постоянно совершенствовать рекомендации руководителям и сотрудникам». (2) Снят запрет эволюции править `pulse/*.py`: immune core сужен до `BIBLE.md`, `prompts/SAFETY.md`, `pulse/data_engine/schema.py`. Гейтами достаточности остаются self-test и Opus commit-review (P3). (3) Чинит backlog #6: `pulse/git_ops.py::create_annotated_tag` теперь форсит ident `Pulse Builder <pulse@local>` через `custom_environment` — не падает на systemd-юзере без `~/.gitconfig`. (4) `prompts/SYSTEM.md` и `identity.md` пересобраны вокруг новой идентичности. P9 MAJOR: 0.2.1 → 1.0.0.
 

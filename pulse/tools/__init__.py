@@ -20,6 +20,14 @@ from .data_tools import (
 from .feedback_tools import get_recent_feedback
 from .jira_tools import query_confluence, query_jira
 from .knowledge_tools import knowledge_list, knowledge_read, knowledge_write
+from .mart_tools import (
+    aggregate_metric_by_tool,
+    efficiency_ranking_tool,
+    list_available_metrics_tool,
+    metric_distribution_tool,
+    top_collab_connectors_tool,
+    top_employees_by_metric_tool,
+)
 from .memory_tools import update_identity, update_scratchpad
 from .ml_tools import predict_attrition, predict_role_success, recommend_courses
 from .self_tools import repo_list, repo_read
@@ -39,6 +47,13 @@ CHAT_TOOLS = [
     knowledge_read,
     knowledge_write,
     knowledge_list,
+    # v1.1.0 — pre-aggregated marts (replace N+1 over employees)
+    list_available_metrics_tool,
+    top_employees_by_metric_tool,
+    metric_distribution_tool,
+    aggregate_metric_by_tool,
+    top_collab_connectors_tool,
+    efficiency_ranking_tool,
 ]
 
 EVOLUTION_TOOLS = CHAT_TOOLS + [
