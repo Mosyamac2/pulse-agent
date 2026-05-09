@@ -61,6 +61,50 @@ def test_build_system_prompt_smoke(tmp_path, monkeypatch):
     assert "Data Sources Registry" in sp
 
 
+def test_format_history_empty():
+    from pulse.chat import _format_history, _compose_user_message
+    assert _format_history(None) == ""
+    assert _format_history([]) == ""
+    assert _compose_user_message("привет", None) == "привет"
+
+
+def test_format_history_renders_turns_in_order():
+    from pulse.chat import _format_history
+    block = _format_history([
+        {"question": "первый вопрос", "answer": "первый ответ"},
+        {"question": "второй", "answer": "второй ответ"},
+    ])
+    assert "Контекст диалога" in block
+    assert block.index("первый вопрос") < block.index("первый ответ") < block.index("второй")
+    assert block.endswith("\n\n")
+
+
+def test_format_history_caps_turns():
+    from pulse.chat import _format_history, HISTORY_TURNS_CAP
+    many = [{"question": f"q{i}", "answer": f"a{i}"} for i in range(HISTORY_TURNS_CAP + 5)]
+    block = _format_history(many)
+    # Only the last HISTORY_TURNS_CAP turns are kept — earliest must be dropped.
+    assert "q0" not in block
+    assert "q4" not in block
+    assert f"q{HISTORY_TURNS_CAP + 4}" in block
+
+
+def test_format_history_caps_chars():
+    from pulse.chat import _format_history, HISTORY_CHARS_CAP
+    huge = [{"question": "x" * 500, "answer": "y" * 500} for _ in range(50)]
+    block = _format_history(huge)
+    assert len(block) <= HISTORY_CHARS_CAP + 200  # small margin for closing newlines
+
+
+def test_compose_user_message_prepends_history():
+    from pulse.chat import _compose_user_message
+    out = _compose_user_message("текущий вопрос",
+                                  [{"question": "ранее", "answer": "ответ"}])
+    assert out.endswith("текущий вопрос")
+    assert "ранее" in out
+    assert out.index("ранее") < out.index("текущий вопрос")
+
+
 def test_health(app_with_db: TestClient):
     r = app_with_db.get("/health")
     assert r.status_code == 200

@@ -93,6 +93,12 @@ const send = document.getElementById('send');
 const composer = document.getElementById('composer');
 const toast = document.getElementById('toast');
 
+// Per-tab session memory: prior turns we send back so the SDK can
+// keep multi-turn context across separate /api/chat/stream calls.
+// Hydrated from /api/history on page load; appended on each `done`.
+const session = { history: [] };
+const HISTORY_SEND_LIMIT = 10;
+
 function showToast(text) {
   toast.textContent = text;
   toast.classList.add('show');
@@ -242,7 +248,10 @@ async function ask(question) {
   try {
     const r = await fetch('/api/chat/stream', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ question }),
+      body: JSON.stringify({
+        question,
+        history: session.history.slice(-HISTORY_SEND_LIMIT),
+      }),
     });
     if (!r.ok) throw new Error(await r.text());
 
@@ -294,6 +303,9 @@ async function ask(question) {
 
     if (!finalEv) throw new Error('Стрим закрылся без финального события.');
 
+    // Remember this turn for the next SDK call's context replay.
+    session.history.push({ question, answer: finalEv.answer || '' });
+
     // Replace the activity log with the final answer; keep the trace under <details>.
     body.textContent = finalEv.answer || '(пустой ответ)';
     if (traceSteps.length) {
@@ -340,6 +352,9 @@ q.addEventListener('keydown', (ev) => {
     for (const it of items) {
       appendUser(it.question);
       appendPulse(it.answer || '(пусто)', it.message_id);
+      // Hydrate the session-history buffer so the next chat call carries
+      // these prior turns back to the SDK.
+      session.history.push({ question: it.question, answer: it.answer || '' });
     }
   } catch (e) { /* ignore */ }
 })();

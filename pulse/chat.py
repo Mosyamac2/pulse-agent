@@ -90,6 +90,53 @@ def _backlog_tail(n: int = 5) -> str:
     return "\n".join(lines[-n:])
 
 
+# ---------------------------------------------------------------------------
+# Conversation history — keep multi-turn context across separate /api/chat calls
+# ---------------------------------------------------------------------------
+
+HISTORY_TURNS_CAP = 10
+HISTORY_CHARS_CAP = 8000
+
+
+def _format_history(history: list[dict[str, str]] | None) -> str:
+    """Render prior turns as a bracketed block to prepend to the user message.
+
+    Each ClaudeSDKClient is one-shot per /api/chat call (the SDK subprocess
+    exits with the context manager), so without replaying prior turns the
+    SDK has no memory of them. We replay by inlining: cheap, deterministic,
+    no extra LLM round-trips. Capped at HISTORY_TURNS_CAP turns or
+    HISTORY_CHARS_CAP chars (whichever is tighter) so long sessions don't
+    blow out the prompt budget.
+
+    Each item: {"question": str, "answer": str} (extra keys ignored). Empty
+    history → empty string, so the user message is unchanged.
+    """
+    if not history:
+        return ""
+    turns = history[-HISTORY_TURNS_CAP:]
+    lines: list[str] = ["[Контекст диалога — предыдущие реплики этой сессии]"]
+    for t in turns:
+        q = (t.get("question") or "").strip()
+        a = (t.get("answer") or "").strip()
+        if q:
+            lines.append(f"Пользователь: {q}")
+        if a:
+            lines.append(f"Пульс: {a}")
+    lines.append("[/Контекст диалога]")
+    block = "\n".join(lines)
+    if len(block) > HISTORY_CHARS_CAP:
+        # Drop oldest content; keep the closing marker intact.
+        head = "[Контекст диалога — предыдущие реплики (старое усечено)]\n"
+        block = head + block[-(HISTORY_CHARS_CAP - len(head)):]
+    return block + "\n\n"
+
+
+def _compose_user_message(question: str,
+                           history: list[dict[str, str]] | None) -> str:
+    prefix = _format_history(history)
+    return prefix + question if prefix else question
+
+
 def build_system_prompt() -> str:
     """Assemble the system prompt for a chat turn. Pure function over disk state."""
     chunks: list[str] = []
@@ -229,9 +276,11 @@ async def stream_chat_events(question: str,
     usage = None
     failed = False
 
+    user_message = _compose_user_message(question, history)
+
     try:
         async with ClaudeSDKClient(options=options) as client:
-            await client.query(question)
+            await client.query(user_message)
             async for msg in client.receive_response():
                 content = getattr(msg, "content", None)
                 if content and not isinstance(content, str):
@@ -261,7 +310,8 @@ async def stream_chat_events(question: str,
     answer = "".join(answer_chunks).strip()
     message_id = _new_message_id()
     meta = {"model": full_model, "tool_calls": tool_calls,
-            "history_len": len(history or [])}
+            "history_len": len(history or []),
+            "history_chars": len(_format_history(history))}
 
     # Persist trace even on partial/failed turns so feedback can still pin them.
     log_chat(question, answer, message_id, meta)
@@ -316,4 +366,6 @@ __all__ = [
     "log_chat",
     "log_tool_call",
     "_new_message_id",
+    "_format_history",
+    "_compose_user_message",
 ]
