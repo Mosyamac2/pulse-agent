@@ -192,6 +192,16 @@ async def handle_chat(question: str, history: list[dict[str, str]] | None = None
     if usage is not None:
         log_usage(usage, kind="chat")
 
+    # Phase-6 hook: post-task reflection when the turn was rich or had errors.
+    try:
+        from .reflection import reflect, should_reflect
+        had_error = "is_error" in answer.lower() or "ошибк" in answer.lower()
+        if should_reflect(n_tool_calls=len(tool_calls), had_error=had_error):
+            await reflect(question=question, answer=answer, tool_calls=tool_calls,
+                          message_id=message_id)
+    except Exception as ex:
+        log.warning("reflection failed: %s", ex)
+
     return {"message_id": message_id, "answer": answer, "meta": meta}
 
 
