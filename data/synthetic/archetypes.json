@@ -1,0 +1,34 @@
+[
+  {
+    "name": "newbie_enthusiast",
+    "share": 15
+  },
+  {
+    "name": "tired_midfielder",
+    "share": 25
+  },
+  {
+    "name": "star_perfectionist",
+    "share": 10
+  },
+  {
+    "name": "quiet_rear_guard",
+    "share": 15
+  },
+  {
+    "name": "drifting_veteran",
+    "share": 10
+  },
+  {
+    "name": "toxic_high_performer",
+    "share": 5
+  },
+  {
+    "name": "isolated_newbie",
+    "share": 10
+  },
+  {
+    "name": "overwhelmed_manager",
+    "share": 10
+  }
+]

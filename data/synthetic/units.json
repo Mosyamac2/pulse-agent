@@ -1,0 +1,86 @@
+[
+  {
+    "unit_id": "unit_root",
+    "name": "Сбер: блок «Розница и обслуживание»",
+    "parent_unit_id": "",
+    "level": 0,
+    "processes_json": "[\"\\u0441\\u0442\\u0440\\u0430\\u0442\\u0435\\u0433\\u0438\\u044f\", \"\\u0443\\u043f\\u0440\\u0430\\u0432\\u043b\\u0435\\u043d\\u0438\\u0435\"]"
+  },
+  {
+    "unit_id": "unit_it",
+    "name": "Технологический блок",
+    "parent_unit_id": "unit_root",
+    "level": 1,
+    "processes_json": "[\"\\u0440\\u0430\\u0437\\u0440\\u0430\\u0431\\u043e\\u0442\\u043a\\u0430\", \"\\u0438\\u043d\\u0444\\u0440\\u0430\\u0441\\u0442\\u0440\\u0443\\u043a\\u0442\\u0443\\u0440\\u0430\", \"\\u043f\\u043e\\u0434\\u0434\\u0435\\u0440\\u0436\\u043a\\u0430\"]"
+  },
+  {
+    "unit_id": "unit_sales",
+    "name": "Продажи и розничная сеть",
+    "parent_unit_id": "unit_root",
+    "level": 1,
+    "processes_json": "[\"\\u043f\\u0440\\u043e\\u0434\\u0430\\u0436\\u0438\", \"\\u043a\\u043e\\u043d\\u0441\\u0443\\u043b\\u044c\\u0442\\u0430\\u0446\\u0438\\u0438\", \"\\u0430\\u043a\\u0446\\u0438\\u0438\"]"
+  },
+  {
+    "unit_id": "unit_analytics",
+    "name": "Аналитика и BI",
+    "parent_unit_id": "unit_root",
+    "level": 1,
+    "processes_json": "[\"BI\", \"DS\", \"\\u0440\\u0435\\u043f\\u043e\\u0440\\u0442\\u0438\\u043d\\u0433\"]"
+  },
+  {
+    "unit_id": "unit_ops",
+    "name": "Операционный блок",
+    "parent_unit_id": "unit_root",
+    "level": 1,
+    "processes_json": "[\"\\u043f\\u043b\\u0430\\u0442\\u0435\\u0436\\u0438\", \"\\u0441\\u0432\\u0435\\u0440\\u043a\\u0438\", \"\\u043a\\u043e\\u043d\\u0442\\u0440\\u043e\\u043b\\u044c\"]"
+  },
+  {
+    "unit_id": "unit_it_back",
+    "name": "Бэкенд-разработка",
+    "parent_unit_id": "unit_it",
+    "level": 2,
+    "processes_json": "[\"python\", \"go\", \"k8s\"]"
+  },
+  {
+    "unit_id": "unit_it_data",
+    "name": "Платформа данных",
+    "parent_unit_id": "unit_it",
+    "level": 2,
+    "processes_json": "[\"airflow\", \"spark\", \"kafka\"]"
+  },
+  {
+    "unit_id": "unit_it_sec",
+    "name": "Безопасность",
+    "parent_unit_id": "unit_it",
+    "level": 2,
+    "processes_json": "[\"AppSec\", \"IAM\"]"
+  },
+  {
+    "unit_id": "unit_sales_corp",
+    "name": "Корпоративные продажи",
+    "parent_unit_id": "unit_sales",
+    "level": 2,
+    "processes_json": "[\"B2B\", \"\\u0442\\u0435\\u043d\\u0434\\u0435\\u0440\\u044b\"]"
+  },
+  {
+    "unit_id": "unit_sales_retail",
+    "name": "Розничная сеть",
+    "parent_unit_id": "unit_sales",
+    "level": 2,
+    "processes_json": "[\"\\u043a\\u043e\\u043d\\u0441\\u0443\\u043b\\u044c\\u0442\\u0430\\u0446\\u0438\\u0438\", \"\\u043e\\u0431\\u0441\\u043b\\u0443\\u0436\\u0438\\u0432\\u0430\\u043d\\u0438\\u0435\"]"
+  },
+  {
+    "unit_id": "unit_an_credit",
+    "name": "Кредитные риски",
+    "parent_unit_id": "unit_analytics",
+    "level": 2,
+    "processes_json": "[\"\\u0441\\u043a\\u043e\\u0440\\u0438\\u043d\\u0433\", \"\\u043e\\u0442\\u0447\\u0451\\u0442\\u043d\\u043e\\u0441\\u0442\\u044c\"]"
+  },
+  {
+    "unit_id": "unit_ops_clear",
+    "name": "Клиринг и сверки",
+    "parent_unit_id": "unit_ops",
+    "level": 2,
+    "processes_json": "[\"\\u0441\\u0432\\u0435\\u0440\\u043a\\u0438\", \"\\u043a\\u043e\\u043d\\u0442\\u0440\\u043e\\u043b\\u044c\"]"
+  }
+]

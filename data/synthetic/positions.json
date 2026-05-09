@@ -1,0 +1,142 @@
+[
+  {
+    "position_id": "pos_IT_1",
+    "title": "Junior Backend",
+    "type": "IT",
+    "grade_level": 1,
+    "core_skills_json": "[\"python\", \"sql\", \"git\", \"linux\"]"
+  },
+  {
+    "position_id": "pos_IT_2",
+    "title": "Backend Engineer",
+    "type": "IT",
+    "grade_level": 2,
+    "core_skills_json": "[\"python\", \"sql\", \"git\", \"linux\"]"
+  },
+  {
+    "position_id": "pos_IT_3",
+    "title": "Senior Engineer",
+    "type": "IT",
+    "grade_level": 3,
+    "core_skills_json": "[\"python\", \"sql\", \"git\", \"linux\"]"
+  },
+  {
+    "position_id": "pos_IT_4",
+    "title": "Tech Lead",
+    "type": "IT",
+    "grade_level": 4,
+    "core_skills_json": "[\"python\", \"sql\", \"git\", \"linux\"]"
+  },
+  {
+    "position_id": "pos_sales_1",
+    "title": "Менеджер по продажам",
+    "type": "sales",
+    "grade_level": 1,
+    "core_skills_json": "[\"\\u043f\\u0435\\u0440\\u0435\\u0433\\u043e\\u0432\\u043e\\u0440\\u044b\", \"CRM\", \"\\u043f\\u0440\\u043e\\u0434\\u0443\\u043a\\u0442\"]"
+  },
+  {
+    "position_id": "pos_sales_2",
+    "title": "Старший менеджер",
+    "type": "sales",
+    "grade_level": 2,
+    "core_skills_json": "[\"\\u043f\\u0435\\u0440\\u0435\\u0433\\u043e\\u0432\\u043e\\u0440\\u044b\", \"CRM\", \"\\u043f\\u0440\\u043e\\u0434\\u0443\\u043a\\u0442\"]"
+  },
+  {
+    "position_id": "pos_sales_3",
+    "title": "Руководитель отдела продаж",
+    "type": "sales",
+    "grade_level": 3,
+    "core_skills_json": "[\"\\u043f\\u0435\\u0440\\u0435\\u0433\\u043e\\u0432\\u043e\\u0440\\u044b\", \"CRM\", \"\\u043f\\u0440\\u043e\\u0434\\u0443\\u043a\\u0442\"]"
+  },
+  {
+    "position_id": "pos_sales_4",
+    "title": "Директор по продажам",
+    "type": "sales",
+    "grade_level": 4,
+    "core_skills_json": "[\"\\u043f\\u0435\\u0440\\u0435\\u0433\\u043e\\u0432\\u043e\\u0440\\u044b\", \"CRM\", \"\\u043f\\u0440\\u043e\\u0434\\u0443\\u043a\\u0442\"]"
+  },
+  {
+    "position_id": "pos_analytics_1",
+    "title": "Аналитик данных",
+    "type": "analytics",
+    "grade_level": 1,
+    "core_skills_json": "[\"sql\", \"python\", \"BI\", \"\\u0441\\u0442\\u0430\\u0442\\u0438\\u0441\\u0442\\u0438\\u043a\\u0430\"]"
+  },
+  {
+    "position_id": "pos_analytics_2",
+    "title": "Старший аналитик",
+    "type": "analytics",
+    "grade_level": 2,
+    "core_skills_json": "[\"sql\", \"python\", \"BI\", \"\\u0441\\u0442\\u0430\\u0442\\u0438\\u0441\\u0442\\u0438\\u043a\\u0430\"]"
+  },
+  {
+    "position_id": "pos_analytics_3",
+    "title": "Lead Analyst",
+    "type": "analytics",
+    "grade_level": 3,
+    "core_skills_json": "[\"sql\", \"python\", \"BI\", \"\\u0441\\u0442\\u0430\\u0442\\u0438\\u0441\\u0442\\u0438\\u043a\\u0430\"]"
+  },
+  {
+    "position_id": "pos_analytics_4",
+    "title": "Head of Analytics",
+    "type": "analytics",
+    "grade_level": 4,
+    "core_skills_json": "[\"sql\", \"python\", \"BI\", \"\\u0441\\u0442\\u0430\\u0442\\u0438\\u0441\\u0442\\u0438\\u043a\\u0430\"]"
+  },
+  {
+    "position_id": "pos_ops_1",
+    "title": "Операционист",
+    "type": "ops",
+    "grade_level": 1,
+    "core_skills_json": "[\"1\\u0421\", \"\\u0441\\u0432\\u0435\\u0440\\u043a\\u0438\", \"compliance\"]"
+  },
+  {
+    "position_id": "pos_ops_2",
+    "title": "Старший операционист",
+    "type": "ops",
+    "grade_level": 2,
+    "core_skills_json": "[\"1\\u0421\", \"\\u0441\\u0432\\u0435\\u0440\\u043a\\u0438\", \"compliance\"]"
+  },
+  {
+    "position_id": "pos_ops_3",
+    "title": "Руководитель группы",
+    "type": "ops",
+    "grade_level": 3,
+    "core_skills_json": "[\"1\\u0421\", \"\\u0441\\u0432\\u0435\\u0440\\u043a\\u0438\", \"compliance\"]"
+  },
+  {
+    "position_id": "pos_ops_4",
+    "title": "Начальник отдела операций",
+    "type": "ops",
+    "grade_level": 4,
+    "core_skills_json": "[\"1\\u0421\", \"\\u0441\\u0432\\u0435\\u0440\\u043a\\u0438\", \"compliance\"]"
+  },
+  {
+    "position_id": "pos_support_1",
+    "title": "Специалист поддержки",
+    "type": "support",
+    "grade_level": 1,
+    "core_skills_json": "[\"communication\", \"ITSM\", \"\\u043a\\u043b\\u0438\\u0435\\u043d\\u0442-\\u0441\\u0435\\u0440\\u0432\\u0438\\u0441\"]"
+  },
+  {
+    "position_id": "pos_support_2",
+    "title": "Старший специалист поддержки",
+    "type": "support",
+    "grade_level": 2,
+    "core_skills_json": "[\"communication\", \"ITSM\", \"\\u043a\\u043b\\u0438\\u0435\\u043d\\u0442-\\u0441\\u0435\\u0440\\u0432\\u0438\\u0441\"]"
+  },
+  {
+    "position_id": "pos_support_3",
+    "title": "Руководитель поддержки",
+    "type": "support",
+    "grade_level": 3,
+    "core_skills_json": "[\"communication\", \"ITSM\", \"\\u043a\\u043b\\u0438\\u0435\\u043d\\u0442-\\u0441\\u0435\\u0440\\u0432\\u0438\\u0441\"]"
+  },
+  {
+    "position_id": "pos_support_4",
+    "title": "Директор сервиса",
+    "type": "support",
+    "grade_level": 4,
+    "core_skills_json": "[\"communication\", \"ITSM\", \"\\u043a\\u043b\\u0438\\u0435\\u043d\\u0442-\\u0441\\u0435\\u0440\\u0432\\u0438\\u0441\"]"
+  }
+]
