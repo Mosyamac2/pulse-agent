@@ -1,0 +1,52 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+*.egg
+
+# Virtualenv
+.venv/
+venv/
+env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Env
+.env
+.env.local
+
+# Data — generated content (only structure tracked)
+data/sber_hr.db
+data/sber_hr.db-shm
+data/sber_hr.db-wal
+data/ml_models/*.joblib
+data/logs/*.jsonl
+data/logs/*.log
+data/state/*.json
+data/state/*.lock
+data/memory/identity.md
+data/memory/scratchpad.md
+data/memory/registry.md
+data/memory/deep_review.md
+data/memory/knowledge/*.md
+
+# Pytest / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Backups
+backups/
+
+# Local IDE / Claude Code settings
+.claude/
