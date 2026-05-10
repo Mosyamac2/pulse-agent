@@ -1,0 +1,1197 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>Пульс — заметка CEO</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Editorial fonts inherited from v1.6.0 design tokens. Same family
+       set as index.html so the pages feel like sister pages of one paper. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..900;1,9..144,400..700&family=Newsreader:ital,opsz,wght@0,6..72,300..700;1,6..72,300..600&family=JetBrains+Mono:wght@400;500&display=swap">
+  <style>
+    :root {
+      color-scheme: light dark;
+      --ed-paper:      #f7f4ec;
+      --ed-paper-dim:  #ede9dc;
+      --ed-paper-edge: #e3dec9;
+      --ed-ink:        #1a1816;
+      --ed-ink-soft:   #4a463f;
+      --ed-rule:       #c9c2ad;
+      --ed-rule-soft:  #d8d3bf;
+      --ed-oxblood:    #7a1c1c;
+      --ed-oxblood-fade: #a04545;
+      --ed-mark:       #f2e4a8;
+      --ed-good:       #2f5d3c; /* dark forest, not bright green */
+
+      --ed-display: 'Fraunces', 'Hoefler Text', 'Iowan Old Style', Georgia, serif;
+      --ed-body:    'Newsreader', 'Georgia', 'Iowan Old Style', serif;
+      --ed-mono:    'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --ed-paper:      #16140f;
+        --ed-paper-dim:  #1f1d18;
+        --ed-paper-edge: #2a261e;
+        --ed-ink:        #e8e3d3;
+        --ed-ink-soft:   #aaa39a;
+        --ed-rule:       #3a342a;
+        --ed-rule-soft:  #2c2820;
+        --ed-oxblood:    #d4685e;
+        --ed-oxblood-fade: #b06c4f;
+        --ed-mark:       #5a4d1a;
+        --ed-good:       #7eaa84;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--ed-body);
+      background: var(--ed-paper);
+      color: var(--ed-ink);
+      font-feature-settings: "kern", "liga", "onum";
+      line-height: 1.55;
+      position: relative;
+    }
+    /* Paper grain — extremely subtle SVG noise on top of parchment.
+       Sits over the body and below all content (z-index:-1 on the
+       pseudo-element wouldn't catch on the painter's algorithm in
+       Safari, so we use mix-blend-multiply with pointer-events:none). */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.32;
+      mix-blend-mode: multiply;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.10  0 0 0 0 0.09  0 0 0 0 0.07  0 0 0 0.07 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    }
+    @media (prefers-color-scheme: dark) {
+      body::before { opacity: 0.18; mix-blend-mode: screen; }
+    }
+    main, .masthead, .colophon { position: relative; z-index: 1; }
+    a { color: inherit; text-decoration: none; }
+    .num { font-feature-settings: "tnum", "lnum"; font-variant-numeric: tabular-nums lining-nums; }
+
+    /* === Masthead — newspaper nameplate ============================== */
+    .masthead {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 2.4rem 1.6rem 1.2rem;
+      border-bottom: 3px double var(--ed-rule);
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: end;
+      gap: 1rem;
+    }
+    .masthead .left {
+      font-family: var(--ed-mono);
+      font-size: 0.74rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--ed-ink-soft);
+    }
+    .masthead .center {
+      font-family: var(--ed-display);
+      font-weight: 800;
+      font-size: clamp(2.2rem, 5.4vw, 4.4rem);
+      letter-spacing: -0.04em;
+      line-height: 0.95;
+      text-align: center;
+      /* Fraunces optical-size & soft contrast at large display sizes */
+      font-variation-settings: "opsz" 144, "SOFT" 30;
+    }
+    .masthead .center small {
+      display: block;
+      font-family: var(--ed-display);
+      font-style: italic;
+      font-weight: 400;
+      font-size: 0.28em;
+      letter-spacing: 0.02em;
+      color: var(--ed-ink-soft);
+      margin-top: 0.55rem;
+      font-variation-settings: "opsz" 28, "SOFT" 100;
+    }
+    .masthead .right {
+      text-align: right;
+      font-family: var(--ed-mono);
+      font-size: 0.74rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--ed-ink-soft);
+    }
+    .masthead .nav-link {
+      color: var(--ed-oxblood);
+      border-bottom: 1px dotted var(--ed-oxblood-fade);
+      padding-bottom: 1px;
+      font-family: var(--ed-display);
+      font-style: italic;
+      font-size: 0.95rem;
+      letter-spacing: 0.01em;
+      text-transform: none;
+    }
+    .masthead .nav-link:hover { border-bottom-style: solid; }
+
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 1.6rem 1.6rem 6rem;
+    }
+
+    /* === Section labels — newspaper section dividers ================= */
+    .section-label {
+      font-family: var(--ed-display);
+      font-style: italic;
+      font-weight: 500;
+      font-size: 1.15rem;
+      letter-spacing: 0.04em;
+      color: var(--ed-ink);
+      text-transform: lowercase;
+      margin: 3rem 0 1rem;
+      display: grid;
+      grid-template-columns: auto 1fr auto auto;
+      align-items: baseline;
+      gap: 0.9rem;
+      font-variation-settings: "opsz" 28, "SOFT" 50;
+    }
+    .section-label .rule {
+      border-top: 1px solid var(--ed-rule);
+      border-bottom: 1px solid var(--ed-rule);
+      height: 4px;
+    }
+    .section-label .roman {
+      font-family: var(--ed-display);
+      font-style: normal;
+      font-weight: 600;
+      font-size: 0.95rem;
+      letter-spacing: 0.18em;
+      color: var(--ed-oxblood);
+    }
+    .section-label .key {
+      font-family: var(--ed-mono);
+      font-style: normal;
+      font-size: 0.66rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--ed-ink-soft);
+    }
+
+    /* === KPI strip ==================================================== */
+    .kpi-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      border-top: 1px solid var(--ed-rule);
+      border-bottom: 1px solid var(--ed-rule);
+      margin-top: 1.4rem;
+    }
+    .kpi {
+      padding: 1.4rem 1.2rem 1.5rem;
+      border-right: 1px solid var(--ed-rule-soft);
+      position: relative;
+    }
+    .kpi:last-child { border-right: none; }
+    .kpi .label {
+      font-family: var(--ed-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--ed-ink-soft);
+      margin-bottom: 0.4rem;
+    }
+    .kpi .number {
+      font-family: var(--ed-display);
+      font-weight: 600;
+      font-size: clamp(2.6rem, 5.4vw, 4rem);
+      line-height: 1;
+      letter-spacing: -0.025em;
+      color: var(--ed-ink);
+      font-variation-settings: "opsz" 144, "SOFT" 30;
+      font-variant-numeric: tabular-nums lining-nums;
+    }
+    .kpi .number.text {
+      font-size: clamp(1.4rem, 2.7vw, 1.95rem);
+      font-style: italic;
+      font-weight: 500;
+      letter-spacing: -0.005em;
+      font-variation-settings: "opsz" 36, "SOFT" 80;
+    }
+    .kpi .delta {
+      display: inline-block;
+      margin-top: 0.6rem;
+      font-family: var(--ed-mono);
+      font-size: 0.78rem;
+      letter-spacing: 0.04em;
+    }
+    .kpi .delta.bad  { color: var(--ed-oxblood); }
+    .kpi .delta.good { color: var(--ed-good); }
+    .kpi .delta.flat { color: var(--ed-ink-soft); }
+    .kpi .footnote {
+      margin-top: 0.4rem;
+      font-family: var(--ed-body);
+      font-style: italic;
+      font-size: 0.85rem;
+      color: var(--ed-ink-soft);
+      line-height: 1.35;
+    }
+    .kpi .footnote a {
+      border-bottom: 1px dotted var(--ed-oxblood-fade);
+      color: var(--ed-oxblood);
+    }
+    .kpi .footnote a:hover { border-bottom-style: solid; }
+
+    /* === Lede — editorial summary right under KPI strip ============ */
+    .lede {
+      margin: 1.6rem 0 0;
+      font-family: var(--ed-body);
+      font-size: 1.12rem;
+      line-height: 1.65;
+      color: var(--ed-ink);
+      padding: 0 0.2rem;
+      max-width: 62ch;
+    }
+    .lede .dropcap {
+      float: left;
+      font-family: var(--ed-display);
+      font-style: italic;
+      font-weight: 700;
+      font-size: 4.1rem;
+      line-height: 0.78;
+      padding: 0.45rem 0.55rem 0 0;
+      color: var(--ed-oxblood);
+      font-variation-settings: "opsz" 144, "SOFT" 100;
+    }
+
+    /* === Module bundles =============================================== */
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr 1fr;
+      gap: 1.4rem;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr;
+      gap: 1.4rem;
+    }
+    @media (max-width: 900px) {
+      .grid-3, .grid-2 { grid-template-columns: 1fr; }
+      .kpi-strip { grid-template-columns: repeat(2, 1fr); }
+      .kpi { border-right: 1px solid var(--ed-rule-soft); border-bottom: 1px solid var(--ed-rule-soft); }
+      .kpi:nth-child(2n) { border-right: none; }
+      .kpi:nth-last-child(-n+2) { border-bottom: none; }
+    }
+
+    .card {
+      border: 1px solid var(--ed-rule-soft);
+      background: var(--ed-paper);
+      padding: 1.1rem 1.1rem 1.2rem;
+    }
+    .card h3 {
+      font-family: var(--ed-display);
+      font-weight: 600;
+      font-size: 1.05rem;
+      margin: 0 0 0.55rem;
+      letter-spacing: -0.01em;
+    }
+    .card .card-sub {
+      font-family: var(--ed-body);
+      font-style: italic;
+      font-size: 0.86rem;
+      color: var(--ed-ink-soft);
+      margin: -0.25rem 0 0.9rem;
+    }
+
+    /* === Heatmap (table) ============================================= */
+    table.heatmap {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--ed-mono);
+      font-size: 0.78rem;
+    }
+    table.heatmap th, table.heatmap td {
+      padding: 0.4rem 0.55rem;
+      text-align: center;
+      border: 1px solid var(--ed-rule-soft);
+    }
+    table.heatmap thead th {
+      font-weight: 500;
+      font-family: var(--ed-display);
+      font-style: italic;
+      font-size: 0.86rem;
+      letter-spacing: 0;
+      background: var(--ed-paper-dim);
+      text-transform: lowercase;
+    }
+    table.heatmap tbody th {
+      text-align: left;
+      font-family: var(--ed-body);
+      font-style: italic;
+      font-weight: 400;
+      font-size: 0.92rem;
+      max-width: 14rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    table.heatmap a, table.heatmap th a { color: inherit; }
+    table.heatmap td.cell {
+      font-variant-numeric: tabular-nums;
+    }
+    table.heatmap td a:hover { text-decoration: underline; }
+
+    /* === At-risk list ================================================= */
+    ol.at-risk {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      counter-reset: ar;
+    }
+    ol.at-risk li {
+      counter-increment: ar;
+      padding: 0.6rem 0;
+      border-bottom: 1px solid var(--ed-rule-soft);
+      display: flex;
+      align-items: baseline;
+      gap: 0.8rem;
+    }
+    ol.at-risk li:last-child { border-bottom: none; }
+    ol.at-risk li::before {
+      content: counter(ar, decimal-leading-zero);
+      font-family: var(--ed-mono);
+      font-size: 0.72rem;
+      color: var(--ed-ink-soft);
+      letter-spacing: 0.06em;
+      min-width: 1.6rem;
+    }
+    ol.at-risk .name {
+      font-family: var(--ed-display);
+      font-weight: 500;
+      font-size: 1.0rem;
+      flex: 1;
+      border-bottom: 1px dotted transparent;
+    }
+    ol.at-risk a:hover .name { border-bottom-color: var(--ed-oxblood-fade); }
+    ol.at-risk .role {
+      font-style: italic;
+      font-size: 0.85rem;
+      color: var(--ed-ink-soft);
+    }
+    ol.at-risk .flags {
+      font-family: var(--ed-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.04em;
+      color: var(--ed-oxblood);
+      text-transform: uppercase;
+    }
+
+    /* === Archetype scatter SVG ======================================= */
+    .scatter-wrap { padding-top: 0.4rem; }
+    .scatter-wrap svg { width: 100%; height: 220px; display: block; }
+    .scatter-wrap .axis-label {
+      font-family: var(--ed-mono);
+      font-size: 9px;
+      fill: var(--ed-ink-soft);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .scatter-wrap .frame { stroke: var(--ed-rule); fill: none; }
+    .scatter-wrap .grid  { stroke: var(--ed-rule-soft); stroke-dasharray: 2 3; }
+    .scatter-wrap circle { stroke: var(--ed-paper); stroke-width: 0.8; opacity: 0.78; }
+    .scatter-wrap .legend {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.15rem 0.6rem;
+      margin-top: 0.6rem;
+      font-family: var(--ed-mono);
+      font-size: 0.66rem;
+      letter-spacing: 0.04em;
+      color: var(--ed-ink-soft);
+    }
+    .scatter-wrap .swatch {
+      display: inline-block;
+      width: 0.5rem; height: 0.5rem; border-radius: 50%;
+      margin-right: 0.4rem; vertical-align: middle;
+    }
+
+    /* === Trust timeline SVG ========================================== */
+    .timeline-wrap svg { width: 100%; height: 200px; display: block; }
+    .timeline-wrap .bar-up   { fill: var(--ed-good); opacity: 0.78; }
+    .timeline-wrap .bar-down { fill: var(--ed-oxblood); opacity: 0.86; }
+    .timeline-wrap .axis     { stroke: var(--ed-rule); }
+    .timeline-wrap .grid-line{ stroke: var(--ed-rule-soft); stroke-dasharray: 2 3; }
+    .timeline-wrap .release  {
+      stroke: var(--ed-ink-soft); stroke-width: 1; stroke-dasharray: 3 3;
+    }
+    .timeline-wrap .release.self { stroke: var(--ed-oxblood); }
+    .timeline-wrap .release-label {
+      font-family: var(--ed-mono);
+      font-size: 9px;
+      letter-spacing: 0.04em;
+      fill: var(--ed-ink-soft);
+    }
+    .timeline-wrap .release.self + .release-label { fill: var(--ed-oxblood); }
+
+    /* === Evolution log =============================================== */
+    ul.evolution-log {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    ul.evolution-log li {
+      padding: 0.55rem 0;
+      border-bottom: 1px solid var(--ed-rule-soft);
+    }
+    ul.evolution-log li:last-child { border-bottom: none; }
+    ul.evolution-log .commit-version {
+      font-family: var(--ed-display);
+      font-weight: 600;
+      font-size: 0.95rem;
+      letter-spacing: -0.01em;
+    }
+    ul.evolution-log .commit-tag {
+      display: inline-block;
+      font-family: var(--ed-mono);
+      font-size: 0.62rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 0.05rem 0.4rem;
+      border: 1px solid var(--ed-rule);
+      border-radius: 2px;
+      margin-left: 0.4rem;
+      color: var(--ed-ink-soft);
+    }
+    ul.evolution-log .commit-tag.self {
+      color: var(--ed-oxblood);
+      border-color: var(--ed-oxblood-fade);
+    }
+    ul.evolution-log .commit-subj {
+      display: block;
+      font-family: var(--ed-body);
+      font-size: 0.92rem;
+      color: var(--ed-ink-soft);
+      margin-top: 0.15rem;
+    }
+    ul.evolution-log .commit-meta {
+      font-family: var(--ed-mono);
+      font-size: 0.7rem;
+      color: var(--ed-ink-soft);
+      letter-spacing: 0.06em;
+      margin-top: 0.15rem;
+    }
+
+    /* === Rejected suggestions ======================================== */
+    ul.rejected { list-style: none; padding: 0; margin: 0; }
+    ul.rejected li {
+      padding: 0.6rem 0;
+      border-bottom: 1px solid var(--ed-rule-soft);
+    }
+    ul.rejected li:last-child { border-bottom: none; }
+    ul.rejected blockquote {
+      margin: 0;
+      padding-left: 0.75rem;
+      border-left: 2px solid var(--ed-oxblood-fade);
+      font-family: var(--ed-body);
+      font-style: italic;
+      font-size: 0.94rem;
+      color: var(--ed-ink);
+    }
+    ul.rejected .principle {
+      font-family: var(--ed-mono);
+      font-size: 0.68rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--ed-oxblood);
+      margin-top: 0.3rem;
+    }
+    ul.rejected .reasoning {
+      font-size: 0.84rem;
+      color: var(--ed-ink-soft);
+      margin-top: 0.2rem;
+    }
+    ul.rejected.empty {
+      font-family: var(--ed-body);
+      font-style: italic;
+      color: var(--ed-ink-soft);
+    }
+
+    /* === Cost area chart ============================================== */
+    .cost-wrap svg { width: 100%; height: 180px; display: block; }
+    .cost-wrap .axis     { stroke: var(--ed-rule); }
+    .cost-wrap .grid-line{ stroke: var(--ed-rule-soft); stroke-dasharray: 2 3; }
+    .cost-wrap .area-opus    { fill: var(--ed-oxblood); opacity: 0.55; }
+    .cost-wrap .area-sonnet  { fill: var(--ed-ink-soft); opacity: 0.45; }
+    .cost-wrap .legend {
+      font-family: var(--ed-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.06em;
+      color: var(--ed-ink-soft);
+      margin-top: 0.4rem;
+      display: flex; gap: 1rem;
+    }
+    .cost-wrap .swatch { display: inline-block; width: 0.7rem; height: 0.6rem; vertical-align: middle; margin-right: 0.3rem; }
+    .cost-runrate {
+      font-family: var(--ed-display);
+      font-style: italic;
+      font-size: 1.1rem;
+      color: var(--ed-ink);
+      margin-top: 0.6rem;
+      text-align: right;
+    }
+    .cost-runrate strong {
+      font-style: normal;
+      font-weight: 600;
+      font-size: 1.4rem;
+      color: var(--ed-oxblood);
+    }
+
+    /* === Empty state =================================================== */
+    .empty {
+      font-family: var(--ed-body);
+      font-style: italic;
+      color: var(--ed-ink-soft);
+      padding: 0.4rem 0;
+    }
+
+    .colophon {
+      max-width: 1180px;
+      margin: 3rem auto 0;
+      padding: 1rem 1.6rem 2rem;
+      border-top: 1px solid var(--ed-rule-soft);
+      font-family: var(--ed-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.06em;
+      color: var(--ed-ink-soft);
+      text-align: center;
+      text-transform: uppercase;
+    }
+  </style>
+</head>
+<body>
+  <header class="masthead">
+    <div class="left">
+      <div id="today">—</div>
+      <div>30-дневное окно</div>
+    </div>
+    <div class="center">
+      Пульс
+      <small>Заметка CEO · ежедневная сводка</small>
+    </div>
+    <div class="right">
+      <div><span id="version">—</span></div>
+      <div><a class="nav-link" href="/">← в чат</a></div>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- ============= KPI STRIP — above the fold ===================== -->
+    <section class="kpi-strip" id="kpi-strip">
+      <div class="kpi" data-kpi="at_risk">
+        <div class="label">At-risk</div>
+        <div class="number" data-bind="value">—</div>
+        <div class="delta flat" data-bind="delta">…</div>
+        <div class="footnote" data-bind="footnote">…</div>
+      </div>
+      <div class="kpi" data-kpi="burnout">
+        <div class="label">Burnout</div>
+        <div class="number" data-bind="value">—</div>
+        <div class="delta flat" data-bind="delta">…</div>
+        <div class="footnote" data-bind="footnote">…</div>
+      </div>
+      <div class="kpi" data-kpi="hot_dept">
+        <div class="label">Hot dept.</div>
+        <div class="number text" data-bind="value">—</div>
+        <div class="delta flat" data-bind="delta">…</div>
+        <div class="footnote" data-bind="footnote">…</div>
+      </div>
+      <div class="kpi" data-kpi="trust">
+        <div class="label">Trust</div>
+        <div class="number" data-bind="value">—</div>
+        <div class="delta flat" data-bind="delta">…</div>
+        <div class="footnote" data-bind="footnote">…</div>
+      </div>
+    </section>
+
+    <!-- Editorial lede — rendered from KPIs after fetch -->
+    <p class="lede" id="lede">
+      <span class="dropcap">З</span>агружаем сводку…
+    </p>
+
+    <!-- ============= PEOPLE bundle ==================================== -->
+    <div class="section-label">
+      <span class="roman">I.</span>
+      <span class="rule"></span>
+      <span>люди</span>
+      <span class="key">people</span>
+    </div>
+
+    <div class="grid-3">
+      <div class="card">
+        <h3>Тепловая карта подразделений</h3>
+        <div class="card-sub">Среднее значение метрики за 30 дней относительно компании</div>
+        <div id="heatmap"><div class="empty">…</div></div>
+      </div>
+
+      <div class="card">
+        <h3>В красной зоне</h3>
+        <div class="card-sub">Сотрудники с тремя или четырьмя признаками риска</div>
+        <ol class="at-risk" id="at-risk"><li class="empty">…</li></ol>
+      </div>
+
+      <div class="card">
+        <h3>Карта архетипов</h3>
+        <div class="card-sub">Ось X — стресс, ось Y — фокус. Цвет — поведенческий архетип.</div>
+        <div class="scatter-wrap" id="scatter"><div class="empty">…</div></div>
+      </div>
+    </div>
+
+    <!-- ============= TRUST bundle ===================================== -->
+    <div class="section-label">
+      <span class="roman">II.</span>
+      <span class="rule"></span>
+      <span>доверие к боту</span>
+      <span class="key">trust</span>
+    </div>
+
+    <div class="grid-3">
+      <div class="card">
+        <h3>Динамика лайков</h3>
+        <div class="card-sub">Зелёные столбцы — лайки, красные — дизлайки. Пунктир — релизы.</div>
+        <div class="timeline-wrap" id="trust-timeline"><div class="empty">…</div></div>
+      </div>
+
+      <div class="card">
+        <h3>Хроника эволюции</h3>
+        <div class="card-sub">Что Пульс себе переписал. Тег <em>self</em> = автономный коммит.</div>
+        <ul class="evolution-log" id="evolution-log"><li class="empty">…</li></ul>
+      </div>
+
+      <div class="card">
+        <h3>Отвергнуто</h3>
+        <div class="card-sub">Пожелания, которые не прошли конституционную сверку.</div>
+        <ul class="rejected" id="rejected"><li class="empty">…</li></ul>
+      </div>
+    </div>
+
+    <!-- ============= COST bundle ====================================== -->
+    <div class="section-label">
+      <span class="roman">III.</span>
+      <span class="rule"></span>
+      <span>стоимость</span>
+      <span class="key">cost</span>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3>Расход токенов, USD/день</h3>
+        <div class="card-sub">Стек: верхний слой — Opus, нижний — Sonnet.</div>
+        <div class="cost-wrap" id="cost-chart"><div class="empty">…</div></div>
+      </div>
+      <div class="card">
+        <h3>Прогноз месяца</h3>
+        <div class="card-sub">Экстраполяция текущего темпа на 30 дней.</div>
+        <div class="cost-runrate" id="cost-runrate">…</div>
+      </div>
+    </div>
+
+  </main>
+
+  <div class="colophon">
+    Pulse — self-evolving HR agent · single FastAPI process · 100 синтетических сотрудников ·
+    данные обновляются на каждый перезапуск
+  </div>
+
+<script>
+// ============================================================================
+//  Dashboard wiring — pure fetch + render. No frameworks.
+// ============================================================================
+//
+// All actionable elements (employee names, unit cells, archetype dots, commits)
+// are <a href="/?q=..."> so the chat on `/` opens with the question pre-filled.
+// We never auto-submit — CEO may want to tweak phrasing first.
+//
+// Drill-down phrasings live in `qFor(...)` so the templates stay in one place.
+
+const Q = {
+  emp:        (name, id) => `Расскажи подробно про ${name} (${id}) — что у него происходит за последние 30 дней и стоит ли мне как CEO вмешиваться.`,
+  unit:       (name)     => `Что происходит в подразделении «${name}» за последние 30 дней — какие метрики просели и почему.`,
+  unitMetric: (name, m)  => `Покажи в подразделении «${name}» распределение по метрике «${m}» за 30 дней — кто в крайних значениях.`,
+  metricTop:  (m)        => `Покажи топ-10 сотрудников по метрике «${m}» за последние 30 дней с интерпретацией.`,
+  archetype:  (a)        => `Расскажи про архетип «${a}» — кто к нему относится и какой у этих людей профиль.`,
+  release:    (v, subj)  => `Расскажи про релиз v${v}: «${subj}». Что ты переписал, какой был триггер, что это поменяло.`,
+  rejected:   (id, txt)  => `Почему ты отклонил предложение ${id}: «${txt}»?`,
+};
+
+function qHref(text) { return `/?q=${encodeURIComponent(text)}`; }
+
+function fmtDate() {
+  const months = ['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'];
+  const days   = ['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'];
+  const d = new Date();
+  return `${days[d.getDay()]}, ${d.getDate()} ${months[d.getMonth()]}`;
+}
+
+document.getElementById('today').textContent = fmtDate();
+
+async function getJson(url) {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`${url} → ${r.status}`);
+  return r.json();
+}
+
+function escapeHtml(s) {
+  if (s == null) return '';
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;',
+  }[c]));
+}
+
+// === KPI strip render =====================================================
+
+function setKpi(card, html, opts) {
+  const el = card.querySelector('[data-bind="' + html + '"]');
+  if (el) {
+    if (opts && opts.html) el.innerHTML = opts.value;
+    else el.textContent = opts.value;
+    if (opts && opts.cls) {
+      el.classList.remove('bad','good','flat');
+      el.classList.add(opts.cls);
+    }
+  }
+}
+
+function deltaHtml(delta, biggerIsBetter, suffix) {
+  if (delta === null || delta === undefined) {
+    return { value: 'нет сравнения', cls: 'flat' };
+  }
+  if (delta === 0) return { value: 'без изменений', cls: 'flat' };
+  const arrow = delta > 0 ? '↑' : '↓';
+  const num   = Math.abs(delta);
+  const isGood = biggerIsBetter ? delta > 0 : delta < 0;
+  return { value: `${arrow}${num}${suffix||''} за месяц`, cls: isGood ? 'good' : 'bad' };
+}
+
+function renderKpi(kpi) {
+  const root = document.getElementById('kpi-strip');
+
+  // AT-RISK
+  const c1 = root.querySelector('[data-kpi="at_risk"]');
+  setKpi(c1, 'value', { value: String(kpi.at_risk.value) });
+  const d1 = deltaHtml(kpi.at_risk.delta, false, '');
+  setKpi(c1, 'delta', d1);
+  setKpi(c1, 'footnote', { value:
+    `${kpi.at_risk.value} из ${kpi.at_risk.total} активных. <a href="${qHref(Q.metricTop('peer_sentiment'))}">смотреть кто</a>`,
+    html: true,
+  });
+
+  // BURNOUT
+  const c2 = root.querySelector('[data-kpi="burnout"]');
+  setKpi(c2, 'value', { value: String(kpi.burnout.value) });
+  const d2 = deltaHtml(kpi.burnout.delta, false, '');
+  setKpi(c2, 'delta', d2);
+  setKpi(c2, 'footnote', { value:
+    `${kpi.burnout.threshold_text}.`,
+    html: false,
+  });
+
+  // HOT DEPT
+  const c3 = root.querySelector('[data-kpi="hot_dept"]');
+  if (kpi.hot_dept.unit_id) {
+    const name = kpi.hot_dept.name;
+    setKpi(c3, 'value', { value:
+      `<a href="${qHref(Q.unit(name))}">${escapeHtml(name)}</a>`, html: true,
+    });
+    const dvn = kpi.hot_dept.delta_vs_norm;
+    setKpi(c3, 'delta', {
+      value: dvn !== null ? `${dvn > 0 ? '+' : ''}${dvn.toFixed(2)} к среднему по компании` : '',
+      cls: dvn !== null && dvn < 0 ? 'bad' : 'flat',
+    });
+    setKpi(c3, 'footnote', { value:
+      `sentiment ${kpi.hot_dept.sentiment.toFixed(2)} · стресс ${kpi.hot_dept.stress.toFixed(2)} · ${kpi.hot_dept.n_employees} чел.`,
+    });
+  } else {
+    setKpi(c3, 'value', { value: '—' });
+    setKpi(c3, 'delta', { value: 'недостаточно данных', cls: 'flat' });
+  }
+
+  // TRUST
+  const c4 = root.querySelector('[data-kpi="trust"]');
+  if (kpi.trust.pct !== null) {
+    setKpi(c4, 'value', { value: `${kpi.trust.pct}%` });
+    const d4 = deltaHtml(kpi.trust.delta_pp, true, ' п.п.');
+    setKpi(c4, 'delta', d4);
+    setKpi(c4, 'footnote', { value:
+      `${kpi.trust.likes} лайков и ${kpi.trust.dislikes} дизлайков за 30 дней.`,
+    });
+  } else {
+    setKpi(c4, 'value', { value: '—' });
+    setKpi(c4, 'delta', { value: 'нет голосов в окне', cls: 'flat' });
+  }
+
+  // === Lede — three sentences hand-knit from numbers ====================
+  const lede = document.getElementById('lede');
+  const parts = [];
+  if (kpi.at_risk.value > 0) {
+    parts.push(`в зоне риска ${kpi.at_risk.value} человек${kpi.at_risk.delta && kpi.at_risk.delta > 0 ? ` — это на ${kpi.at_risk.delta} больше, чем месяцем ранее` : ''}`);
+  }
+  if (kpi.hot_dept && kpi.hot_dept.unit_id) {
+    parts.push(`«самое тёплое» подразделение — ${kpi.hot_dept.name}, со средним sentiment ${kpi.hot_dept.sentiment.toFixed(2)} и стрессом ${kpi.hot_dept.stress.toFixed(2)}`);
+  }
+  if (kpi.trust.pct !== null) {
+    const pp = kpi.trust.delta_pp;
+    parts.push(`доверие к Пульсу за месяц — ${kpi.trust.pct}%${pp !== null && pp !== 0 ? ` (${pp > 0 ? '+' : ''}${pp} п.п.)` : ''}`);
+  }
+  if (parts.length === 0) {
+    lede.innerHTML = '<span class="dropcap">Т</span>ишина в данных. Возможно, БД ещё не наполнена.';
+  } else {
+    const text = parts.join('; ') + '.';
+    const first = text.charAt(0);
+    const rest  = text.slice(1);
+    lede.innerHTML = `<span class="dropcap">${escapeHtml(first)}</span>${escapeHtml(rest)}`;
+  }
+}
+
+// === Heatmap ==============================================================
+
+function severityToColor(sev) {
+  // sev ∈ [-3, +3]; negative = bad → oxblood tint, positive = good → ink tint.
+  // We tint the parchment, never overwhelm it. The cell stays readable.
+  const k = Math.max(-3, Math.min(3, sev));
+  if (k >= -0.25 && k <= 0.25) return 'transparent';
+  if (k < 0) {
+    const t = Math.min(1, -k / 3);
+    return `rgba(122, 28, 28, ${0.08 + 0.32 * t})`;
+  }
+  const t = Math.min(1, k / 3);
+  return `rgba(47, 93, 60, ${0.06 + 0.22 * t})`;
+}
+
+function renderHeatmap(data) {
+  const root = document.getElementById('heatmap');
+  if (!data.units.length) { root.innerHTML = '<div class="empty">нет данных</div>'; return; }
+  const cellsByUnitMetric = new Map();
+  for (const c of data.cells) cellsByUnitMetric.set(c.unit_id + '|' + c.metric, c);
+
+  const rows = data.units.map(u => {
+    const tds = data.metrics.map(m => {
+      const c = cellsByUnitMetric.get(u.unit_id + '|' + m.key);
+      const val = (c && c.value !== null) ? c.value.toFixed(2) : '—';
+      const bg = c ? severityToColor(c.severity) : 'transparent';
+      const href = qHref(Q.unitMetric(u.unit_name, m.label));
+      return `<td class="cell" style="background:${bg}"><a href="${href}">${val}</a></td>`;
+    }).join('');
+    return `<tr><th><a href="${qHref(Q.unit(u.unit_name))}">${escapeHtml(u.unit_name)}</a></th>${tds}</tr>`;
+  }).join('');
+
+  const header = data.metrics.map(m =>
+    `<th><a href="${qHref(Q.metricTop(m.label))}">${escapeHtml(m.label)}</a></th>`
+  ).join('');
+
+  root.innerHTML = `
+    <table class="heatmap">
+      <thead><tr><th></th>${header}</tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
+
+// === At-risk ==============================================================
+
+const FLAG_LABEL = {
+  low_sentiment: 'sentiment',
+  low_focus:     'фокус',
+  low_tasks:     'задачи',
+  low_hours:     'часы',
+};
+
+function renderAtRisk(items) {
+  const root = document.getElementById('at-risk');
+  if (!items.length) { root.innerHTML = '<li class="empty">сегодня в красной зоне никого</li>'; return; }
+  root.innerHTML = items.map(p => {
+    const flagsTxt = (p.flags || []).map(f => FLAG_LABEL[f] || f).join(' · ');
+    const role = p.position ? ` · ${escapeHtml(p.position)}` : '';
+    const unit = p.unit_name ? `, ${escapeHtml(p.unit_name)}` : '';
+    return `
+      <li>
+        <a href="${qHref(Q.emp(p.full_name, p.emp_id))}" style="display:contents">
+          <span class="name">${escapeHtml(p.full_name)}</span>
+          <span class="role">${role}${unit}</span>
+        </a>
+        <span class="flags">${escapeHtml(flagsTxt)}</span>
+      </li>
+    `;
+  }).join('');
+}
+
+// === Archetype scatter ====================================================
+
+const ARCHETYPE_PALETTE = [
+  '#7a1c1c', '#1c4f7a', '#2f5d3c', '#a04545', '#4a463f',
+  '#8a6a1f', '#5c2f6e', '#1f6f6f',
+];
+
+function renderScatter(data) {
+  const root = document.getElementById('scatter');
+  if (!data.points.length) { root.innerHTML = '<div class="empty">нет данных</div>'; return; }
+
+  const W = 280, H = 220, pad = { l: 28, r: 8, t: 8, b: 22 };
+  const pw = W - pad.l - pad.r, ph = H - pad.t - pad.b;
+  // x = stress in [0..1], y = focus in [0..1]
+  const x = v => pad.l + v * pw;
+  const y = v => pad.t + (1 - v) * ph;
+
+  const colorFor = (a) => {
+    const i = data.archetypes.indexOf(a);
+    return ARCHETYPE_PALETTE[i % ARCHETYPE_PALETTE.length];
+  };
+
+  const grid = [0.25, 0.5, 0.75].map(t =>
+    `<line class="grid" x1="${x(t)}" y1="${pad.t}" x2="${x(t)}" y2="${pad.t + ph}"/>` +
+    `<line class="grid" x1="${pad.l}" y1="${y(t)}" x2="${pad.l + pw}" y2="${y(t)}"/>`
+  ).join('');
+
+  const dots = data.points.map(p => {
+    const c = colorFor(p.archetype);
+    const href = qHref(Q.emp(p.full_name, p.emp_id));
+    const tip = `${p.full_name} — стресс ${p.x.toFixed(2)}, фокус ${p.y.toFixed(2)} (${p.archetype})`;
+    return `<a xlink:href="${href}" href="${href}"><circle cx="${x(p.x).toFixed(1)}" cy="${y(p.y).toFixed(1)}" r="4" fill="${c}"><title>${escapeHtml(tip)}</title></circle></a>`;
+  }).join('');
+
+  const legend = data.archetypes.map(a =>
+    `<div><span class="swatch" style="background:${colorFor(a)}"></span><a href="${qHref(Q.archetype(a))}">${escapeHtml(a)}</a></div>`
+  ).join('');
+
+  root.innerHTML = `
+    <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <rect class="frame" x="${pad.l}" y="${pad.t}" width="${pw}" height="${ph}"/>
+      ${grid}
+      ${dots}
+      <text class="axis-label" x="${pad.l + pw / 2}" y="${H - 6}" text-anchor="middle">стресс →</text>
+      <text class="axis-label" x="6" y="${pad.t + ph / 2}" transform="rotate(-90, 6, ${pad.t + ph / 2})" text-anchor="middle">фокус →</text>
+    </svg>
+    <div class="legend">${legend}</div>
+  `;
+}
+
+// === Trust timeline =======================================================
+
+function renderTrustTimeline(data) {
+  const root = document.getElementById('trust-timeline');
+  if (!data.days.length) { root.innerHTML = '<div class="empty">за 30 дней нет фидбэка</div>'; return; }
+
+  // Diverging design: likes grow upward from a center axis, dislikes
+  // grow downward. Releases drawn as full-height vertical pickets.
+  const W = 360, H = 200, pad = { l: 32, r: 8, t: 18, b: 22 };
+  const pw = W - pad.l - pad.r, ph = H - pad.t - pad.b;
+  const mid = pad.t + ph / 2;
+
+  const days = data.days;
+  const startDate = new Date(days[0].date + 'T00:00:00Z');
+  const endDate   = new Date(days[days.length-1].date + 'T00:00:00Z');
+  const dayMs = 86400000;
+  const total = Math.max(1, Math.round((endDate - startDate) / dayMs)) + 1;
+  const xFor = (date) => {
+    const d = new Date(date + 'T00:00:00Z');
+    const idx = Math.round((d - startDate) / dayMs);
+    return pad.l + (total === 1 ? pw / 2 : (idx / (total - 1)) * pw);
+  };
+
+  const maxLikes = Math.max(1, ...days.map(d => d.likes));
+  const maxDis   = Math.max(1, ...days.map(d => d.dislikes));
+  const maxY = Math.max(maxLikes, maxDis);
+  const halfH = ph / 2;
+  const yLikes = v => mid - (v / maxY) * halfH;
+  const yDis   = v => mid + (v / maxY) * halfH;
+
+  const barW = Math.max(2, pw / total - 2);
+
+  const tick = Math.max(1, Math.ceil(maxY / 2));
+  const grid = [
+    `<line class="grid-line" x1="${pad.l}" y1="${yLikes(tick)}" x2="${pad.l + pw}" y2="${yLikes(tick)}"/>`,
+    `<line class="grid-line" x1="${pad.l}" y1="${yDis(tick)}"   x2="${pad.l + pw}" y2="${yDis(tick)}"/>`,
+    `<text class="release-label" x="${pad.l - 4}" y="${yLikes(tick) + 3}" text-anchor="end">+${tick}</text>`,
+    `<text class="release-label" x="${pad.l - 4}" y="${yDis(tick) + 3}"   text-anchor="end">−${tick}</text>`,
+  ].join('');
+
+  const bars = days.map(d => {
+    const cx = xFor(d.date) - barW / 2;
+    const upH   = (d.likes    / maxY) * halfH;
+    const downH = (d.dislikes / maxY) * halfH;
+    return `
+      <rect class="bar-up"   x="${cx.toFixed(1)}" y="${(mid - upH).toFixed(1)}"  width="${barW.toFixed(1)}" height="${upH.toFixed(1)}"><title>${d.date}: ${d.likes} лайков</title></rect>
+      <rect class="bar-down" x="${cx.toFixed(1)}" y="${mid.toFixed(1)}"          width="${barW.toFixed(1)}" height="${downH.toFixed(1)}"><title>${d.date}: ${d.dislikes} дизлайков</title></rect>
+    `;
+  }).join('');
+
+  const releases = (data.releases || []).map(r => {
+    const cx = xFor(r.date);
+    const cls = r.self_evolved ? 'release self' : 'release';
+    return `
+      <line class="${cls}" x1="${cx.toFixed(1)}" y1="${pad.t}" x2="${cx.toFixed(1)}" y2="${pad.t + ph}"/>
+      <text class="release-label" x="${cx.toFixed(1)}" y="${pad.t - 4}" text-anchor="middle">v${escapeHtml(r.version || '')}${r.self_evolved ? ' ⊙' : ''}</text>
+    `;
+  }).join('');
+
+  root.innerHTML = `
+    <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      ${grid}
+      ${releases}
+      ${bars}
+      <line class="axis" x1="${pad.l}" y1="${mid.toFixed(1)}" x2="${pad.l + pw}" y2="${mid.toFixed(1)}"/>
+      <text class="release-label" x="${pad.l}"      y="${H - 4}" text-anchor="start">${escapeHtml(days[0].date)}</text>
+      <text class="release-label" x="${pad.l + pw}" y="${H - 4}" text-anchor="end">${escapeHtml(days[days.length-1].date)}</text>
+    </svg>
+  `;
+}
+
+// === Evolution log ========================================================
+
+function renderEvolutionLog(items) {
+  const root = document.getElementById('evolution-log');
+  if (!items.length) { root.innerHTML = '<li class="empty">нет коммитов</li>'; return; }
+  root.innerHTML = items.map(c => {
+    const tag = c.self_evolved
+      ? '<span class="commit-tag self">self</span>'
+      : '<span class="commit-tag">human</span>';
+    const ver = c.version ? `v${escapeHtml(c.version)}` : c.hash;
+    const subj = c.version
+      ? c.subject.replace(/^v\d+\.\d+\.\d+:\s*/, '')
+      : c.subject;
+    const href = qHref(Q.release(c.version || c.hash, subj));
+    return `
+      <li>
+        <a href="${href}">
+          <span class="commit-version">${ver}</span>${tag}
+          <span class="commit-subj">${escapeHtml(subj)}</span>
+        </a>
+        <div class="commit-meta">${escapeHtml(c.date)} · ${escapeHtml(c.hash)}</div>
+      </li>
+    `;
+  }).join('');
+}
+
+// === Rejected suggestions =================================================
+
+function renderRejected(items) {
+  const root = document.getElementById('rejected');
+  if (!items.length) {
+    root.classList.add('empty');
+    root.innerHTML = '<li class="empty">за 30 дней Пульс ничего не отверг.</li>';
+    return;
+  }
+  root.classList.remove('empty');
+  root.innerHTML = items.map(r => {
+    const principle = r.principle ? `<div class="principle">${escapeHtml(r.principle)}</div>` : '';
+    const reasoning = r.reasoning ? `<div class="reasoning">${escapeHtml(r.reasoning)}</div>` : '';
+    const txt = r.suggestion ? r.suggestion.slice(0, 200) : '(текст отсутствует)';
+    const href = qHref(Q.rejected(r.id, txt));
+    return `
+      <li>
+        <a href="${href}">
+          <blockquote>${escapeHtml(txt)}</blockquote>
+          ${principle}
+          ${reasoning}
+        </a>
+      </li>
+    `;
+  }).join('');
+}
+
+// === Cost chart ===========================================================
+
+function renderCost(data) {
+  const root = document.getElementById('cost-chart');
+  if (!data.days.length) { root.innerHTML = '<div class="empty">за 30 дней нет расходов</div>'; return; }
+
+  const W = 360, H = 180, pad = { l: 36, r: 8, t: 14, b: 20 };
+  const pw = W - pad.l - pad.r, ph = H - pad.t - pad.b;
+
+  const startDate = new Date(data.days[0].date + 'T00:00:00Z');
+  const endDate   = new Date(data.days[data.days.length-1].date + 'T00:00:00Z');
+  const dayMs = 86400000;
+  const total = Math.max(1, Math.round((endDate - startDate) / dayMs)) + 1;
+  const xFor = (date) => {
+    const d = new Date(date + 'T00:00:00Z');
+    const idx = Math.round((d - startDate) / dayMs);
+    return pad.l + (total === 1 ? pw / 2 : (idx / (total - 1)) * pw);
+  };
+
+  const stacked = data.days.map(d => ({
+    date: d.date,
+    sonnet: d.sonnet || 0,
+    opus: (d.sonnet || 0) + (d.opus || 0),
+  }));
+  const maxY = Math.max(0.01, ...stacked.map(s => s.opus));
+  const yScale = v => pad.t + ph - (v / maxY) * ph;
+
+  const path = (key) => {
+    let pts = stacked.map(s => `${xFor(s.date).toFixed(1)},${yScale(s[key]).toFixed(1)}`);
+    return pts;
+  };
+  const opusPath = path('opus');
+  const sonnetPath = path('sonnet');
+  const baselineY = (pad.t + ph).toFixed(1);
+
+  // Stacked area: opus polygon goes 0 → opus, sonnet polygon goes 0 → sonnet (front).
+  const areaOpus = `M${pad.l},${baselineY} L${opusPath.join(' L')} L${pad.l + pw},${baselineY} Z`;
+  const areaSonnet = `M${pad.l},${baselineY} L${sonnetPath.join(' L')} L${pad.l + pw},${baselineY} Z`;
+
+  const ticks = [0, maxY / 2, maxY];
+  const grid = ticks.map(t =>
+    `<line class="grid-line" x1="${pad.l}" y1="${yScale(t)}" x2="${pad.l + pw}" y2="${yScale(t)}"/>` +
+    `<text class="release-label" x="${pad.l - 4}" y="${yScale(t) + 3}" text-anchor="end">$${t.toFixed(2)}</text>`
+  ).join('');
+
+  root.innerHTML = `
+    <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      ${grid}
+      <path class="area-opus"   d="${areaOpus}"/>
+      <path class="area-sonnet" d="${areaSonnet}"/>
+      <line class="axis" x1="${pad.l}" y1="${pad.t + ph}" x2="${pad.l + pw}" y2="${pad.t + ph}"/>
+      <text class="release-label" x="${pad.l}"      y="${H - 4}" text-anchor="start">${escapeHtml(data.days[0].date)}</text>
+      <text class="release-label" x="${pad.l + pw}" y="${H - 4}" text-anchor="end">${escapeHtml(data.days[data.days.length-1].date)}</text>
+    </svg>
+    <div class="legend">
+      <div><span class="swatch" style="background:var(--ed-oxblood);opacity:0.55"></span>Opus</div>
+      <div><span class="swatch" style="background:var(--ed-ink-soft);opacity:0.45"></span>Sonnet</div>
+    </div>
+  `;
+
+  document.getElementById('cost-runrate').innerHTML =
+    `прогноз 30 дней: <strong>$${data.run_rate_usd_30d.toFixed(2)}</strong><br>` +
+    `<span style="font-style:normal;font-family:var(--ed-mono);font-size:0.78rem;letter-spacing:0.04em;color:var(--ed-ink-soft)">` +
+    `Opus $${data.by_model_usd.opus.toFixed(2)} · Sonnet $${data.by_model_usd.sonnet.toFixed(2)} · всего $${data.total_window_usd.toFixed(2)} за окно` +
+    `</span>`;
+}
+
+// === Boot =================================================================
+
+(async function init() {
+  try {
+    const h = await getJson('/health');
+    document.getElementById('version').textContent = 'v' + h.version;
+  } catch (_) {}
+
+  const [kpi, heat, atRisk, arch, trust, evo, rej, cost] = await Promise.all([
+    getJson('/api/dashboard/kpi?window=30').catch(e => ({error: e.message})),
+    getJson('/api/dashboard/heatmap?window=30').catch(e => ({error: e.message})),
+    getJson('/api/dashboard/at_risk?window=30&n=7').catch(e => ({items: []})),
+    getJson('/api/dashboard/archetypes?window=30').catch(e => ({points: [], archetypes: []})),
+    getJson('/api/dashboard/trust_timeline?window=30').catch(e => ({days: [], releases: []})),
+    getJson('/api/dashboard/evolution_log?n=10').catch(e => ({items: []})),
+    getJson('/api/dashboard/rejected?n=5').catch(e => ({items: []})),
+    getJson('/api/dashboard/cost?window=30').catch(e => ({days: [], total_window_usd: 0, run_rate_usd_30d: 0, by_model_usd: {opus:0,sonnet:0}})),
+  ]);
+
+  if (!kpi.error)  renderKpi(kpi);
+  if (!heat.error) renderHeatmap(heat);
+  renderAtRisk(atRisk.items || []);
+  renderScatter(arch);
+  renderTrustTimeline(trust);
+  renderEvolutionLog(evo.items || []);
+  renderRejected(rej.items || []);
+  renderCost(cost);
+})();
+</script>
+</body>
+</html>

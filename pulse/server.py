@@ -2,6 +2,7 @@
 
 Endpoints:
   GET  /                         → web UI (static index.html)
+  GET  /dashboard                → CEO dashboard (since v1.7.0)
   GET  /health                   → status JSON
   POST /api/chat                 → chat turn, returns {message_id, answer}
   POST /api/chat/stream          → same turn as SSE (status/tool_call/text/done)
@@ -13,6 +14,7 @@ Endpoints:
   GET  /api/employees/{emp_id}   → debug: full row from `employees`
   GET  /api/evolution            → status (Phase 8 will add POST /api/evolution)
   GET  /api/consciousness        → status (Phase 9)
+  GET  /api/dashboard/*          → CEO dashboard aggregations (since v1.7.0)
 """
 from __future__ import annotations
 
@@ -44,22 +46,43 @@ if WEB_DIR.exists():
     app.mount("/static", StaticFiles(directory=str(WEB_DIR)), name="static")
 
 
+_NOCACHE = {"Cache-Control": "no-cache, no-store, must-revalidate",
+             "Pragma": "no-cache", "Expires": "0"}
+
+
 @app.get("/", response_class=HTMLResponse)
 def index() -> Any:
     idx = WEB_DIR / "index.html"
     # Block browser caching: every release potentially changes the JS that
     # talks to /api/chat/stream. A stale index.html silently breaks features
     # like multi-turn history (we hit this with v0.2.1).
-    headers = {"Cache-Control": "no-cache, no-store, must-revalidate",
-               "Pragma": "no-cache", "Expires": "0"}
     if idx.exists():
-        return FileResponse(str(idx), headers=headers)
+        return FileResponse(str(idx), headers=_NOCACHE)
     return HTMLResponse(
         "<html><body style='font-family:system-ui;padding:2rem'>"
         f"<h1>Пульс {read_version()}</h1>"
         "<p>UI отсутствует. Файл web/index.html не найден.</p>"
         "</body></html>",
-        headers=headers,
+        headers=_NOCACHE,
+    )
+
+
+@app.get("/dashboard", response_class=HTMLResponse)
+def dashboard_page() -> Any:
+    """CEO dashboard (v1.7.0). 30-day window. Editorial morning-brief aesthetic.
+
+    Drill-down links use `/?q=…` — the chat UI on `/` reads the query and
+    pre-fills the input box.
+    """
+    p = WEB_DIR / "dashboard.html"
+    if p.exists():
+        return FileResponse(str(p), headers=_NOCACHE)
+    return HTMLResponse(
+        "<html><body style='font-family:system-ui;padding:2rem'>"
+        f"<h1>Пульс {read_version()}</h1>"
+        "<p>Дашборд отсутствует. Файл web/dashboard.html не найден.</p>"
+        "</body></html>",
+        headers=_NOCACHE,
     )
 
 
@@ -284,6 +307,69 @@ async def api_deep_self_review(req: DeepReviewRequest) -> JSONResponse:
     from .deep_self_review import deep_self_review
     out = await deep_self_review()
     return JSONResponse({"ok": True, "ts": out["ts"]})
+
+
+# ---------------------------------------------------------------------------
+# /api/dashboard/* — CEO dashboard aggregations (v1.7.0)
+# Thin FastAPI wrappers around pulse.dashboard pure functions. Default
+# window=30 days (CEO rhythm). All endpoints are GET, no side effects.
+# ---------------------------------------------------------------------------
+
+def _require_db() -> None:
+    if not PATHS.db.exists():
+        raise HTTPException(503, "DB missing — run `python -m scripts.seed --force` first.")
+
+
+@app.get("/api/dashboard/kpi")
+def api_dashboard_kpi(window: int = 30) -> JSONResponse:
+    _require_db()
+    from .dashboard import get_kpi_strip
+    return JSONResponse(get_kpi_strip(window=window))
+
+
+@app.get("/api/dashboard/heatmap")
+def api_dashboard_heatmap(window: int = 30) -> JSONResponse:
+    _require_db()
+    from .dashboard import get_workforce_heatmap
+    return JSONResponse(get_workforce_heatmap(window=window))
+
+
+@app.get("/api/dashboard/at_risk")
+def api_dashboard_at_risk(window: int = 30, n: int = 7) -> JSONResponse:
+    _require_db()
+    from .dashboard import get_at_risk_top
+    return JSONResponse({"items": get_at_risk_top(n=n, window=window)})
+
+
+@app.get("/api/dashboard/archetypes")
+def api_dashboard_archetypes(window: int = 30) -> JSONResponse:
+    _require_db()
+    from .dashboard import get_archetype_scatter
+    return JSONResponse(get_archetype_scatter(window=window))
+
+
+@app.get("/api/dashboard/trust_timeline")
+def api_dashboard_trust_timeline(window: int = 30) -> JSONResponse:
+    from .dashboard import get_trust_timeline
+    return JSONResponse(get_trust_timeline(window=window))
+
+
+@app.get("/api/dashboard/evolution_log")
+def api_dashboard_evolution_log(n: int = 10) -> JSONResponse:
+    from .dashboard import get_evolution_log
+    return JSONResponse({"items": get_evolution_log(n=n)})
+
+
+@app.get("/api/dashboard/rejected")
+def api_dashboard_rejected(n: int = 5) -> JSONResponse:
+    from .dashboard import get_rejected_suggestions
+    return JSONResponse({"items": get_rejected_suggestions(n=n)})
+
+
+@app.get("/api/dashboard/cost")
+def api_dashboard_cost(window: int = 30) -> JSONResponse:
+    from .dashboard import get_cost_breakdown
+    return JSONResponse(get_cost_breakdown(window=window))
 
 
 @app.on_event("startup")

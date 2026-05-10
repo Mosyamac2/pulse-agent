@@ -1,6 +1,6 @@
 # Пульс — самоэволюционирующий HR‑агент
 
-[![version](https://img.shields.io/badge/version-1.6.0-blue)](VERSION)
+[![version](https://img.shields.io/badge/version-1.7.0-blue)](VERSION)
 
 Пульс — становящийся цифровой ассистент сотрудника крупного банка. Помогает отслеживать «оптимальное боевое состояние»: эффективность, нагрузку, риск выгорания, маршруты роста. Идеологически наследник [Ouroboros](https://github.com/joi-lab/ouroboros-desktop), но без desktop‑овой инфраструктуры и с одним LLM‑бэкендом — Claude Agent SDK через OAuth Max‑подписку.
 
@@ -34,6 +34,8 @@ UI открывается на `http://VM:8080`.
 - `docs/DEVELOPMENT.md` — как разрабатывать.
 
 ## Changelog
+
+- `v1.7.0` — **CEO-дашборд `/dashboard`** в editorial-эстетике v1.6.0 (Fraunces / Newsreader / JetBrains Mono, parchment + ink + oxblood). Hero-полоса из 4 чисел: AT-RISK (≥3/4 признака disengagement по 30-дневному окну), BURNOUT (≥3/4 признака overwork), HOT DEPT (отдел с худшим composite `sentiment − stress`), TRUST (like-rate `feedback.jsonl`). Под hero — три bundle'a: People (тепловая карта units × metrics + at-risk Top-7 + scatter архетипов stress×focus), Trust (diverging timeline лайков/дизлайков с маркерами релизов и self-evolved-флагом, лента коммитов, отвергнутые suggestion'ы), Cost (stacked area Opus/Sonnet + run-rate). Все actionable-элементы — это `/?q=<urlencoded>` ссылки: клик → главный чат с предзаполненным вопросом (CEO дописывает и шлёт). Бэкенд: `pulse/dashboard.py` — чистые агрегации над `data/sber_hr.db`, `data/logs/*.jsonl` и `git log` без нового storage; 8 GET-endpoint'ов в `pulse/server.py` (`/api/dashboard/{kpi,heatmap,at_risk,archetypes,trust_timeline,evolution_log,rejected,cost}`). Окно по умолчанию — 30 дней (CEO-ритм). 12 unit-тестов в `tests/test_dashboard.py`.
 
 - `v1.6.0` — **«Заметка редактору» + конституционный гейт.** В UI добавлен отдельный плавающий виджет (правый верхний угол): `POST /api/feedback/general` принимает свободный текст (4-4000 симв.) и пишет в `data/logs/general_feedback.jsonl`. Перед попаданием в эволюционный цикл каждое предложение проходит **alignment check** — отдельный Opus-вызов `kind="alignment_check"` с промптом `prompts/ALIGNMENT_CHECK.md`, который оценивает совместимость с BIBLE.md + текущим SYSTEM.md + последними 30 строками improvement-backlog + identity/scratchpad. Вердикт: `aligned` → суггестия превращается в синтетический dislike-сигнал и идёт в общий `aggregate_feedback`; `needs_modification`/`rejected` → пишется в `data/memory/knowledge/rejected_suggestions.md` с обоснованием по конкретному принципу. Никаких отказов по «слишком сложно» — только по конституционным конфликтам. Эстетика виджета: «editorial morning brief» (Fraunces + Newsreader + JetBrains Mono, parchment + ink + oxblood). UI остаётся chat-ориентированным, виджет не трогает существующие стили чата.
 
