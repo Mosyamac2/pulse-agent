@@ -4,342 +4,401 @@
   <meta charset="utf-8">
   <title>Пульс — заметка CEO</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <!-- Editorial fonts inherited from v1.6.0 design tokens. Same family
-       set as index.html so the pages feel like sister pages of one paper. -->
+  <!-- Pulse-HCM design system (v1.8.0):
+       primary corporate blue #0066ff, purple-to-blue signature gradient,
+       SB Sans Text / SB Sans Display preferred (installed on Sber dev hosts);
+       Onest is the public fallback we load from Google Fonts so everyone else
+       sees the same humanist-grotesque feel. JetBrains Mono retained for
+       tabular numerals and identifiers only. -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..900;1,9..144,400..700&family=Newsreader:ital,opsz,wght@0,6..72,300..700;1,6..72,300..600&family=JetBrains+Mono:wght@400;500&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
   <style>
     :root {
       color-scheme: light dark;
-      --ed-paper:      #f7f4ec;
-      --ed-paper-dim:  #ede9dc;
-      --ed-paper-edge: #e3dec9;
-      --ed-ink:        #1a1816;
-      --ed-ink-soft:   #4a463f;
-      --ed-rule:       #c9c2ad;
-      --ed-rule-soft:  #d8d3bf;
-      --ed-oxblood:    #7a1c1c;
-      --ed-oxblood-fade: #a04545;
-      --ed-mark:       #f2e4a8;
-      --ed-good:       #2f5d3c; /* dark forest, not bright green */
 
-      --ed-display: 'Fraunces', 'Hoefler Text', 'Iowan Old Style', Georgia, serif;
-      --ed-body:    'Newsreader', 'Georgia', 'Iowan Old Style', serif;
-      --ed-mono:    'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+      /* ─── Pulse-HCM palette ─────────────────────────────────────── */
+      --p-bg:           #ffffff;
+      --p-surface:      #f7f8fa;
+      --p-tint:         #f0f6ff;
+      --p-tint-2:       #ecf3ff;
+      --p-tint-3:       #d0e3ff;
+      --p-border:       #e3e7ec;
+      --p-border-soft:  #ecf0f4;
+      --p-fg:           #252525;
+      --p-fg-muted:     #5c5c5c;
+      --p-fg-soft:      #939393;
+      --p-fg-faint:     #b3b5b7;
+      --p-accent:       #0066ff;
+      --p-accent-deep:  #0044bb;
+      --p-accent-soft:  #1a75ff;
+      --p-purple:       #a729ff;
+      --p-good:         #2a8a3f;
+      --p-bad:          #c92140;
+
+      --p-grad-hero:    linear-gradient(140deg, #a729ff 0%, #0763ff 42%, #0066ff 100%);
+      --p-grad-soft:    linear-gradient(180deg, #5297ff 0%, #0066ff 100%);
+
+      /* ─── Typography ────────────────────────────────────────────── */
+      --p-font-display: 'SB Sans Display', 'Onest', system-ui, -apple-system, sans-serif;
+      --p-font-body:    'SB Sans Text', 'Onest', system-ui, -apple-system, sans-serif;
+      --p-font-mono:    'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+      /* ─── Radii & shadows (mirror Pulse-HCM scale) ─────────────── */
+      --p-r-xs: 4px;
+      --p-r-sm: 8px;
+      --p-r:    12px;
+      --p-r-lg: 20px;
+      --p-r-xl: 32px;
+      --p-r-asym: 12px 2px 12px 12px;
+
+      --p-shadow-sm: 0 1px 0 rgba(0,0,0,0.04);
+      --p-shadow:    0 2px 10px rgba(0,0,0,0.07);
+      --p-shadow-lg: 0 8px 24px rgba(0,0,0,0.10);
     }
     @media (prefers-color-scheme: dark) {
       :root {
-        --ed-paper:      #16140f;
-        --ed-paper-dim:  #1f1d18;
-        --ed-paper-edge: #2a261e;
-        --ed-ink:        #e8e3d3;
-        --ed-ink-soft:   #aaa39a;
-        --ed-rule:       #3a342a;
-        --ed-rule-soft:  #2c2820;
-        --ed-oxblood:    #d4685e;
-        --ed-oxblood-fade: #b06c4f;
-        --ed-mark:       #5a4d1a;
-        --ed-good:       #7eaa84;
+        --p-bg:           #0e1117;
+        --p-surface:      #161a22;
+        --p-tint:         #131c2e;
+        --p-tint-2:       #0f1827;
+        --p-tint-3:       #1b2738;
+        --p-border:       #232a36;
+        --p-border-soft:  #1c222c;
+        --p-fg:           #e8edf5;
+        --p-fg-muted:     #98a2b3;
+        --p-fg-soft:      #6b758a;
+        --p-fg-faint:     #515b6e;
+        --p-accent:       #3385ff;
+        --p-accent-deep:  #5297ff;
+        --p-accent-soft:  #1a75ff;
+        --p-purple:       #c46bff;
+        --p-good:         #59c172;
+        --p-bad:          #ff5772;
+        --p-shadow:       0 2px 10px rgba(0,0,0,0.45);
+        --p-shadow-lg:    0 8px 24px rgba(0,0,0,0.55);
       }
     }
+
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      font-family: var(--ed-body);
-      background: var(--ed-paper);
-      color: var(--ed-ink);
-      font-feature-settings: "kern", "liga", "onum";
-      line-height: 1.55;
-      position: relative;
+      font-family: var(--p-font-body);
+      background: var(--p-surface);
+      color: var(--p-fg);
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+      line-height: 1.5;
     }
-    /* Paper grain — extremely subtle SVG noise on top of parchment.
-       Sits over the body and below all content (z-index:-1 on the
-       pseudo-element wouldn't catch on the painter's algorithm in
-       Safari, so we use mix-blend-multiply with pointer-events:none). */
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: 0;
-      opacity: 0.32;
-      mix-blend-mode: multiply;
-      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.10  0 0 0 0 0.09  0 0 0 0 0.07  0 0 0 0.07 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
-    }
-    @media (prefers-color-scheme: dark) {
-      body::before { opacity: 0.18; mix-blend-mode: screen; }
-    }
-    main, .masthead, .colophon { position: relative; z-index: 1; }
     a { color: inherit; text-decoration: none; }
-    .num { font-feature-settings: "tnum", "lnum"; font-variant-numeric: tabular-nums lining-nums; }
+    .num {
+      font-feature-settings: "tnum", "lnum";
+      font-variant-numeric: tabular-nums lining-nums;
+    }
 
-    /* === Masthead — newspaper nameplate ============================== */
-    .masthead {
-      max-width: 1180px;
+    /* ─── App header ────────────────────────────────────────────── */
+    .app-header {
+      background: var(--p-bg);
+      border-bottom: 1px solid var(--p-border-soft);
+      position: sticky; top: 0; z-index: 10;
+      backdrop-filter: saturate(140%) blur(8px);
+      -webkit-backdrop-filter: saturate(140%) blur(8px);
+    }
+    .app-header .inner {
+      max-width: 1200px;
       margin: 0 auto;
-      padding: 2.4rem 1.6rem 1.2rem;
-      border-bottom: 3px double var(--ed-rule);
-      display: grid;
-      grid-template-columns: 1fr auto 1fr;
-      align-items: end;
-      gap: 1rem;
+      padding: 0.9rem 1.4rem;
+      display: flex;
+      align-items: center;
+      gap: 1.4rem;
     }
-    .masthead .left {
-      font-family: var(--ed-mono);
-      font-size: 0.74rem;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: var(--ed-ink-soft);
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-family: var(--p-font-display);
+      font-weight: 700;
+      font-size: 1.15rem;
+      letter-spacing: -0.015em;
+      color: var(--p-fg);
     }
-    .masthead .center {
-      font-family: var(--ed-display);
-      font-weight: 800;
-      font-size: clamp(2.2rem, 5.4vw, 4.4rem);
-      letter-spacing: -0.04em;
-      line-height: 0.95;
-      text-align: center;
-      /* Fraunces optical-size & soft contrast at large display sizes */
-      font-variation-settings: "opsz" 144, "SOFT" 30;
+    .brand .dot {
+      width: 0.65rem; height: 0.65rem;
+      border-radius: 50%;
+      background: var(--p-grad-hero);
+      box-shadow: 0 0 0 3px rgba(167, 41, 255, 0.12);
     }
-    .masthead .center small {
-      display: block;
-      font-family: var(--ed-display);
-      font-style: italic;
-      font-weight: 400;
-      font-size: 0.28em;
-      letter-spacing: 0.02em;
-      color: var(--ed-ink-soft);
-      margin-top: 0.55rem;
-      font-variation-settings: "opsz" 28, "SOFT" 100;
+    .brand small {
+      font-family: var(--p-font-body);
+      font-weight: 500;
+      font-size: 0.78rem;
+      color: var(--p-fg-muted);
+      margin-left: 0.4rem;
     }
-    .masthead .right {
-      text-align: right;
-      font-family: var(--ed-mono);
-      font-size: 0.74rem;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-      color: var(--ed-ink-soft);
+    .nav { margin-left: auto; display: flex; align-items: center; gap: 1.4rem; }
+    .nav a {
+      font-family: var(--p-font-body);
+      font-weight: 500;
+      font-size: 0.92rem;
+      color: var(--p-fg-muted);
+      transition: color 0.15s ease;
     }
-    .masthead .nav-link {
-      color: var(--ed-oxblood);
-      border-bottom: 1px dotted var(--ed-oxblood-fade);
-      padding-bottom: 1px;
-      font-family: var(--ed-display);
-      font-style: italic;
-      font-size: 0.95rem;
-      letter-spacing: 0.01em;
-      text-transform: none;
+    .nav a:hover { color: var(--p-accent); }
+    .nav .badge {
+      font-family: var(--p-font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.04em;
+      color: var(--p-fg-soft);
+      padding: 0.2rem 0.55rem;
+      border: 1px solid var(--p-border);
+      border-radius: 999px;
     }
-    .masthead .nav-link:hover { border-bottom-style: solid; }
 
     main {
-      max-width: 1180px;
+      max-width: 1200px;
       margin: 0 auto;
-      padding: 1.6rem 1.6rem 6rem;
+      padding: 1.6rem 1.4rem 6rem;
     }
 
-    /* === Section labels — newspaper section dividers ================= */
-    .section-label {
-      font-family: var(--ed-display);
-      font-style: italic;
-      font-weight: 500;
-      font-size: 1.15rem;
-      letter-spacing: 0.04em;
-      color: var(--ed-ink);
-      text-transform: lowercase;
-      margin: 3rem 0 1rem;
+    /* ─── Hero strip — gradient banner above KPI ────────────────── */
+    .hero {
+      background: var(--p-grad-hero);
+      color: #fff;
+      border-radius: var(--p-r-lg);
+      padding: 1.4rem 1.6rem 1.5rem;
+      margin: 0.4rem 0 1.4rem;
       display: grid;
-      grid-template-columns: auto 1fr auto auto;
-      align-items: baseline;
-      gap: 0.9rem;
-      font-variation-settings: "opsz" 28, "SOFT" 50;
+      grid-template-columns: 1fr auto;
+      align-items: end;
+      gap: 1rem;
+      box-shadow: var(--p-shadow);
+      position: relative;
+      overflow: hidden;
     }
-    .section-label .rule {
-      border-top: 1px solid var(--ed-rule);
-      border-bottom: 1px solid var(--ed-rule);
-      height: 4px;
+    .hero::after {
+      /* soft texture circle to match Pulse-HCM marketing hero */
+      content: '';
+      position: absolute;
+      right: -120px; top: -120px;
+      width: 320px; height: 320px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.18), transparent 60%);
+      pointer-events: none;
     }
-    .section-label .roman {
-      font-family: var(--ed-display);
-      font-style: normal;
-      font-weight: 600;
-      font-size: 0.95rem;
-      letter-spacing: 0.18em;
-      color: var(--ed-oxblood);
+    .hero h1 {
+      font-family: var(--p-font-display);
+      font-weight: 700;
+      font-size: clamp(1.6rem, 3vw, 2.2rem);
+      letter-spacing: -0.02em;
+      margin: 0 0 0.35rem;
+      line-height: 1.1;
     }
-    .section-label .key {
-      font-family: var(--ed-mono);
-      font-style: normal;
-      font-size: 0.66rem;
-      letter-spacing: 0.22em;
+    .hero p {
+      margin: 0;
+      font-size: 1.02rem;
+      line-height: 1.55;
+      color: rgba(255,255,255,0.92);
+      max-width: 64ch;
+      font-weight: 400;
+    }
+    .hero .meta {
+      font-family: var(--p-font-mono);
+      font-size: 0.74rem;
+      letter-spacing: 0.06em;
       text-transform: uppercase;
-      color: var(--ed-ink-soft);
+      color: rgba(255,255,255,0.78);
+      text-align: right;
+      white-space: nowrap;
+    }
+    .hero .meta strong {
+      display: block;
+      font-family: var(--p-font-display);
+      font-weight: 600;
+      font-size: 1.1rem;
+      letter-spacing: 0.02em;
+      color: #fff;
+      margin-top: 0.25rem;
+      text-transform: none;
     }
 
-    /* === KPI strip ==================================================== */
+    /* ─── KPI strip ────────────────────────────────────────────── */
     .kpi-strip {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      border-top: 1px solid var(--ed-rule);
-      border-bottom: 1px solid var(--ed-rule);
-      margin-top: 1.4rem;
+      gap: 1rem;
     }
     .kpi {
-      padding: 1.4rem 1.2rem 1.5rem;
-      border-right: 1px solid var(--ed-rule-soft);
-      position: relative;
+      background: var(--p-bg);
+      border: 1px solid var(--p-border-soft);
+      border-radius: var(--p-r);
+      padding: 1.1rem 1.2rem 1.2rem;
+      box-shadow: var(--p-shadow-sm);
+      transition: box-shadow 0.18s ease, transform 0.18s ease;
     }
-    .kpi:last-child { border-right: none; }
+    .kpi:hover {
+      box-shadow: var(--p-shadow);
+      transform: translateY(-1px);
+    }
     .kpi .label {
-      font-family: var(--ed-mono);
-      font-size: 0.7rem;
-      letter-spacing: 0.22em;
+      font-family: var(--p-font-mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.16em;
       text-transform: uppercase;
-      color: var(--ed-ink-soft);
-      margin-bottom: 0.4rem;
+      color: var(--p-fg-soft);
+      margin-bottom: 0.6rem;
     }
     .kpi .number {
-      font-family: var(--ed-display);
-      font-weight: 600;
-      font-size: clamp(2.6rem, 5.4vw, 4rem);
+      font-family: var(--p-font-display);
+      font-weight: 700;
+      font-size: clamp(2.4rem, 4.6vw, 3.2rem);
       line-height: 1;
       letter-spacing: -0.025em;
-      color: var(--ed-ink);
-      font-variation-settings: "opsz" 144, "SOFT" 30;
+      color: var(--p-fg);
       font-variant-numeric: tabular-nums lining-nums;
     }
     .kpi .number.text {
-      font-size: clamp(1.4rem, 2.7vw, 1.95rem);
-      font-style: italic;
-      font-weight: 500;
-      letter-spacing: -0.005em;
-      font-variation-settings: "opsz" 36, "SOFT" 80;
+      font-size: clamp(1.3rem, 2.6vw, 1.7rem);
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: var(--p-accent);
     }
     .kpi .delta {
       display: inline-block;
       margin-top: 0.6rem;
-      font-family: var(--ed-mono);
-      font-size: 0.78rem;
-      letter-spacing: 0.04em;
+      font-family: var(--p-font-body);
+      font-weight: 500;
+      font-size: 0.84rem;
+      padding: 0.18rem 0.55rem;
+      border-radius: 999px;
+      background: var(--p-tint-2);
+      color: var(--p-fg-muted);
     }
-    .kpi .delta.bad  { color: var(--ed-oxblood); }
-    .kpi .delta.good { color: var(--ed-good); }
-    .kpi .delta.flat { color: var(--ed-ink-soft); }
+    .kpi .delta.bad  { background: #fde7eb; color: var(--p-bad); }
+    .kpi .delta.good { background: #e3f3e7; color: var(--p-good); }
+    @media (prefers-color-scheme: dark) {
+      .kpi .delta.bad  { background: rgba(255,87,114,0.14); }
+      .kpi .delta.good { background: rgba(89,193,114,0.14); }
+    }
     .kpi .footnote {
-      margin-top: 0.4rem;
-      font-family: var(--ed-body);
-      font-style: italic;
-      font-size: 0.85rem;
-      color: var(--ed-ink-soft);
-      line-height: 1.35;
+      margin-top: 0.5rem;
+      font-size: 0.84rem;
+      line-height: 1.45;
+      color: var(--p-fg-muted);
     }
     .kpi .footnote a {
-      border-bottom: 1px dotted var(--ed-oxblood-fade);
-      color: var(--ed-oxblood);
+      color: var(--p-accent);
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.15s ease;
     }
-    .kpi .footnote a:hover { border-bottom-style: solid; }
+    .kpi .footnote a:hover { border-bottom-color: var(--p-accent); }
 
-    /* === Lede — editorial summary right under KPI strip ============ */
-    .lede {
-      margin: 1.6rem 0 0;
-      font-family: var(--ed-body);
-      font-size: 1.12rem;
-      line-height: 1.65;
-      color: var(--ed-ink);
-      padding: 0 0.2rem;
-      max-width: 62ch;
-    }
-    .lede .dropcap {
-      float: left;
-      font-family: var(--ed-display);
-      font-style: italic;
+    /* ─── Section labels — clean, minimal ──────────────────────── */
+    .section-label {
+      display: flex;
+      align-items: baseline;
+      gap: 0.7rem;
+      margin: 2.4rem 0 0.9rem;
+      font-family: var(--p-font-display);
       font-weight: 700;
-      font-size: 4.1rem;
-      line-height: 0.78;
-      padding: 0.45rem 0.55rem 0 0;
-      color: var(--ed-oxblood);
-      font-variation-settings: "opsz" 144, "SOFT" 100;
+      font-size: 1.35rem;
+      letter-spacing: -0.015em;
+      color: var(--p-fg);
+    }
+    .section-label .key {
+      font-family: var(--p-font-mono);
+      font-weight: 400;
+      font-size: 0.68rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--p-fg-soft);
+      padding: 0.18rem 0.55rem;
+      border: 1px solid var(--p-border);
+      border-radius: 999px;
+    }
+    .section-label .num {
+      font-family: var(--p-font-mono);
+      font-weight: 500;
+      font-size: 0.85rem;
+      letter-spacing: 0.04em;
+      color: var(--p-accent);
     }
 
-    /* === Module bundles =============================================== */
+    /* ─── Grids ─────────────────────────────────────────────────── */
     .grid-3 {
       display: grid;
-      grid-template-columns: 1.2fr 1fr 1fr;
-      gap: 1.4rem;
+      grid-template-columns: 1.25fr 1fr 1fr;
+      gap: 1rem;
     }
     .grid-2 {
       display: grid;
       grid-template-columns: 1.5fr 1fr;
-      gap: 1.4rem;
+      gap: 1rem;
     }
-    @media (max-width: 900px) {
+    @media (max-width: 960px) {
       .grid-3, .grid-2 { grid-template-columns: 1fr; }
-      .kpi-strip { grid-template-columns: repeat(2, 1fr); }
-      .kpi { border-right: 1px solid var(--ed-rule-soft); border-bottom: 1px solid var(--ed-rule-soft); }
-      .kpi:nth-child(2n) { border-right: none; }
-      .kpi:nth-last-child(-n+2) { border-bottom: none; }
+      .kpi-strip       { grid-template-columns: repeat(2, 1fr); }
     }
 
+    /* ─── Cards ─────────────────────────────────────────────────── */
     .card {
-      border: 1px solid var(--ed-rule-soft);
-      background: var(--ed-paper);
-      padding: 1.1rem 1.1rem 1.2rem;
+      background: var(--p-bg);
+      border: 1px solid var(--p-border-soft);
+      border-radius: var(--p-r);
+      padding: 1.2rem 1.2rem 1.3rem;
+      box-shadow: var(--p-shadow-sm);
     }
     .card h3 {
-      font-family: var(--ed-display);
+      font-family: var(--p-font-display);
       font-weight: 600;
-      font-size: 1.05rem;
-      margin: 0 0 0.55rem;
-      letter-spacing: -0.01em;
+      font-size: 1.02rem;
+      letter-spacing: -0.005em;
+      margin: 0 0 0.35rem;
+      color: var(--p-fg);
     }
     .card .card-sub {
-      font-family: var(--ed-body);
-      font-style: italic;
       font-size: 0.86rem;
-      color: var(--ed-ink-soft);
-      margin: -0.25rem 0 0.9rem;
+      color: var(--p-fg-muted);
+      margin: 0 0 0.95rem;
+      line-height: 1.45;
     }
 
-    /* === Heatmap (table) ============================================= */
+    /* ─── Heatmap (clean blue scale) ────────────────────────────── */
     table.heatmap {
       width: 100%;
-      border-collapse: collapse;
-      font-family: var(--ed-mono);
-      font-size: 0.78rem;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-family: var(--p-font-body);
+      font-size: 0.84rem;
+      font-variant-numeric: tabular-nums lining-nums;
     }
     table.heatmap th, table.heatmap td {
-      padding: 0.4rem 0.55rem;
+      padding: 0.5rem 0.6rem;
       text-align: center;
-      border: 1px solid var(--ed-rule-soft);
+      border-bottom: 1px solid var(--p-border-soft);
     }
     table.heatmap thead th {
+      font-family: var(--p-font-mono);
       font-weight: 500;
-      font-family: var(--ed-display);
-      font-style: italic;
-      font-size: 0.86rem;
-      letter-spacing: 0;
-      background: var(--ed-paper-dim);
-      text-transform: lowercase;
+      font-size: 0.7rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--p-fg-soft);
+      background: var(--p-surface);
+      border-bottom: 1px solid var(--p-border);
     }
     table.heatmap tbody th {
       text-align: left;
-      font-family: var(--ed-body);
-      font-style: italic;
-      font-weight: 400;
-      font-size: 0.92rem;
+      font-weight: 500;
+      color: var(--p-fg);
       max-width: 14rem;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
-    table.heatmap a, table.heatmap th a { color: inherit; }
-    table.heatmap td.cell {
-      font-variant-numeric: tabular-nums;
-    }
-    table.heatmap td a:hover { text-decoration: underline; }
+    table.heatmap a:hover { color: var(--p-accent); }
+    table.heatmap td.cell { font-family: var(--p-font-mono); font-size: 0.78rem; }
 
-    /* === At-risk list ================================================= */
+    /* ─── At-risk list ──────────────────────────────────────────── */
     ol.at-risk {
       list-style: none;
       padding: 0;
@@ -349,292 +408,292 @@
     ol.at-risk li {
       counter-increment: ar;
       padding: 0.6rem 0;
-      border-bottom: 1px solid var(--ed-rule-soft);
+      border-bottom: 1px solid var(--p-border-soft);
       display: flex;
       align-items: baseline;
-      gap: 0.8rem;
+      gap: 0.7rem;
     }
     ol.at-risk li:last-child { border-bottom: none; }
     ol.at-risk li::before {
       content: counter(ar, decimal-leading-zero);
-      font-family: var(--ed-mono);
-      font-size: 0.72rem;
-      color: var(--ed-ink-soft);
+      font-family: var(--p-font-mono);
+      font-size: 0.74rem;
+      color: var(--p-fg-soft);
       letter-spacing: 0.06em;
       min-width: 1.6rem;
     }
     ol.at-risk .name {
-      font-family: var(--ed-display);
-      font-weight: 500;
-      font-size: 1.0rem;
+      font-weight: 600;
+      font-size: 0.96rem;
       flex: 1;
-      border-bottom: 1px dotted transparent;
+      color: var(--p-fg);
+      transition: color 0.15s ease;
     }
-    ol.at-risk a:hover .name { border-bottom-color: var(--ed-oxblood-fade); }
+    ol.at-risk a:hover .name { color: var(--p-accent); }
     ol.at-risk .role {
-      font-style: italic;
-      font-size: 0.85rem;
-      color: var(--ed-ink-soft);
+      font-size: 0.84rem;
+      color: var(--p-fg-muted);
+      font-weight: 400;
     }
     ol.at-risk .flags {
-      font-family: var(--ed-mono);
-      font-size: 0.7rem;
-      letter-spacing: 0.04em;
-      color: var(--ed-oxblood);
+      font-family: var(--p-font-mono);
+      font-size: 0.66rem;
+      letter-spacing: 0.06em;
+      color: var(--p-bad);
       text-transform: uppercase;
+      padding: 0.18rem 0.5rem;
+      background: #fde7eb;
+      border-radius: 999px;
+    }
+    @media (prefers-color-scheme: dark) {
+      ol.at-risk .flags { background: rgba(255,87,114,0.14); }
     }
 
-    /* === Archetype scatter SVG ======================================= */
-    .scatter-wrap { padding-top: 0.4rem; }
-    .scatter-wrap svg { width: 100%; height: 220px; display: block; }
+    /* ─── Archetype scatter ─────────────────────────────────────── */
+    .scatter-wrap svg { width: 100%; height: 230px; display: block; }
     .scatter-wrap .axis-label {
-      font-family: var(--ed-mono);
+      font-family: var(--p-font-mono);
       font-size: 9px;
-      fill: var(--ed-ink-soft);
+      fill: var(--p-fg-soft);
       letter-spacing: 0.1em;
       text-transform: uppercase;
     }
-    .scatter-wrap .frame { stroke: var(--ed-rule); fill: none; }
-    .scatter-wrap .grid  { stroke: var(--ed-rule-soft); stroke-dasharray: 2 3; }
-    .scatter-wrap circle { stroke: var(--ed-paper); stroke-width: 0.8; opacity: 0.78; }
+    .scatter-wrap .frame { stroke: var(--p-border); fill: none; }
+    .scatter-wrap .grid  { stroke: var(--p-border-soft); stroke-dasharray: 2 3; }
+    .scatter-wrap circle { stroke: var(--p-bg); stroke-width: 1; opacity: 0.85; }
     .scatter-wrap .legend {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 0.15rem 0.6rem;
-      margin-top: 0.6rem;
-      font-family: var(--ed-mono);
-      font-size: 0.66rem;
-      letter-spacing: 0.04em;
-      color: var(--ed-ink-soft);
+      gap: 0.2rem 0.6rem;
+      margin-top: 0.7rem;
+      font-family: var(--p-font-body);
+      font-size: 0.78rem;
+      color: var(--p-fg-muted);
     }
     .scatter-wrap .swatch {
       display: inline-block;
-      width: 0.5rem; height: 0.5rem; border-radius: 50%;
-      margin-right: 0.4rem; vertical-align: middle;
+      width: 0.55rem; height: 0.55rem; border-radius: 50%;
+      margin-right: 0.45rem; vertical-align: middle;
     }
 
-    /* === Trust timeline SVG ========================================== */
+    /* ─── Trust timeline ───────────────────────────────────────── */
     .timeline-wrap svg { width: 100%; height: 200px; display: block; }
-    .timeline-wrap .bar-up   { fill: var(--ed-good); opacity: 0.78; }
-    .timeline-wrap .bar-down { fill: var(--ed-oxblood); opacity: 0.86; }
-    .timeline-wrap .axis     { stroke: var(--ed-rule); }
-    .timeline-wrap .grid-line{ stroke: var(--ed-rule-soft); stroke-dasharray: 2 3; }
+    .timeline-wrap .bar-up   { fill: var(--p-accent); opacity: 0.85; }
+    .timeline-wrap .bar-down { fill: var(--p-bad); opacity: 0.78; }
+    .timeline-wrap .axis     { stroke: var(--p-border); }
+    .timeline-wrap .grid-line{ stroke: var(--p-border-soft); stroke-dasharray: 2 3; }
     .timeline-wrap .release  {
-      stroke: var(--ed-ink-soft); stroke-width: 1; stroke-dasharray: 3 3;
+      stroke: var(--p-fg-soft); stroke-width: 1; stroke-dasharray: 3 3;
     }
-    .timeline-wrap .release.self { stroke: var(--ed-oxblood); }
+    .timeline-wrap .release.self { stroke: var(--p-purple); }
     .timeline-wrap .release-label {
-      font-family: var(--ed-mono);
+      font-family: var(--p-font-mono);
       font-size: 9px;
       letter-spacing: 0.04em;
-      fill: var(--ed-ink-soft);
+      fill: var(--p-fg-soft);
     }
-    .timeline-wrap .release.self + .release-label { fill: var(--ed-oxblood); }
 
-    /* === Evolution log =============================================== */
-    ul.evolution-log {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
+    /* ─── Evolution log ─────────────────────────────────────────── */
+    ul.evolution-log { list-style: none; padding: 0; margin: 0; }
     ul.evolution-log li {
       padding: 0.55rem 0;
-      border-bottom: 1px solid var(--ed-rule-soft);
+      border-bottom: 1px solid var(--p-border-soft);
     }
     ul.evolution-log li:last-child { border-bottom: none; }
     ul.evolution-log .commit-version {
-      font-family: var(--ed-display);
+      font-family: var(--p-font-display);
       font-weight: 600;
       font-size: 0.95rem;
-      letter-spacing: -0.01em;
+      color: var(--p-fg);
     }
     ul.evolution-log .commit-tag {
       display: inline-block;
-      font-family: var(--ed-mono);
+      font-family: var(--p-font-mono);
       font-size: 0.62rem;
       letter-spacing: 0.12em;
       text-transform: uppercase;
-      padding: 0.05rem 0.4rem;
-      border: 1px solid var(--ed-rule);
-      border-radius: 2px;
-      margin-left: 0.4rem;
-      color: var(--ed-ink-soft);
+      padding: 0.12rem 0.5rem;
+      border-radius: 999px;
+      margin-left: 0.45rem;
+      color: var(--p-fg-soft);
+      background: var(--p-tint-2);
+      border: 1px solid var(--p-border-soft);
     }
     ul.evolution-log .commit-tag.self {
-      color: var(--ed-oxblood);
-      border-color: var(--ed-oxblood-fade);
+      color: #fff;
+      background: var(--p-grad-hero);
+      border-color: transparent;
     }
     ul.evolution-log .commit-subj {
       display: block;
-      font-family: var(--ed-body);
-      font-size: 0.92rem;
-      color: var(--ed-ink-soft);
-      margin-top: 0.15rem;
+      font-size: 0.9rem;
+      color: var(--p-fg-muted);
+      margin-top: 0.18rem;
+      line-height: 1.45;
     }
     ul.evolution-log .commit-meta {
-      font-family: var(--ed-mono);
+      font-family: var(--p-font-mono);
       font-size: 0.7rem;
-      color: var(--ed-ink-soft);
-      letter-spacing: 0.06em;
-      margin-top: 0.15rem;
+      color: var(--p-fg-soft);
+      letter-spacing: 0.04em;
+      margin-top: 0.18rem;
     }
 
-    /* === Rejected suggestions ======================================== */
+    /* ─── Rejected suggestions ──────────────────────────────────── */
     ul.rejected { list-style: none; padding: 0; margin: 0; }
     ul.rejected li {
-      padding: 0.6rem 0;
-      border-bottom: 1px solid var(--ed-rule-soft);
+      padding: 0.65rem 0;
+      border-bottom: 1px solid var(--p-border-soft);
     }
     ul.rejected li:last-child { border-bottom: none; }
     ul.rejected blockquote {
       margin: 0;
-      padding-left: 0.75rem;
-      border-left: 2px solid var(--ed-oxblood-fade);
-      font-family: var(--ed-body);
-      font-style: italic;
-      font-size: 0.94rem;
-      color: var(--ed-ink);
+      padding-left: 0.8rem;
+      border-left: 3px solid var(--p-purple);
+      font-size: 0.93rem;
+      color: var(--p-fg);
+      line-height: 1.5;
     }
     ul.rejected .principle {
-      font-family: var(--ed-mono);
-      font-size: 0.68rem;
+      font-family: var(--p-font-mono);
+      font-size: 0.66rem;
       letter-spacing: 0.14em;
       text-transform: uppercase;
-      color: var(--ed-oxblood);
-      margin-top: 0.3rem;
+      color: var(--p-purple);
+      margin-top: 0.35rem;
     }
     ul.rejected .reasoning {
       font-size: 0.84rem;
-      color: var(--ed-ink-soft);
+      color: var(--p-fg-muted);
       margin-top: 0.2rem;
-    }
-    ul.rejected.empty {
-      font-family: var(--ed-body);
-      font-style: italic;
-      color: var(--ed-ink-soft);
+      line-height: 1.45;
     }
 
-    /* === Cost area chart ============================================== */
-    .cost-wrap svg { width: 100%; height: 180px; display: block; }
-    .cost-wrap .axis     { stroke: var(--ed-rule); }
-    .cost-wrap .grid-line{ stroke: var(--ed-rule-soft); stroke-dasharray: 2 3; }
-    .cost-wrap .area-opus    { fill: var(--ed-oxblood); opacity: 0.55; }
-    .cost-wrap .area-sonnet  { fill: var(--ed-ink-soft); opacity: 0.45; }
+    /* ─── Cost ──────────────────────────────────────────────────── */
+    .cost-wrap svg { width: 100%; height: 200px; display: block; }
+    .cost-wrap .axis     { stroke: var(--p-border); }
+    .cost-wrap .grid-line{ stroke: var(--p-border-soft); stroke-dasharray: 2 3; }
+    .cost-wrap .area-opus    { fill: var(--p-purple); opacity: 0.65; }
+    .cost-wrap .area-sonnet  { fill: var(--p-accent); opacity: 0.55; }
     .cost-wrap .legend {
-      font-family: var(--ed-mono);
-      font-size: 0.7rem;
-      letter-spacing: 0.06em;
-      color: var(--ed-ink-soft);
-      margin-top: 0.4rem;
-      display: flex; gap: 1rem;
+      font-family: var(--p-font-body);
+      font-size: 0.82rem;
+      color: var(--p-fg-muted);
+      margin-top: 0.6rem;
+      display: flex; gap: 1.2rem;
     }
-    .cost-wrap .swatch { display: inline-block; width: 0.7rem; height: 0.6rem; vertical-align: middle; margin-right: 0.3rem; }
+    .cost-wrap .swatch { display: inline-block; width: 0.7rem; height: 0.7rem; vertical-align: middle; margin-right: 0.4rem; border-radius: 2px; }
     .cost-runrate {
-      font-family: var(--ed-display);
-      font-style: italic;
-      font-size: 1.1rem;
-      color: var(--ed-ink);
+      font-family: var(--p-font-display);
+      font-size: 1.05rem;
+      color: var(--p-fg-muted);
       margin-top: 0.6rem;
       text-align: right;
     }
     .cost-runrate strong {
-      font-style: normal;
-      font-weight: 600;
-      font-size: 1.4rem;
-      color: var(--ed-oxblood);
+      font-weight: 700;
+      font-size: 1.6rem;
+      letter-spacing: -0.015em;
+      color: var(--p-accent);
+      font-feature-settings: "tnum", "lnum";
     }
 
-    /* === Empty state =================================================== */
+    /* ─── Empty state ──────────────────────────────────────────── */
     .empty {
-      font-family: var(--ed-body);
       font-style: italic;
-      color: var(--ed-ink-soft);
+      color: var(--p-fg-soft);
       padding: 0.4rem 0;
+      font-size: 0.92rem;
     }
 
     .colophon {
-      max-width: 1180px;
+      max-width: 1200px;
       margin: 3rem auto 0;
-      padding: 1rem 1.6rem 2rem;
-      border-top: 1px solid var(--ed-rule-soft);
-      font-family: var(--ed-mono);
-      font-size: 0.7rem;
-      letter-spacing: 0.06em;
-      color: var(--ed-ink-soft);
+      padding: 1.4rem 1.4rem 2rem;
+      border-top: 1px solid var(--p-border-soft);
+      font-family: var(--p-font-mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.04em;
+      color: var(--p-fg-soft);
       text-align: center;
-      text-transform: uppercase;
     }
   </style>
 </head>
 <body>
-  <header class="masthead">
-    <div class="left">
-      <div id="today">—</div>
-      <div>30-дневное окно</div>
-    </div>
-    <div class="center">
-      Пульс
-      <small>Заметка CEO · ежедневная сводка</small>
-    </div>
-    <div class="right">
-      <div><span id="version">—</span></div>
-      <div><a class="nav-link" href="/">← в чат</a></div>
+
+  <header class="app-header">
+    <div class="inner">
+      <div class="brand">
+        <span class="dot"></span>
+        Пульс <small>заметка CEO</small>
+      </div>
+      <nav class="nav">
+        <a href="/">→ Чат</a>
+        <a href="/health" target="_blank">/health</a>
+        <span class="badge" id="version">—</span>
+      </nav>
     </div>
   </header>
 
   <main>
 
-    <!-- ============= KPI STRIP — above the fold ===================== -->
+    <!-- ============= HERO ============================================== -->
+    <section class="hero">
+      <div>
+        <h1>Доброе утро, Алексей.</h1>
+        <p id="lede">Загружаем сводку…</p>
+      </div>
+      <div class="meta">
+        окно 30 дней<br>
+        <strong id="today">—</strong>
+      </div>
+    </section>
+
+    <!-- ============= KPI STRIP ========================================= -->
     <section class="kpi-strip" id="kpi-strip">
       <div class="kpi" data-kpi="at_risk">
         <div class="label">At-risk</div>
-        <div class="number" data-bind="value">—</div>
-        <div class="delta flat" data-bind="delta">…</div>
+        <div class="number num" data-bind="value">—</div>
+        <div class="delta" data-bind="delta">…</div>
         <div class="footnote" data-bind="footnote">…</div>
       </div>
       <div class="kpi" data-kpi="burnout">
         <div class="label">Burnout</div>
-        <div class="number" data-bind="value">—</div>
-        <div class="delta flat" data-bind="delta">…</div>
+        <div class="number num" data-bind="value">—</div>
+        <div class="delta" data-bind="delta">…</div>
         <div class="footnote" data-bind="footnote">…</div>
       </div>
       <div class="kpi" data-kpi="hot_dept">
         <div class="label">Hot dept.</div>
         <div class="number text" data-bind="value">—</div>
-        <div class="delta flat" data-bind="delta">…</div>
+        <div class="delta" data-bind="delta">…</div>
         <div class="footnote" data-bind="footnote">…</div>
       </div>
       <div class="kpi" data-kpi="trust">
         <div class="label">Trust</div>
-        <div class="number" data-bind="value">—</div>
-        <div class="delta flat" data-bind="delta">…</div>
+        <div class="number num" data-bind="value">—</div>
+        <div class="delta" data-bind="delta">…</div>
         <div class="footnote" data-bind="footnote">…</div>
       </div>
     </section>
 
-    <!-- Editorial lede — rendered from KPIs after fetch -->
-    <p class="lede" id="lede">
-      <span class="dropcap">З</span>агружаем сводку…
-    </p>
-
-    <!-- ============= PEOPLE bundle ==================================== -->
-    <div class="section-label">
-      <span class="roman">I.</span>
-      <span class="rule"></span>
-      <span>люди</span>
+    <!-- ============= I. PEOPLE ========================================= -->
+    <h2 class="section-label">
+      <span class="num">01</span>
+      Люди
       <span class="key">people</span>
-    </div>
+    </h2>
 
     <div class="grid-3">
       <div class="card">
         <h3>Тепловая карта подразделений</h3>
-        <div class="card-sub">Среднее значение метрики за 30 дней относительно компании</div>
+        <div class="card-sub">Среднее значение за 30 дней относительно компании.</div>
         <div id="heatmap"><div class="empty">…</div></div>
       </div>
 
       <div class="card">
         <h3>В красной зоне</h3>
-        <div class="card-sub">Сотрудники с тремя или четырьмя признаками риска</div>
+        <div class="card-sub">Сотрудники с тремя или четырьмя признаками риска.</div>
         <ol class="at-risk" id="at-risk"><li class="empty">…</li></ol>
       </div>
 
@@ -645,41 +704,39 @@
       </div>
     </div>
 
-    <!-- ============= TRUST bundle ===================================== -->
-    <div class="section-label">
-      <span class="roman">II.</span>
-      <span class="rule"></span>
-      <span>доверие к боту</span>
+    <!-- ============= II. TRUST ========================================= -->
+    <h2 class="section-label">
+      <span class="num">02</span>
+      Доверие к боту
       <span class="key">trust</span>
-    </div>
+    </h2>
 
     <div class="grid-3">
       <div class="card">
         <h3>Динамика лайков</h3>
-        <div class="card-sub">Зелёные столбцы — лайки, красные — дизлайки. Пунктир — релизы.</div>
+        <div class="card-sub">Синий — лайки, красный — дизлайки. Пунктир — релизы (фиолетовый = self).</div>
         <div class="timeline-wrap" id="trust-timeline"><div class="empty">…</div></div>
       </div>
 
       <div class="card">
         <h3>Хроника эволюции</h3>
-        <div class="card-sub">Что Пульс себе переписал. Тег <em>self</em> = автономный коммит.</div>
+        <div class="card-sub">Что Пульс себе переписал. Тег <em>self</em> — автономный коммит.</div>
         <ul class="evolution-log" id="evolution-log"><li class="empty">…</li></ul>
       </div>
 
       <div class="card">
         <h3>Отвергнуто</h3>
-        <div class="card-sub">Пожелания, которые не прошли конституционную сверку.</div>
+        <div class="card-sub">Пожелания, не прошедшие конституционную сверку.</div>
         <ul class="rejected" id="rejected"><li class="empty">…</li></ul>
       </div>
     </div>
 
-    <!-- ============= COST bundle ====================================== -->
-    <div class="section-label">
-      <span class="roman">III.</span>
-      <span class="rule"></span>
-      <span>стоимость</span>
+    <!-- ============= III. COST ========================================= -->
+    <h2 class="section-label">
+      <span class="num">03</span>
+      Стоимость
       <span class="key">cost</span>
-    </div>
+    </h2>
 
     <div class="grid-2">
       <div class="card">
@@ -697,8 +754,7 @@
   </main>
 
   <div class="colophon">
-    Pulse — self-evolving HR agent · single FastAPI process · 100 синтетических сотрудников ·
-    данные обновляются на каждый перезапуск
+    Pulse — self-evolving HR agent · single FastAPI process · 100 синтетических сотрудников
   </div>
 
 <script>
@@ -709,8 +765,6 @@
 // All actionable elements (employee names, unit cells, archetype dots, commits)
 // are <a href="/?q=..."> so the chat on `/` opens with the question pre-filled.
 // We never auto-submit — CEO may want to tweak phrasing first.
-//
-// Drill-down phrasings live in `qFor(...)` so the templates stay in one place.
 
 const Q = {
   emp:        (name, id) => `Расскажи подробно про ${name} (${id}) — что у него происходит за последние 30 дней и стоит ли мне как CEO вмешиваться.`,
@@ -725,12 +779,10 @@ const Q = {
 function qHref(text) { return `/?q=${encodeURIComponent(text)}`; }
 
 function fmtDate() {
-  const months = ['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'];
-  const days   = ['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'];
+  const months = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
   const d = new Date();
-  return `${days[d.getDay()]}, ${d.getDate()} ${months[d.getMonth()]}`;
+  return `${d.getDate()} ${months[d.getMonth()]}`;
 }
-
 document.getElementById('today').textContent = fmtDate();
 
 async function getJson(url) {
@@ -746,21 +798,22 @@ function escapeHtml(s) {
   }[c]));
 }
 
-// === KPI strip render =====================================================
+// ─── KPI strip render ────────────────────────────────────────────────────
 
 function setKpi(card, html, opts) {
   const el = card.querySelector('[data-bind="' + html + '"]');
-  if (el) {
-    if (opts && opts.html) el.innerHTML = opts.value;
-    else el.textContent = opts.value;
-    if (opts && opts.cls) {
-      el.classList.remove('bad','good','flat');
-      el.classList.add(opts.cls);
-    }
+  if (!el) return;
+  if (opts && opts.html) el.innerHTML = opts.value;
+  else el.textContent = opts.value;
+  if (opts && opts.cls) {
+    el.classList.remove('bad','good','flat');
+    el.classList.add(opts.cls);
+  } else {
+    el.classList.remove('bad','good');
   }
 }
 
-function deltaHtml(delta, biggerIsBetter, suffix) {
+function deltaPill(delta, biggerIsBetter, suffix) {
   if (delta === null || delta === undefined) {
     return { value: 'нет сравнения', cls: 'flat' };
   }
@@ -774,27 +827,19 @@ function deltaHtml(delta, biggerIsBetter, suffix) {
 function renderKpi(kpi) {
   const root = document.getElementById('kpi-strip');
 
-  // AT-RISK
   const c1 = root.querySelector('[data-kpi="at_risk"]');
   setKpi(c1, 'value', { value: String(kpi.at_risk.value) });
-  const d1 = deltaHtml(kpi.at_risk.delta, false, '');
-  setKpi(c1, 'delta', d1);
+  setKpi(c1, 'delta', deltaPill(kpi.at_risk.delta, false, ''));
   setKpi(c1, 'footnote', { value:
     `${kpi.at_risk.value} из ${kpi.at_risk.total} активных. <a href="${qHref(Q.metricTop('peer_sentiment'))}">смотреть кто</a>`,
     html: true,
   });
 
-  // BURNOUT
   const c2 = root.querySelector('[data-kpi="burnout"]');
   setKpi(c2, 'value', { value: String(kpi.burnout.value) });
-  const d2 = deltaHtml(kpi.burnout.delta, false, '');
-  setKpi(c2, 'delta', d2);
-  setKpi(c2, 'footnote', { value:
-    `${kpi.burnout.threshold_text}.`,
-    html: false,
-  });
+  setKpi(c2, 'delta', deltaPill(kpi.burnout.delta, false, ''));
+  setKpi(c2, 'footnote', { value: kpi.burnout.threshold_text + '.' });
 
-  // HOT DEPT
   const c3 = root.querySelector('[data-kpi="hot_dept"]');
   if (kpi.hot_dept.unit_id) {
     const name = kpi.hot_dept.name;
@@ -803,7 +848,7 @@ function renderKpi(kpi) {
     });
     const dvn = kpi.hot_dept.delta_vs_norm;
     setKpi(c3, 'delta', {
-      value: dvn !== null ? `${dvn > 0 ? '+' : ''}${dvn.toFixed(2)} к среднему по компании` : '',
+      value: dvn !== null ? `${dvn > 0 ? '+' : ''}${dvn.toFixed(2)} к среднему` : 'нет данных',
       cls: dvn !== null && dvn < 0 ? 'bad' : 'flat',
     });
     setKpi(c3, 'footnote', { value:
@@ -814,56 +859,48 @@ function renderKpi(kpi) {
     setKpi(c3, 'delta', { value: 'недостаточно данных', cls: 'flat' });
   }
 
-  // TRUST
   const c4 = root.querySelector('[data-kpi="trust"]');
   if (kpi.trust.pct !== null) {
     setKpi(c4, 'value', { value: `${kpi.trust.pct}%` });
-    const d4 = deltaHtml(kpi.trust.delta_pp, true, ' п.п.');
-    setKpi(c4, 'delta', d4);
+    setKpi(c4, 'delta', deltaPill(kpi.trust.delta_pp, true, ' п.п.'));
     setKpi(c4, 'footnote', { value:
-      `${kpi.trust.likes} лайков и ${kpi.trust.dislikes} дизлайков за 30 дней.`,
+      `${kpi.trust.likes} лайков · ${kpi.trust.dislikes} дизлайков за 30 дней.`,
     });
   } else {
     setKpi(c4, 'value', { value: '—' });
     setKpi(c4, 'delta', { value: 'нет голосов в окне', cls: 'flat' });
   }
 
-  // === Lede — three sentences hand-knit from numbers ====================
+  // ── Lede — 1-3 sentences crafted from KPIs ─────────────────────────────
   const lede = document.getElementById('lede');
   const parts = [];
   if (kpi.at_risk.value > 0) {
-    parts.push(`в зоне риска ${kpi.at_risk.value} человек${kpi.at_risk.delta && kpi.at_risk.delta > 0 ? ` — это на ${kpi.at_risk.delta} больше, чем месяцем ранее` : ''}`);
+    parts.push(`в зоне риска ${kpi.at_risk.value} человек${kpi.at_risk.delta && kpi.at_risk.delta > 0 ? `, на ${kpi.at_risk.delta} больше, чем месяцем ранее` : ''}`);
   }
   if (kpi.hot_dept && kpi.hot_dept.unit_id) {
-    parts.push(`«самое тёплое» подразделение — ${kpi.hot_dept.name}, со средним sentiment ${kpi.hot_dept.sentiment.toFixed(2)} и стрессом ${kpi.hot_dept.stress.toFixed(2)}`);
+    parts.push(`«самое тёплое» подразделение — ${kpi.hot_dept.name}, sentiment ${kpi.hot_dept.sentiment.toFixed(2)}, стресс ${kpi.hot_dept.stress.toFixed(2)}`);
   }
   if (kpi.trust.pct !== null) {
     const pp = kpi.trust.delta_pp;
     parts.push(`доверие к Пульсу за месяц — ${kpi.trust.pct}%${pp !== null && pp !== 0 ? ` (${pp > 0 ? '+' : ''}${pp} п.п.)` : ''}`);
   }
-  if (parts.length === 0) {
-    lede.innerHTML = '<span class="dropcap">Т</span>ишина в данных. Возможно, БД ещё не наполнена.';
-  } else {
-    const text = parts.join('; ') + '.';
-    const first = text.charAt(0);
-    const rest  = text.slice(1);
-    lede.innerHTML = `<span class="dropcap">${escapeHtml(first)}</span>${escapeHtml(rest)}`;
-  }
+  lede.textContent = parts.length
+    ? (parts.join('; ').replace(/^./, c => c.toUpperCase()) + '.')
+    : 'Тишина в данных. Возможно, БД ещё не наполнена.';
 }
 
-// === Heatmap ==============================================================
+// ─── Heatmap ─────────────────────────────────────────────────────────────
 
 function severityToColor(sev) {
-  // sev ∈ [-3, +3]; negative = bad → oxblood tint, positive = good → ink tint.
-  // We tint the parchment, never overwhelm it. The cell stays readable.
+  // sev ∈ [-3, +3]; negative = bad (red tint), positive = good (blue tint).
   const k = Math.max(-3, Math.min(3, sev));
   if (k >= -0.25 && k <= 0.25) return 'transparent';
   if (k < 0) {
     const t = Math.min(1, -k / 3);
-    return `rgba(122, 28, 28, ${0.08 + 0.32 * t})`;
+    return `rgba(201, 33, 64, ${0.05 + 0.30 * t})`;
   }
   const t = Math.min(1, k / 3);
-  return `rgba(47, 93, 60, ${0.06 + 0.22 * t})`;
+  return `rgba(0, 102, 255, ${0.05 + 0.22 * t})`;
 }
 
 function renderHeatmap(data) {
@@ -895,7 +932,7 @@ function renderHeatmap(data) {
   `;
 }
 
-// === At-risk ==============================================================
+// ─── At-risk list ────────────────────────────────────────────────────────
 
 const FLAG_LABEL = {
   low_sentiment: 'sentiment',
@@ -923,20 +960,19 @@ function renderAtRisk(items) {
   }).join('');
 }
 
-// === Archetype scatter ====================================================
+// ─── Archetype scatter ───────────────────────────────────────────────────
 
 const ARCHETYPE_PALETTE = [
-  '#7a1c1c', '#1c4f7a', '#2f5d3c', '#a04545', '#4a463f',
-  '#8a6a1f', '#5c2f6e', '#1f6f6f',
+  '#0066ff', '#a729ff', '#1170ff', '#5297ff',
+  '#0044bb', '#c66bff', '#5c5c5c', '#252525',
 ];
 
 function renderScatter(data) {
   const root = document.getElementById('scatter');
   if (!data.points.length) { root.innerHTML = '<div class="empty">нет данных</div>'; return; }
 
-  const W = 280, H = 220, pad = { l: 28, r: 8, t: 8, b: 22 };
+  const W = 280, H = 230, pad = { l: 30, r: 10, t: 10, b: 24 };
   const pw = W - pad.l - pad.r, ph = H - pad.t - pad.b;
-  // x = stress in [0..1], y = focus in [0..1]
   const x = v => pad.l + v * pw;
   const y = v => pad.t + (1 - v) * ph;
 
@@ -954,7 +990,7 @@ function renderScatter(data) {
     const c = colorFor(p.archetype);
     const href = qHref(Q.emp(p.full_name, p.emp_id));
     const tip = `${p.full_name} — стресс ${p.x.toFixed(2)}, фокус ${p.y.toFixed(2)} (${p.archetype})`;
-    return `<a xlink:href="${href}" href="${href}"><circle cx="${x(p.x).toFixed(1)}" cy="${y(p.y).toFixed(1)}" r="4" fill="${c}"><title>${escapeHtml(tip)}</title></circle></a>`;
+    return `<a xlink:href="${href}" href="${href}"><circle cx="${x(p.x).toFixed(1)}" cy="${y(p.y).toFixed(1)}" r="4.2" fill="${c}"><title>${escapeHtml(tip)}</title></circle></a>`;
   }).join('');
 
   const legend = data.archetypes.map(a =>
@@ -973,15 +1009,13 @@ function renderScatter(data) {
   `;
 }
 
-// === Trust timeline =======================================================
+// ─── Trust timeline (diverging) ──────────────────────────────────────────
 
 function renderTrustTimeline(data) {
   const root = document.getElementById('trust-timeline');
   if (!data.days.length) { root.innerHTML = '<div class="empty">за 30 дней нет фидбэка</div>'; return; }
 
-  // Diverging design: likes grow upward from a center axis, dislikes
-  // grow downward. Releases drawn as full-height vertical pickets.
-  const W = 360, H = 200, pad = { l: 32, r: 8, t: 18, b: 22 };
+  const W = 360, H = 200, pad = { l: 30, r: 8, t: 18, b: 24 };
   const pw = W - pad.l - pad.r, ph = H - pad.t - pad.b;
   const mid = pad.t + ph / 2;
 
@@ -1002,7 +1036,6 @@ function renderTrustTimeline(data) {
   const halfH = ph / 2;
   const yLikes = v => mid - (v / maxY) * halfH;
   const yDis   = v => mid + (v / maxY) * halfH;
-
   const barW = Math.max(2, pw / total - 2);
 
   const tick = Math.max(1, Math.ceil(maxY / 2));
@@ -1018,8 +1051,8 @@ function renderTrustTimeline(data) {
     const upH   = (d.likes    / maxY) * halfH;
     const downH = (d.dislikes / maxY) * halfH;
     return `
-      <rect class="bar-up"   x="${cx.toFixed(1)}" y="${(mid - upH).toFixed(1)}"  width="${barW.toFixed(1)}" height="${upH.toFixed(1)}"><title>${d.date}: ${d.likes} лайков</title></rect>
-      <rect class="bar-down" x="${cx.toFixed(1)}" y="${mid.toFixed(1)}"          width="${barW.toFixed(1)}" height="${downH.toFixed(1)}"><title>${d.date}: ${d.dislikes} дизлайков</title></rect>
+      <rect class="bar-up"   x="${cx.toFixed(1)}" y="${(mid - upH).toFixed(1)}" width="${barW.toFixed(1)}" height="${upH.toFixed(1)}" rx="1"><title>${d.date}: ${d.likes} лайков</title></rect>
+      <rect class="bar-down" x="${cx.toFixed(1)}" y="${mid.toFixed(1)}"         width="${barW.toFixed(1)}" height="${downH.toFixed(1)}" rx="1"><title>${d.date}: ${d.dislikes} дизлайков</title></rect>
     `;
   }).join('');
 
@@ -1028,7 +1061,7 @@ function renderTrustTimeline(data) {
     const cls = r.self_evolved ? 'release self' : 'release';
     return `
       <line class="${cls}" x1="${cx.toFixed(1)}" y1="${pad.t}" x2="${cx.toFixed(1)}" y2="${pad.t + ph}"/>
-      <text class="release-label" x="${cx.toFixed(1)}" y="${pad.t - 4}" text-anchor="middle">v${escapeHtml(r.version || '')}${r.self_evolved ? ' ⊙' : ''}</text>
+      <text class="release-label" x="${cx.toFixed(1)}" y="${pad.t - 4}" text-anchor="middle" fill="${r.self_evolved ? 'var(--p-purple)' : 'var(--p-fg-soft)'}">v${escapeHtml(r.version || '')}${r.self_evolved ? ' ⊙' : ''}</text>
     `;
   }).join('');
 
@@ -1038,13 +1071,13 @@ function renderTrustTimeline(data) {
       ${releases}
       ${bars}
       <line class="axis" x1="${pad.l}" y1="${mid.toFixed(1)}" x2="${pad.l + pw}" y2="${mid.toFixed(1)}"/>
-      <text class="release-label" x="${pad.l}"      y="${H - 4}" text-anchor="start">${escapeHtml(days[0].date)}</text>
-      <text class="release-label" x="${pad.l + pw}" y="${H - 4}" text-anchor="end">${escapeHtml(days[days.length-1].date)}</text>
+      <text class="release-label" x="${pad.l}"      y="${H - 6}" text-anchor="start">${escapeHtml(days[0].date)}</text>
+      <text class="release-label" x="${pad.l + pw}" y="${H - 6}" text-anchor="end">${escapeHtml(days[days.length-1].date)}</text>
     </svg>
   `;
 }
 
-// === Evolution log ========================================================
+// ─── Evolution log ───────────────────────────────────────────────────────
 
 function renderEvolutionLog(items) {
   const root = document.getElementById('evolution-log');
@@ -1070,16 +1103,14 @@ function renderEvolutionLog(items) {
   }).join('');
 }
 
-// === Rejected suggestions =================================================
+// ─── Rejected suggestions ────────────────────────────────────────────────
 
 function renderRejected(items) {
   const root = document.getElementById('rejected');
   if (!items.length) {
-    root.classList.add('empty');
     root.innerHTML = '<li class="empty">за 30 дней Пульс ничего не отверг.</li>';
     return;
   }
-  root.classList.remove('empty');
   root.innerHTML = items.map(r => {
     const principle = r.principle ? `<div class="principle">${escapeHtml(r.principle)}</div>` : '';
     const reasoning = r.reasoning ? `<div class="reasoning">${escapeHtml(r.reasoning)}</div>` : '';
@@ -1097,13 +1128,13 @@ function renderRejected(items) {
   }).join('');
 }
 
-// === Cost chart ===========================================================
+// ─── Cost chart ──────────────────────────────────────────────────────────
 
 function renderCost(data) {
   const root = document.getElementById('cost-chart');
   if (!data.days.length) { root.innerHTML = '<div class="empty">за 30 дней нет расходов</div>'; return; }
 
-  const W = 360, H = 180, pad = { l: 36, r: 8, t: 14, b: 20 };
+  const W = 360, H = 200, pad = { l: 38, r: 8, t: 16, b: 24 };
   const pw = W - pad.l - pad.r, ph = H - pad.t - pad.b;
 
   const startDate = new Date(data.days[0].date + 'T00:00:00Z');
@@ -1124,16 +1155,11 @@ function renderCost(data) {
   const maxY = Math.max(0.01, ...stacked.map(s => s.opus));
   const yScale = v => pad.t + ph - (v / maxY) * ph;
 
-  const path = (key) => {
-    let pts = stacked.map(s => `${xFor(s.date).toFixed(1)},${yScale(s[key]).toFixed(1)}`);
-    return pts;
-  };
-  const opusPath = path('opus');
-  const sonnetPath = path('sonnet');
+  const path = (key) => stacked.map(s => `${xFor(s.date).toFixed(1)},${yScale(s[key]).toFixed(1)}`);
   const baselineY = (pad.t + ph).toFixed(1);
-
-  // Stacked area: opus polygon goes 0 → opus, sonnet polygon goes 0 → sonnet (front).
-  const areaOpus = `M${pad.l},${baselineY} L${opusPath.join(' L')} L${pad.l + pw},${baselineY} Z`;
+  const opusPath   = path('opus');
+  const sonnetPath = path('sonnet');
+  const areaOpus   = `M${pad.l},${baselineY} L${opusPath.join(' L')} L${pad.l + pw},${baselineY} Z`;
   const areaSonnet = `M${pad.l},${baselineY} L${sonnetPath.join(' L')} L${pad.l + pw},${baselineY} Z`;
 
   const ticks = [0, maxY / 2, maxY];
@@ -1148,23 +1174,23 @@ function renderCost(data) {
       <path class="area-opus"   d="${areaOpus}"/>
       <path class="area-sonnet" d="${areaSonnet}"/>
       <line class="axis" x1="${pad.l}" y1="${pad.t + ph}" x2="${pad.l + pw}" y2="${pad.t + ph}"/>
-      <text class="release-label" x="${pad.l}"      y="${H - 4}" text-anchor="start">${escapeHtml(data.days[0].date)}</text>
-      <text class="release-label" x="${pad.l + pw}" y="${H - 4}" text-anchor="end">${escapeHtml(data.days[data.days.length-1].date)}</text>
+      <text class="release-label" x="${pad.l}"      y="${H - 6}" text-anchor="start">${escapeHtml(data.days[0].date)}</text>
+      <text class="release-label" x="${pad.l + pw}" y="${H - 6}" text-anchor="end">${escapeHtml(data.days[data.days.length-1].date)}</text>
     </svg>
     <div class="legend">
-      <div><span class="swatch" style="background:var(--ed-oxblood);opacity:0.55"></span>Opus</div>
-      <div><span class="swatch" style="background:var(--ed-ink-soft);opacity:0.45"></span>Sonnet</div>
+      <div><span class="swatch" style="background:var(--p-purple);opacity:0.65"></span>Opus</div>
+      <div><span class="swatch" style="background:var(--p-accent);opacity:0.55"></span>Sonnet</div>
     </div>
   `;
 
   document.getElementById('cost-runrate').innerHTML =
-    `прогноз 30 дней: <strong>$${data.run_rate_usd_30d.toFixed(2)}</strong><br>` +
-    `<span style="font-style:normal;font-family:var(--ed-mono);font-size:0.78rem;letter-spacing:0.04em;color:var(--ed-ink-soft)">` +
+    `прогноз 30 дней: <strong class="num">$${data.run_rate_usd_30d.toFixed(2)}</strong><br>` +
+    `<span style="font-family:var(--p-font-mono);font-size:0.74rem;letter-spacing:0.04em;color:var(--p-fg-soft)">` +
     `Opus $${data.by_model_usd.opus.toFixed(2)} · Sonnet $${data.by_model_usd.sonnet.toFixed(2)} · всего $${data.total_window_usd.toFixed(2)} за окно` +
     `</span>`;
 }
 
-// === Boot =================================================================
+// ─── Boot ────────────────────────────────────────────────────────────────
 
 (async function init() {
   try {

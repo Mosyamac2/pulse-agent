@@ -1,6 +1,6 @@
 # Пульс — самоэволюционирующий HR‑агент
 
-[![version](https://img.shields.io/badge/version-1.7.0-blue)](VERSION)
+[![version](https://img.shields.io/badge/version-1.8.0-blue)](VERSION)
 
 Пульс — становящийся цифровой ассистент сотрудника крупного банка. Помогает отслеживать «оптимальное боевое состояние»: эффективность, нагрузку, риск выгорания, маршруты роста. Идеологически наследник [Ouroboros](https://github.com/joi-lab/ouroboros-desktop), но без desktop‑овой инфраструктуры и с одним LLM‑бэкендом — Claude Agent SDK через OAuth Max‑подписку.
 
@@ -34,6 +34,8 @@ UI открывается на `http://VM:8080`.
 - `docs/DEVELOPMENT.md` — как разрабатывать.
 
 ## Changelog
+
+- `v1.8.0` — **Pulse-HCM design system.** Полная замена editorial-эстетики (Fraunces / Newsreader / parchment / oxblood) на корпоративный стиль материнского сайта pulse-hcm.ru. Шрифты: SB Sans Display / SB Sans Text (на Сберовских машинах) с Onest-фолбэком из Google Fonts. Палитра: `#fff` фон, `#252525` текст, primary blue `#0066ff` + deep `#0044bb`, secondary purple `#a729ff`, signature gradient `linear-gradient(140deg, #a729ff, #0763ff, #0066ff)`. Радиусы 8/12/20/32 px, мягкие тени `0 2px 10px rgba(0,0,0,0.07)`. Дашборд: hero-баннер с фирменным purple-blue градиентом и pill-метками вместо newspaper-masthead, KPI-карточки белые с soft-shadow + цветные delta-pill (зелёная/красная), heatmap в blue-red diverging вместо oxblood-forest, trust timeline blue/red бары, evolution-log self-tag в фирменном градиенте, cost area Opus=purple Sonnet=blue. Чат: bubble user — pale-blue tint, pulse — белый, focus-ring `box-shadow 0 0 0 3px rgba(0,102,255,0.12)`, primary-button blue с hover deep-blue. Виджет «заметка редактору» переехал из stamp-эстетики в pill-кнопку с fading purple-blue градиент-маркером и rounded-modal с soft shadow. Все CSS-токены `--ed-*` сохранены как алиасы — обратная совместимость. Минимум структурных правок — только визуальный слой.
 
 - `v1.7.0` — **CEO-дашборд `/dashboard`** в editorial-эстетике v1.6.0 (Fraunces / Newsreader / JetBrains Mono, parchment + ink + oxblood). Hero-полоса из 4 чисел: AT-RISK (≥3/4 признака disengagement по 30-дневному окну), BURNOUT (≥3/4 признака overwork), HOT DEPT (отдел с худшим composite `sentiment − stress`), TRUST (like-rate `feedback.jsonl`). Под hero — три bundle'a: People (тепловая карта units × metrics + at-risk Top-7 + scatter архетипов stress×focus), Trust (diverging timeline лайков/дизлайков с маркерами релизов и self-evolved-флагом, лента коммитов, отвергнутые suggestion'ы), Cost (stacked area Opus/Sonnet + run-rate). Все actionable-элементы — это `/?q=<urlencoded>` ссылки: клик → главный чат с предзаполненным вопросом (CEO дописывает и шлёт). Бэкенд: `pulse/dashboard.py` — чистые агрегации над `data/sber_hr.db`, `data/logs/*.jsonl` и `git log` без нового storage; 8 GET-endpoint'ов в `pulse/server.py` (`/api/dashboard/{kpi,heatmap,at_risk,archetypes,trust_timeline,evolution_log,rejected,cost}`). Окно по умолчанию — 30 дней (CEO-ритм). 12 unit-тестов в `tests/test_dashboard.py`.
 
