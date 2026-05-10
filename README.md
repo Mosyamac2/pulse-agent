@@ -1,6 +1,6 @@
 # Пульс — самоэволюционирующий HR‑агент
 
-[![version](https://img.shields.io/badge/version-2.3.1-blue)](VERSION)
+[![version](https://img.shields.io/badge/version-2.4.0-blue)](VERSION)
 
 Пульс — становящийся цифровой ассистент сотрудника крупного банка. Помогает отслеживать «оптимальное боевое состояние»: эффективность, нагрузку, риск выгорания, маршруты роста. Идеологически наследник [Ouroboros](https://github.com/joi-lab/ouroboros-desktop), но без desktop‑овой инфраструктуры и с одним LLM‑бэкендом — Claude Agent SDK через OAuth Max‑подписку.
 
@@ -34,6 +34,8 @@ UI открывается на `http://VM:8080`.
 - `docs/DEVELOPMENT.md` — как разрабатывать.
 
 ## Changelog
+
+- `v2.4.0` — Phase E1 — web/app.html: новый SPA-shell с module rail (10 кнопок: Pulse + 9 модулей Пульс-HCM), Pulse-таб через iframe в /chat (полная сохранность legacy-чата). Server: GET / отдает app.html, GET /chat — старый index.html (для iframe и legacy-ссылок). Tab routing client-side через ?tab=...
 
 - `v2.3.1` — Phase D2 — pulse/hcm_panels.py: career (get_my_career, list_internal_vacancies, list_talent_search_results, list_delegations), profile (get_profile_full, get_org_structure), docs/КЭДО (list_my_hr_requests, get_team_calendar, get_request_catalog), analytics (get_hr_analytics_overview) + 10 GET /api/hcm/career/* /profile/* /structure /docs/* /analytics/overview эндпоинтов.
 

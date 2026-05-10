@@ -1,0 +1,568 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>Пульс — HR-платформа</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/png" href="/static/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
+  <style>
+    :root {
+      color-scheme: light dark;
+      /* Inherits Pulse-HCM tokens from web/index.html (single source). Kept
+         redundantly here so app shell renders standalone if index.html is
+         offline. */
+      --p-bg:           #ffffff;
+      --p-surface:      #f7f8fa;
+      --p-tint:         #f0f6ff;
+      --p-tint-2:       #ecf3ff;
+      --p-tint-3:       #d0e3ff;
+      --p-border:       #e3e7ec;
+      --p-border-soft:  #ecf0f4;
+      --p-fg:           #252525;
+      --p-fg-muted:     #5c5c5c;
+      --p-fg-soft:      #939393;
+      --p-fg-faint:     #b3b5b7;
+      --p-accent:       #0066ff;
+      --p-accent-deep:  #0044bb;
+      --p-accent-soft:  #1a75ff;
+      --p-purple:       #a729ff;
+      --p-good:         #2a8a3f;
+      --p-bad:          #c92140;
+      --p-grad-hcm:     linear-gradient(140deg, #adf2cc 0%, #a3eddc 60%, #99e7ed 100%);
+
+      --p-font-display: 'SB Sans Display', 'Onest', system-ui, -apple-system, sans-serif;
+      --p-font-body:    'SB Sans Text', 'Onest', system-ui, -apple-system, sans-serif;
+      --p-font-mono:    'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+      --p-r-sm: 8px; --p-r: 12px; --p-r-lg: 20px; --p-r-xl: 32px;
+      --p-shadow-sm: 0 1px 0 rgba(0,0,0,0.04);
+      --p-shadow:    0 2px 10px rgba(0,0,0,0.07);
+
+      --rail-width:   72px;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --p-bg:          #0e1117;
+        --p-surface:     #161a22;
+        --p-tint:        #131c2e;
+        --p-tint-2:      #0f1827;
+        --p-tint-3:      #1b2738;
+        --p-border:      #232a36;
+        --p-border-soft: #1c222c;
+        --p-fg:          #e8edf5;
+        --p-fg-muted:    #98a2b3;
+        --p-fg-soft:     #6b758a;
+        --p-fg-faint:    #515b6e;
+        --p-accent:      #3385ff;
+        --p-accent-deep: #5297ff;
+        --p-accent-soft: #1a75ff;
+        --p-purple:      #c46bff;
+        --p-good:        #59c172;
+        --p-bad:         #ff5772;
+        --p-shadow:      0 2px 10px rgba(0,0,0,0.45);
+      }
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: var(--p-font-body);
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+      background: var(--p-bg);
+      color: var(--p-fg);
+    }
+
+    /* ─── Layout: rail (left) + workspace (right) ─────────── */
+    .app-layout {
+      display: grid;
+      grid-template-columns: var(--rail-width) 1fr;
+      min-height: 100vh;
+    }
+
+    /* Module rail */
+    .rail {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      background: var(--p-bg);
+      border-right: 1px solid var(--p-border-soft);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0.6rem 0;
+      z-index: 10;
+    }
+    .rail-brand {
+      width: 40px; height: 40px;
+      display: grid; place-items: center;
+      margin-bottom: 0.6rem;
+      color: var(--p-accent);
+    }
+    .rail-brand svg { width: 28px; height: 28px; }
+    .rail-divider {
+      width: 28px; height: 1px;
+      background: var(--p-border);
+      margin: 0.4rem 0 0.6rem;
+    }
+    .rail-btn {
+      width: 48px; height: 48px;
+      display: grid; place-items: center;
+      margin-bottom: 0.35rem;
+      border-radius: var(--p-r);
+      background: transparent;
+      border: 0;
+      color: var(--p-fg-muted);
+      cursor: pointer;
+      transition: background-color 0.15s ease, color 0.15s ease;
+      position: relative;
+    }
+    .rail-btn:hover { background: var(--p-tint-2); color: var(--p-fg); }
+    .rail-btn[aria-current="page"] {
+      background: var(--p-tint-3);
+      color: var(--p-accent-deep);
+    }
+    .rail-btn[aria-current="page"]::before {
+      content: "";
+      position: absolute; left: -2px; top: 8px; bottom: 8px;
+      width: 3px; border-radius: 0 3px 3px 0;
+      background: var(--p-accent);
+    }
+    .rail-btn svg { width: 22px; height: 22px; }
+    .rail-tip {
+      position: absolute; left: calc(100% + 8px); top: 50%;
+      transform: translateY(-50%);
+      background: var(--p-fg);
+      color: var(--p-bg);
+      font-size: 0.78rem;
+      padding: 0.25rem 0.55rem;
+      border-radius: 6px;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s ease;
+      z-index: 20;
+    }
+    .rail-btn:hover .rail-tip { opacity: 1; }
+
+    /* Workspace */
+    .workspace { position: relative; min-width: 0; }
+    .ws-header {
+      position: sticky;
+      top: 0;
+      background: var(--p-bg);
+      border-bottom: 1px solid var(--p-border-soft);
+      padding: 0.85rem 1.4rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 5;
+    }
+    .ws-bread {
+      font-size: 0.85rem;
+      color: var(--p-fg-soft);
+      letter-spacing: 0.01em;
+    }
+    .ws-bread b { color: var(--p-fg); font-weight: 600; }
+    .ws-actions {
+      display: flex; align-items: center; gap: 0.6rem;
+      font-size: 0.8rem; color: var(--p-fg-muted);
+    }
+    .ws-version {
+      padding: 0.2rem 0.55rem;
+      background: var(--p-tint-2);
+      border-radius: 999px;
+      font-family: var(--p-font-mono);
+      font-size: 0.72rem;
+    }
+
+    /* Tab content area */
+    .tab-pane {
+      display: none;
+      animation: fadein 0.18s ease;
+    }
+    .tab-pane[data-active="true"] { display: block; }
+    @keyframes fadein {
+      from { opacity: 0; transform: translateY(2px); }
+      to   { opacity: 1; transform: none; }
+    }
+
+    /* Pulse tab — full-bleed iframe to /chat */
+    .pulse-frame-wrap {
+      height: calc(100vh - 60px); /* below ws-header */
+      width: 100%;
+    }
+    .pulse-frame-wrap iframe {
+      width: 100%; height: 100%;
+      border: 0;
+      background: var(--p-bg);
+      display: block;
+    }
+
+    /* Other-tab placeholder */
+    .placeholder {
+      max-width: 920px;
+      margin: 3rem auto;
+      padding: 2.2rem 2.4rem;
+      background: var(--p-surface);
+      border: 1px solid var(--p-border-soft);
+      border-radius: var(--p-r-lg);
+    }
+    .placeholder h1 {
+      font-family: var(--p-font-display);
+      font-size: 1.6rem;
+      margin: 0 0 0.6rem;
+    }
+    .placeholder p {
+      color: var(--p-fg-muted);
+      line-height: 1.55;
+      margin: 0.4rem 0;
+    }
+    .placeholder .ph-hint {
+      margin-top: 1.4rem;
+      padding: 0.85rem 1rem;
+      background: var(--p-bg);
+      border: 1px dashed var(--p-border);
+      border-radius: var(--p-r-sm);
+      color: var(--p-fg-soft);
+      font-size: 0.88rem;
+    }
+    .ask-pulse-btn {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      margin-top: 1rem;
+      padding: 0.55rem 0.9rem;
+      background: var(--p-accent);
+      color: white;
+      font-family: var(--p-font-body);
+      font-size: 0.92rem;
+      font-weight: 500;
+      border: 0;
+      border-radius: var(--p-r);
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .ask-pulse-btn:hover { background: var(--p-accent-deep); }
+    .ask-pulse-btn svg { width: 14px; height: 14px; }
+
+    /* Mobile */
+    @media (max-width: 720px) {
+      .app-layout { grid-template-columns: var(--rail-width) 1fr; }
+      .placeholder { margin: 1rem; padding: 1.2rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="app-layout">
+
+  <!-- ─── Module rail ─── -->
+  <nav class="rail" aria-label="Модули Пульс-HCM">
+    <a class="rail-brand" href="?tab=pulse" aria-label="Пульс — главная">
+      <!-- Pulse wordmark glyph (compact) — пульс ECG dot motif -->
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 12h3l2-7 4 14 2-7h3"/>
+      </svg>
+    </a>
+    <span class="rail-divider"></span>
+
+    <button class="rail-btn" data-tab="pulse" aria-current="page" aria-label="Пульс">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 12a9 9 0 1 1-3.5-7.1"/><path d="M21 4v5h-5"/>
+      </svg>
+      <span class="rail-tip">Пульс</span>
+    </button>
+
+    <button class="rail-btn" data-tab="profile" aria-label="Профиль и структура">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+      </svg>
+      <span class="rail-tip">Профиль и структура</span>
+    </button>
+
+    <button class="rail-btn" data-tab="recruit" aria-label="Подбор и адаптация">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="16" y1="11" x2="22" y2="11"/>
+      </svg>
+      <span class="rail-tip">Подбор и адаптация</span>
+    </button>
+
+    <button class="rail-btn" data-tab="goals" aria-label="Цели и задачи">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 21V5l16-3v16"/><path d="M4 9h16"/>
+      </svg>
+      <span class="rail-tip">Цели и задачи</span>
+    </button>
+
+    <button class="rail-btn" data-tab="learning" aria-label="Обучение и развитие">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+      </svg>
+      <span class="rail-tip">Обучение и развитие</span>
+    </button>
+
+    <button class="rail-btn" data-tab="assess" aria-label="Оценка эффективности">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2 4 7v10l8 5 8-5V7z"/><path d="M9 12l2 2 4-4"/>
+      </svg>
+      <span class="rail-tip">Оценка эффективности</span>
+    </button>
+
+    <button class="rail-btn" data-tab="career" aria-label="Карьерное продвижение">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="3 17 9 11 13 15 21 7"/><polyline points="14 7 21 7 21 14"/>
+      </svg>
+      <span class="rail-tip">Карьерное продвижение</span>
+    </button>
+
+    <button class="rail-btn" data-tab="analytics" aria-label="Сквозная HR-аналитика">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="3" y1="3" x2="3" y2="21"/><line x1="3" y1="21" x2="21" y2="21"/><rect x="7" y="13" width="3" height="6"/><rect x="12" y="9" width="3" height="10"/><rect x="17" y="5" width="3" height="14"/>
+      </svg>
+      <span class="rail-tip">HR-аналитика</span>
+    </button>
+
+    <button class="rail-btn" data-tab="docs" aria-label="КЭДО — работа и отдых">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/>
+      </svg>
+      <span class="rail-tip">КЭДО</span>
+    </button>
+
+    <button class="rail-btn" data-tab="comms" aria-label="Коммуникации">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+      </svg>
+      <span class="rail-tip">Коммуникации</span>
+    </button>
+  </nav>
+
+  <!-- ─── Workspace ─── -->
+  <main class="workspace">
+
+    <header class="ws-header">
+      <div class="ws-bread" id="ws-bread">главная / <b>пульс</b></div>
+      <div class="ws-actions">
+        <a class="ws-version" href="/health" target="_blank" rel="noopener">v<span id="ws-version">…</span></a>
+      </div>
+    </header>
+
+    <!-- Pulse tab: iframe to legacy /chat — preserves full chat behaviour -->
+    <section class="tab-pane" data-tab="pulse" data-active="true">
+      <div class="pulse-frame-wrap">
+        <iframe id="pulse-frame" src="/chat" title="Чат с Пульсом" allow="clipboard-read; clipboard-write"></iframe>
+      </div>
+    </section>
+
+    <!-- Other tabs: placeholders for Phase F/G/H -->
+    <section class="tab-pane" data-tab="profile">
+      <div class="placeholder">
+        <h1>Профиль и структура</h1>
+        <p>Здесь будет профиль сотрудника и навигация по структуре компании. Тонкая read-only обёртка над <code>GET /api/hcm/profile/{emp_id}</code> и <code>GET /api/hcm/structure</code>.</p>
+        <p>Любое действие из этой панели — переход в чат с предзаполненным вопросом. Например, чтобы развернуть состояние сотрудника, я загляну в данные через те же тулы, что и обычно.</p>
+        <a class="ask-pulse-btn" href="?tab=pulse&q=Покажи%20мне%20состояние%20Филатовой%20Елены%20%E2%80%94%20профиль%2C%20риски%2C%20peer-group">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          Спросить Пульса о профиле
+        </a>
+        <div class="ph-hint">📦 Backend готов: <code>/api/hcm/profile/&lt;emp_id&gt;</code>, <code>/api/hcm/structure</code>. Содержательная панель появится в Phase F1.</div>
+      </div>
+    </section>
+
+    <section class="tab-pane" data-tab="recruit">
+      <div class="placeholder">
+        <h1>Подбор и адаптация</h1>
+        <p>23 вакансии в системе. KPI: 5 в работе, 3 на согласовании, 2 приостановленных, 10 закрытых, 3 черновика. Полная воронка кандидатов прячется в <code>/api/hcm/recruit/vacancies/{id}</code>.</p>
+        <a class="ask-pulse-btn" href="?tab=pulse&q=Кто%20из%20открытых%20вакансий%20висит%20дольше%20нормы%3F%20Дай%20краткий%20разбор%20по%20нанимающим%20руководителям.">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          Спросить про вакансии
+        </a>
+        <div class="ph-hint">📦 Backend готов. Содержательная панель — Phase F2.</div>
+      </div>
+    </section>
+
+    <section class="tab-pane" data-tab="goals">
+      <div class="placeholder">
+        <h1>Цели и задачи</h1>
+        <p>1041 целей по 92 активным сотрудникам × 3 периодам. Вес каждой цели нормирован, прогресс архетип-зависимый.</p>
+        <a class="ask-pulse-btn" href="?tab=pulse&q=Какие%20из%20моих%20целей%20самые%20рисковые%20с%20точки%20зрения%20дедлайнов%3F">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          Спросить про мои цели
+        </a>
+        <div class="ph-hint">📦 Backend готов. Карточки целей — Phase F3.</div>
+      </div>
+    </section>
+
+    <section class="tab-pane" data-tab="learning">
+      <div class="placeholder">
+        <h1>Обучение и развитие</h1>
+        <p>1245 элементов AI-ленты. Каждый с обоснованием рекомендации.</p>
+        <a class="ask-pulse-btn" href="?tab=pulse&q=Какой%20курс%20мне%20нужнее%20всего%20на%20ближайший%20квартал%20и%20почему%3F">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          Спросить про развитие
+        </a>
+        <div class="ph-hint">📦 Backend готов. Лента — Phase G1.</div>
+      </div>
+    </section>
+
+    <section class="tab-pane" data-tab="assess">
+      <div class="placeholder">
+        <h1>Оценка эффективности</h1>
+        <p>6 кампаний в системе (4 завершённых, 2 активных). Самооценка / 360 / итоговая — единая страница.</p>
+        <a class="ask-pulse-btn" href="?tab=pulse&q=Объясни%20мне%20результаты%20последней%20оценки%20%E2%80%94%20что%20усилить%2C%20что%20оставить%3F">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          Спросить про оценку
+        </a>
+        <div class="ph-hint">📦 Backend готов. Карточка — Phase G2.</div>
+      </div>
+    </section>
+
+    <section class="tab-pane" data-tab="career">
+      <div class="placeholder">
+        <h1>Карьерное продвижение</h1>
+        <p>Talent pool, делегирования, поиск талантов. Архетип-driven распределение «открыт для предложений».</p>
+        <a class="ask-pulse-btn" href="?tab=pulse&q=Кому%20я%20могу%20делегировать%20часть%20своих%20функций%20без%20риска%3F">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          Спросить про карьеру
+        </a>
+        <div class="ph-hint">📦 Backend готов. Toggle-секции — Phase G3.</div>
+      </div>
+    </section>
+
+    <section class="tab-pane" data-tab="analytics">
+      <div class="placeholder">
+        <h1>Сквозная HR-аналитика</h1>
+        <p>В Phase H1 эта вкладка станет iframe-ом к существующему CEO-дашборду <code>/dashboard</code>. Сегодня — открой его в новой вкладке.</p>
+        <a class="ask-pulse-btn" href="/dashboard" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/><path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/></svg>
+          Открыть CEO-дашборд
+        </a>
+        <a class="ask-pulse-btn" style="margin-left:0.5rem;background:var(--p-fg);color:var(--p-bg);" href="?tab=pulse&q=Сделай%20свежий%20обзор%20по%20at-risk%20сотрудникам.">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          Спросить про at-risk
+        </a>
+        <div class="ph-hint">📦 Backend готов: <code>/api/hcm/analytics/overview</code> + весь <code>/api/dashboard/*</code>.</div>
+      </div>
+    </section>
+
+    <section class="tab-pane" data-tab="docs">
+      <div class="placeholder">
+        <h1>КЭДО — работа и отдых</h1>
+        <p>95 запросов в системе. Календарь команды + каталог обращений (6 типов: 2-НДФЛ, копия трудовой, заявление о счёте, ...).</p>
+        <a class="ask-pulse-btn" href="?tab=pulse&q=Сформируй%20мне%20запрос%20на%20справку%202-НДФЛ%20за%20прошлый%20год.">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          Спросить про справку
+        </a>
+        <div class="ph-hint">📦 Backend готов. Календарь и каталог — Phase H2.</div>
+      </div>
+    </section>
+
+    <section class="tab-pane" data-tab="comms">
+      <div class="placeholder">
+        <h1>Корпоративные коммуникации</h1>
+        <p>В оригинальной презентации Пульс-HCM это шестой модуль. У нас на синтетике уже есть таблицы <code>corp_events</code> и <code>event_participation</code> — этот таб станет лентой ближайших событий.</p>
+        <a class="ask-pulse-btn" href="?tab=pulse&q=Какие%20корпоративные%20события%20запланированы%20на%20ближайший%20месяц%3F">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          Спросить про события
+        </a>
+        <div class="ph-hint">📦 Backend пока reuse-ит <code>corp_events</code>. Лента — Phase H3 (опционально).</div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+  // ─── Tab labels (for breadcrumb) ───────────────────────────────────────
+  const TAB_LABELS = {
+    pulse:    "пульс",
+    profile:  "профиль и структура",
+    recruit:  "подбор",
+    goals:    "цели",
+    learning: "обучение",
+    assess:   "оценка",
+    career:   "карьера",
+    analytics:"аналитика",
+    docs:     "кэдо",
+    comms:    "коммуникации",
+  };
+
+  // ─── Tab routing ───────────────────────────────────────────────────────
+  function activateTab(tab) {
+    if (!TAB_LABELS[tab]) tab = "pulse";
+
+    // visibility
+    document.querySelectorAll('.tab-pane').forEach(p => {
+      p.dataset.active = (p.dataset.tab === tab) ? "true" : "false";
+    });
+
+    // rail aria-current
+    document.querySelectorAll('.rail-btn').forEach(b => {
+      if (b.dataset.tab === tab) b.setAttribute('aria-current', 'page');
+      else b.removeAttribute('aria-current');
+    });
+
+    // breadcrumb
+    document.getElementById('ws-bread').innerHTML =
+      `главная / <b>${TAB_LABELS[tab]}</b>`;
+
+    document.title = `Пульс — ${TAB_LABELS[tab]}`;
+  }
+
+  function readTab() {
+    const params = new URLSearchParams(location.search);
+    return params.get('tab') || 'pulse';
+  }
+
+  // Plumb pulse-frame query: when /app?tab=pulse&q=... is hit, forward
+  // the q to the iframe via /chat?q=... so the legacy chat composer
+  // pre-fills (its existing behaviour from v1.x).
+  function syncPulseFrameQuery() {
+    const params = new URLSearchParams(location.search);
+    const q = params.get('q');
+    const frame = document.getElementById('pulse-frame');
+    if (!frame) return;
+    if (q && readTab() === 'pulse') {
+      // Only reload if the iframe URL doesn't already carry this q.
+      const desired = `/chat?q=${encodeURIComponent(q)}`;
+      try {
+        const cur = new URL(frame.src, location.origin);
+        if (cur.pathname !== '/chat' || cur.searchParams.get('q') !== q) {
+          frame.src = desired;
+        }
+      } catch (_) {
+        frame.src = desired;
+      }
+    }
+  }
+
+  // Click handlers for rail buttons.
+  document.querySelectorAll('.rail-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tab = btn.dataset.tab;
+      const params = new URLSearchParams(location.search);
+      params.set('tab', tab);
+      history.pushState({tab}, '', `?${params.toString()}`);
+      activateTab(tab);
+      syncPulseFrameQuery();
+    });
+  });
+
+  window.addEventListener('popstate', () => {
+    activateTab(readTab());
+    syncPulseFrameQuery();
+  });
+
+  // Initial paint
+  activateTab(readTab());
+  syncPulseFrameQuery();
+
+  // Show package version in the corner.
+  fetch('/health').then(r => r.json()).then(j => {
+    document.getElementById('ws-version').textContent = j.version || '?';
+  }).catch(() => {});
+</script>
+
+</body>
+</html>

@@ -52,10 +52,20 @@ _NOCACHE = {"Cache-Control": "no-cache, no-store, must-revalidate",
 
 @app.get("/", response_class=HTMLResponse)
 def index() -> Any:
+    """v2.4.0+ shell: web/app.html with module rail + 9 tabs (P14).
+
+    The Pulse tab is an iframe into /chat (the legacy direct chat UI),
+    so existing chat behaviour is preserved verbatim. If the new shell
+    isn't on disk yet (e.g. mid-deploy), we fall through to /chat.
+    """
+    app_html = WEB_DIR / "app.html"
+    if app_html.exists():
+        return FileResponse(str(app_html), headers=_NOCACHE)
+    return _legacy_chat_html()
+
+
+def _legacy_chat_html() -> Any:
     idx = WEB_DIR / "index.html"
-    # Block browser caching: every release potentially changes the JS that
-    # talks to /api/chat/stream. A stale index.html silently breaks features
-    # like multi-turn history (we hit this with v0.2.1).
     if idx.exists():
         return FileResponse(str(idx), headers=_NOCACHE)
     return HTMLResponse(
@@ -65,6 +75,16 @@ def index() -> Any:
         "</body></html>",
         headers=_NOCACHE,
     )
+
+
+@app.get("/chat", response_class=HTMLResponse)
+def chat_page() -> Any:
+    """Legacy direct-chat UI (web/index.html). Kept live so:
+      * the new app.html shell can iframe it for the Pulse tab,
+      * legacy deep-links like /?q=... → /chat?q=... still work,
+      * old bookmarks don't break.
+    """
+    return _legacy_chat_html()
 
 
 @app.get("/dashboard", response_class=HTMLResponse)
