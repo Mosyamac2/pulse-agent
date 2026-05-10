@@ -13,8 +13,10 @@
        VM has no internet, vendor copies missing) we fall back to plain-
        text via escapeHTML(). CDN fallback only fires when vendor 404s,
        and is itself optional. -->
-  <script src="/static/vendor/marked.min.js"></script>
-  <script src="/static/vendor/purify.min.js"></script>
+  <!-- v2.7.11+: vendored copies (web/vendor/) — version-querystring forces
+       browsers to bypass any stale 404 cache from earlier releases. -->
+  <script src="/static/vendor/marked.min.js?v=12.0.2"></script>
+  <script src="/static/vendor/purify.min.js?v=3.1.4"></script>
   <script>
   (function () {
     function loadCdn(src) {

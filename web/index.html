@@ -1113,8 +1113,10 @@
   back to escaped plain text — the chat keeps working, it just shows raw
   Markdown like before this release. Closes fb-class-003.
 -->
-<script src="/static/vendor/marked.min.js"></script>
-<script src="/static/vendor/purify.min.js"></script>
+<!-- v2.7.11+: vendored copies actually shipped (web/vendor/), version-querystring
+     forces browsers to bypass any stale 404 cache from earlier releases. -->
+<script src="/static/vendor/marked.min.js?v=12.0.2"></script>
+<script src="/static/vendor/purify.min.js?v=3.1.4"></script>
 <script>
 (function () {
   function loadCdn(src) {
