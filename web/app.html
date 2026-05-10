@@ -929,11 +929,11 @@
       <span class="rail-tip">Карьерное продвижение</span>
     </button>
 
-    <button class="rail-btn" data-tab="analytics" aria-label="Сквозная HR-аналитика">
+    <button class="rail-btn" data-tab="analytics" aria-label="Дашборд руководителя">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
         <line x1="3" y1="3" x2="3" y2="21"/><line x1="3" y1="21" x2="21" y2="21"/><rect x="7" y="13" width="3" height="6"/><rect x="12" y="9" width="3" height="10"/><rect x="17" y="5" width="3" height="14"/>
       </svg>
-      <span class="rail-tip">HR-аналитика</span>
+      <span class="rail-tip">Дашборд руководителя</span>
     </button>
 
     <button class="rail-btn" data-tab="docs" aria-label="КЭДО — работа и отдых">
@@ -1023,9 +1023,9 @@
 
     <section class="tab-pane" data-tab="analytics">
       <div class="tab-content" data-loaded="false" data-renderer="analytics">
-        <h1 class="tab-h1">Сквозная HR-аналитика</h1>
-        <p class="tab-sub">Лёгкий обзор + полный CEO-дашборд во встроенном фрейме.</p>
-        <div class="skel">Загружаю обзор…</div>
+        <h1 class="tab-h1">Дашборд руководителя</h1>
+        <p class="tab-sub">Утренний обзор организации — встроенный <code>/dashboard</code>.</p>
+        <div class="skel">Загружаю дашборд…</div>
       </div>
     </section>
 
@@ -1087,7 +1087,7 @@
     learning: "обучение",
     assess:   "оценка",
     career:   "карьера",
-    analytics:"аналитика",
+    analytics:"дашборд руководителя",
     docs:     "кэдо",
     comms:    "коммуникации",
   };
@@ -1302,7 +1302,18 @@
 
   // ─── Lazy tab content renderers (F1+F2+F3) ────────────────────────────
   const RENDERERS = {};
-  let DEFAULT_EMP_ID = "emp_001";  // synthetic "current user"
+  // ─── Demo persona — Phase F+ ─────────────────────────────────────────
+  // The whole non-Pulse facade renders «как будто это интерфейс одного
+  // конкретного руководителя». Pick a manager with rich data: grade 4,
+  // 14 подчинённых, действующая делегация, 8 целей в 2026-Q2.
+  let DEFAULT_EMP_ID   = "emp_072";
+  let DEFAULT_EMP_NAME = "Блинов Арсений";
+  // Helper: «Блинов Арсений (emp_072)»
+  function empLabel(name, eid) {
+    const n = name || DEFAULT_EMP_NAME;
+    const i = eid  || DEFAULT_EMP_ID;
+    return `${n} (${i})`;
+  }
 
   // helpers
   function el(html) {
@@ -1333,7 +1344,7 @@
       return;
     }
     if (!prof || !prof.employee) {
-      container.innerHTML = `<div class="skel">Сотрудник ${escapeHTML(DEFAULT_EMP_ID)} не найден.</div>`;
+      container.innerHTML = `<div class="skel">Сотрудник ${escapeHTML(empLabel())} не найден.</div>`;
       return;
     }
     const e = prof.employee;
@@ -1356,7 +1367,7 @@
           <div><dt>семья</dt><dd>${escapeHTML(fam.marital_status || '—')}, ${fam.kids_count || 0} детей</dd></div>
           <div><dt>архетип (внутр.)</dt><dd>${escapeHTML(e.archetype || '—')}</dd></div>
           <div><dt>последняя оценка</dt><dd>${pr ? (pr.score + ' за ' + pr.period) : '—'}</dd></div>
-          <div><dt>peer-сентимент</dt><dd>${peer.avg_sentiment != null ? peer.avg_sentiment : '—'} (${peer.n || 0} реплик)</dd></div>
+          <div><dt>отзывы коллег</dt><dd>${peer.avg_sentiment != null ? peer.avg_sentiment : '—'} <small>(сентимент −1…+1, по ${peer.n || 0} реплик.)</small></dd></div>
           <div><dt>курсы</dt><dd>${cs.completed || 0} ✓ · ${cs.in_progress || 0} в процессе</dd></div>
         </dl>
       </div>`;
@@ -1392,7 +1403,7 @@
 
     container.innerHTML = `
       <h1 class="tab-h1">Профиль и структура</h1>
-      <p class="tab-sub">Сотрудник по умолчанию: ${escapeHTML(e.full_name)}. Структура — корень + первый уровень юнитов.</p>
+      <p class="tab-sub">Демо для: <b>${escapeHTML(empLabel(e.full_name, e.emp_id))}</b>. Структура — корень + первый уровень юнитов.</p>
       <div class="profile-grid">
         ${profileCard}
         ${orgTree}
@@ -1607,7 +1618,7 @@
           ${krBlock}
         </div>
       `;
-    }).join('') : `<div class="skel">У сотрудника ${DEFAULT_EMP_ID} нет целей за ${period}.</div>`;
+    }).join('') : `<div class="skel">У ${escapeHTML(DEFAULT_EMP_NAME)} нет целей за ${period}.</div>`;
 
     const presetsHTML = `
       <aside class="presets">
@@ -1622,7 +1633,7 @@
 
     container.innerHTML = `
       <h1 class="tab-h1">Цели и задачи</h1>
-      <p class="tab-sub">Период ${period}. Сотрудник по умолчанию: ${DEFAULT_EMP_ID}.</p>
+      <p class="tab-sub">Период ${period}. Демо для: <b>${escapeHTML(empLabel())}</b>.</p>
       ${kpiHTML}
       <h3 style="margin:1.6rem 0 0.6rem;font-family:var(--p-font-display);font-size:1.05rem;">Мои цели</h3>
       ${goalsHTML}
@@ -1687,7 +1698,7 @@
 
     container.innerHTML = `
       <h1 class="tab-h1">Обучение и развитие</h1>
-      <p class="tab-sub">Лента сотрудника ${DEFAULT_EMP_ID}. Каждая карточка — с обоснованием рекомендации от Пульса.</p>
+      <p class="tab-sub">Лента: <b>${escapeHTML(empLabel())}</b>. Каждая карточка — с обоснованием рекомендации от Пульса.</p>
       ${kpiHTML}
       ${cardsHTML}
       <aside class="presets">
@@ -1725,7 +1736,7 @@
         <div class="kpi"><div class="kpi-label">активных кампаний</div><div class="kpi-value">${a.length}</div></div>
         <div class="kpi"><div class="kpi-label">завершённых</div><div class="kpi-value">${c.length}</div></div>
         <div class="kpi"><div class="kpi-label">моя оценка</div><div class="kpi-value">${pr ? pr.score : '—'}</div><div class="kpi-foot">${pr ? pr.period : ''}</div></div>
-        <div class="kpi"><div class="kpi-label">peer-сентимент</div><div class="kpi-value">${peer.avg_sentiment != null ? peer.avg_sentiment : '—'}</div><div class="kpi-foot">${peer.n || 0} реплик</div></div>
+        <div class="kpi"><div class="kpi-label">отзывы коллег</div><div class="kpi-value">${peer.avg_sentiment != null ? peer.avg_sentiment : '—'}</div><div class="kpi-foot">${peer.n || 0} реплик · сентимент −1…+1</div></div>
       </div>`;
 
     function campCard(s) {
@@ -1842,7 +1853,7 @@
 
     container.innerHTML = `
       <h1 class="tab-h1">Карьерное продвижение</h1>
-      <p class="tab-sub">${escapeHTML(e.full_name || DEFAULT_EMP_ID)} — карьерный статус, рекомендованные внутренние вакансии, делегирования.</p>
+      <p class="tab-sub"><b>${escapeHTML(empLabel(e.full_name, e.emp_id))}</b> — карьерный статус, рекомендованные внутренние вакансии, делегирования.</p>
       ${kpiHTML}
       <h3 style="margin:1.2rem 0 0.5rem;font-family:var(--p-font-display);font-size:1.05rem;">Внутренние вакансии под мой профиль</h3>
       ${vacanciesHTML}
@@ -1866,35 +1877,19 @@
       </aside>`;
   };
 
-  // ─── Renderer: analytics (H1) ────────────────────────────────────────
+  // ─── Renderer: analytics — Дашборд руководителя (H1) ────────────────
+  // По запросу с v2.7.3: фасадная вкладка не дублирует HR-аналитику в виде
+  // KPI-плашек поверх такого же дашборда. Здесь — чистый iframe в /dashboard
+  // (полный morning-brief руководителя) + chat-presets рядом.
   RENDERERS.analytics = async function(container) {
-    setSkel(container, "Загружаю обзор…");
-    let ov;
-    try {
-      ov = await fetch('/api/hcm/analytics/overview').then(r => r.json());
-    } catch (e) {
-      container.innerHTML = `<div class="skel">Не удалось загрузить: ${escapeHTML(e.message)}</div>`;
-      return;
-    }
-    const kpiHTML = `
-      <div class="kpi-strip">
-        <div class="kpi"><div class="kpi-label">штатная численность</div><div class="kpi-value">${ov.headcount_active}</div><div class="kpi-foot">активных сотрудников</div></div>
-        <div class="kpi"><div class="kpi-label">движение за окно</div><div class="kpi-value">${ov.terminations}</div><div class="kpi-foot">увольнений за ${ov.window_days} дн.</div></div>
-        <div class="kpi"><div class="kpi-label">открытые вакансии</div><div class="kpi-value">${ov.vacancies_open}</div></div>
-        <div class="kpi"><div class="kpi-label">активные опросы</div><div class="kpi-value">${ov.surveys_active}</div></div>
-        <div class="kpi"><div class="kpi-label">завершено курсов</div><div class="kpi-value">${ov.courses_completed}</div><div class="kpi-foot">за ${ov.window_days} дн.</div></div>
-        <div class="kpi"><div class="kpi-label">КЭДО в работе</div><div class="kpi-value">${ov.pending_requests}</div><div class="kpi-foot">open + processing</div></div>
-      </div>`;
-
     container.innerHTML = `
-      <h1 class="tab-h1">Сквозная HR-аналитика</h1>
-      <p class="tab-sub">Лёгкий обзор + полный CEO-дашборд во встроенном фрейме (он же открывается прямо в <code>/dashboard</code>).</p>
-      ${kpiHTML}
-      <div class="analytics-iframe-wrap">
-        <iframe src="/dashboard" title="CEO дашборд" loading="lazy"></iframe>
+      <h1 class="tab-h1">Дашборд руководителя</h1>
+      <p class="tab-sub">Утренний обзор «состояния организма» — то же, что открывается в <code>/dashboard</code>. KPI-страйп, тепловая карта подразделений, at-risk сотрудники, динамика доверия, лог эволюционных циклов и cost-breakdown.</p>
+      <div class="analytics-iframe-wrap" style="height:calc(100vh - 180px);">
+        <iframe src="/dashboard" title="Дашборд руководителя" loading="lazy"></iframe>
       </div>
       <aside class="presets">
-        <h3>📎 Что спросить Пульса по аналитике</h3>
+        <h3>📎 Что спросить Пульса по дашборду</h3>
         <div class="presets-list">
           ${presetLink('Сделай свежий обзор по at-risk сотрудникам — кто сейчас под красной чертой?')}
           ${presetLink('Какие отделы заметнее всего ухудшились за последний месяц?')}
@@ -1909,11 +1904,10 @@
     // pick a manager for the team calendar
     let catalog, calendar, mineReq;
     try {
-      const mgrRow = await fetch(`/api/hcm/career/talent_search?grade_min=4`).then(r => r.json());
-      const managerId = (mgrRow.items && mgrRow.items[0]) ? mgrRow.items[0].emp_id : DEFAULT_EMP_ID;
+      // Demo persona is the manager whose team we show.
       [catalog, calendar, mineReq] = await Promise.all([
         fetch('/api/hcm/docs/catalog').then(r => r.json()),
-        fetch(`/api/hcm/docs/team_calendar?manager_emp_id=${managerId}&year=2026&month=5`).then(r => r.json()),
+        fetch(`/api/hcm/docs/team_calendar?manager_emp_id=${DEFAULT_EMP_ID}&year=2026&month=5`).then(r => r.json()),
         fetch(`/api/hcm/docs/my_requests?emp_id=${DEFAULT_EMP_ID}`).then(r => r.json()),
       ]);
     } catch (e) {
@@ -1991,7 +1985,7 @@
 
     container.innerHTML = `
       <h1 class="tab-h1">Работа и отдых, документооборот</h1>
-      <p class="tab-sub">Календарь команды (май 2026) + каталог обращений + мои запросы.</p>
+      <p class="tab-sub">Команда <b>${escapeHTML(empLabel())}</b> (май 2026) + каталог обращений + мои запросы.</p>
       <div class="profile-grid" style="grid-template-columns:1.4fr 1fr;">
         <div>
           <h3 style="margin:0 0 0.5rem;font-family:var(--p-font-display);font-size:1.05rem;">Календарь команды</h3>
