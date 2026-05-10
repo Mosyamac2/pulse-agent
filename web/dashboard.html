@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <title>Пульс — заметка CEO</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/png" href="/static/favicon.png">
   <!-- Pulse-HCM design system (v1.8.0):
        primary corporate blue #0066ff, purple-to-blue signature gradient,
        SB Sans Text / SB Sans Display preferred (installed on Sber dev hosts);
@@ -112,28 +113,46 @@
       align-items: center;
       gap: 1.4rem;
     }
+    /* Brand: ПУЛЬС wordmark from pulse-hcm.ru, currentColor-themed.
+       The trailing <small> is divided from the mark by a thin rule —
+       reads as «Пульс | заметка CEO» without the noisy dot bullet. */
     .brand {
       display: inline-flex;
       align-items: center;
-      gap: 0.6rem;
-      font-family: var(--p-font-display);
-      font-weight: 700;
-      font-size: 1.15rem;
-      letter-spacing: -0.015em;
-      color: var(--p-fg);
+      gap: 0.65rem;
+      color: var(--p-accent);
+      text-decoration: none;
     }
-    .brand .dot {
-      width: 0.65rem; height: 0.65rem;
-      border-radius: 50%;
-      background: var(--p-grad-hero);
-      box-shadow: 0 0 0 3px rgba(167, 41, 255, 0.12);
+    .brand-mark {
+      height: 1.4rem;
+      width: auto;
+      display: inline-block;
+      animation: brand-mark-in 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both;
     }
+    .brand:hover .brand-mark { animation: brand-mark-beat 1.3s ease-in-out; }
     .brand small {
       font-family: var(--p-font-body);
       font-weight: 500;
-      font-size: 0.78rem;
+      font-size: 0.82rem;
       color: var(--p-fg-muted);
-      margin-left: 0.4rem;
+      letter-spacing: 0;
+      padding-left: 0.65rem;
+      border-left: 1px solid var(--p-border-soft);
+    }
+    @keyframes brand-mark-in {
+      from { opacity: 0; transform: translateX(-3px); }
+      to   { opacity: 1; transform: translateX(0);    }
+    }
+    @keyframes brand-mark-beat {
+      0%   { transform: scale(1);    }
+      18%  { transform: scale(1.04); }
+      32%  { transform: scale(1);    }
+      48%  { transform: scale(1.02); }
+      62%  { transform: scale(1);    }
+      100% { transform: scale(1);    }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .brand-mark, .brand:hover .brand-mark { animation: none; }
     }
     .nav { margin-left: auto; display: flex; align-items: center; gap: 1.4rem; }
     .nav a {
@@ -623,10 +642,13 @@
 
   <header class="app-header">
     <div class="inner">
-      <div class="brand">
-        <span class="dot"></span>
-        Пульс <small>заметка CEO</small>
-      </div>
+      <a class="brand" href="/" aria-label="Пульс — главная">
+        <svg class="brand-mark" viewBox="0 0 1144 167" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+          <title>Пульс</title>
+          <path fill="currentColor" d="M891.532 60.693c-12.5-8.036-26.786-11.608-48.215-11.608h-87.948V6.228h-41.965v160.716h129.913c21.429 0 35.715-3.571 48.215-11.607 15.179-10.715 22.768-26.786 22.768-47.322 0-20.09-7.589-37.054-22.768-47.322Zm-27.233 63.84c-4.464 3.125-8.928 4.018-16.518 4.018h-91.965V87.925h91.965c7.59 0 12.501.893 16.518 4.018 5.358 3.572 8.036 9.822 8.036 16.518 0 5.804-2.678 12.5-8.036 16.072ZM418.757 6.228l-68.305 112.501L278.576 6.228h-50.447l97.769 150.448-36.161 57.59h50.447L469.65 6.228h-50.893ZM0 166.944h41.965V48.193h125.448v118.751h42.412V6.228H0v160.716ZM496.884 89.71c-1.34 4.465-2.679 10.715-4.465 15.626-6.25 20.536-19.643 22.768-42.411 22.768v40.626c36.608-.446 68.304-3.125 81.697-43.751 1.34-4.464 3.126-10.268 4.465-16.518 4.911-19.197 10.268-43.75 13.393-60.268h79.912v118.751h41.965V6.228H515.187c-6.25 29.91-10.714 53.572-18.303 83.483ZM1056.27 41.496c29.91 0 64.73 4.464 87.05 16.964V14.263C1122.78 4.442 1083.5.87 1056.27.87c-57.148 0-118.756 24.554-118.756 85.716 0 61.161 61.608 85.715 118.756 85.715 27.23 0 66.51-4.018 87.05-13.393v-44.197c-22.32 12.5-57.14 16.965-87.05 16.965-37.06 0-74.113-13.84-74.113-45.09 0-30.804 37.053-45.09 74.113-45.09Z"/>
+        </svg>
+        <small>заметка CEO</small>
+      </a>
       <nav class="nav">
         <a href="/">→ Чат</a>
         <a href="/health" target="_blank">/health</a>
