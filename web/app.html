@@ -847,38 +847,26 @@
     </section>
 
     <section class="tab-pane" data-tab="learning">
-      <div class="placeholder">
-        <h1>Обучение и развитие</h1>
-        <p>1245 элементов AI-ленты. Каждый с обоснованием рекомендации.</p>
-        <a class="ask-pulse-btn" href="?tab=pulse&q=Какой%20курс%20мне%20нужнее%20всего%20на%20ближайший%20квартал%20и%20почему%3F">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-          Спросить про развитие
-        </a>
-        <div class="ph-hint">📦 Backend готов. Лента — Phase G1.</div>
+      <div class="tab-content" data-loaded="false" data-renderer="learning">
+        <h1 class="tab-h1">Обучение и развитие</h1>
+        <p class="tab-sub">AI-лента с обоснованием рекомендации для каждой карточки.</p>
+        <div class="skel">Загружаю ленту…</div>
       </div>
     </section>
 
     <section class="tab-pane" data-tab="assess">
-      <div class="placeholder">
-        <h1>Оценка эффективности</h1>
-        <p>6 кампаний в системе (4 завершённых, 2 активных). Самооценка / 360 / итоговая — единая страница.</p>
-        <a class="ask-pulse-btn" href="?tab=pulse&q=Объясни%20мне%20результаты%20последней%20оценки%20%E2%80%94%20что%20усилить%2C%20что%20оставить%3F">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-          Спросить про оценку
-        </a>
-        <div class="ph-hint">📦 Backend готов. Карточка — Phase G2.</div>
+      <div class="tab-content" data-loaded="false" data-renderer="assess">
+        <h1 class="tab-h1">Оценка эффективности</h1>
+        <p class="tab-sub">Активные кампании + моя последняя оценка (perf review + 360 + peer summary).</p>
+        <div class="skel">Загружаю кампании и оценку…</div>
       </div>
     </section>
 
     <section class="tab-pane" data-tab="career">
-      <div class="placeholder">
-        <h1>Карьерное продвижение</h1>
-        <p>Talent pool, делегирования, поиск талантов. Архетип-driven распределение «открыт для предложений».</p>
-        <a class="ask-pulse-btn" href="?tab=pulse&q=Кому%20я%20могу%20делегировать%20часть%20своих%20функций%20без%20риска%3F">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-          Спросить про карьеру
-        </a>
-        <div class="ph-hint">📦 Backend готов. Toggle-секции — Phase G3.</div>
+      <div class="tab-content" data-loaded="false" data-renderer="career">
+        <h1 class="tab-h1">Карьерное продвижение</h1>
+        <p class="tab-sub">Карьерный статус, рекомендованные внутренние вакансии, делегирования.</p>
+        <div class="skel">Загружаю карьеру…</div>
       </div>
     </section>
 
@@ -1498,6 +1486,242 @@
       ${goalsHTML}
       ${presetsHTML}
     `;
+  };
+
+  // ─── Renderer: learning (G1) ─────────────────────────────────────────
+  const REASON_RU = {
+    "peer_completed":     "коллега прошёл",
+    "position_match":     "по моей должности",
+    "skill_gap":          "пробел в навыке",
+    "manager_assigned":   "назначил руководитель",
+    "similar_interests":  "похожие интересы",
+  };
+  RENDERERS.learning = async function(container) {
+    setSkel(container, "Загружаю AI-ленту развития…");
+    let feed, courses;
+    try {
+      [feed, courses] = await Promise.all([
+        fetch(`/api/hcm/learning/feed?emp_id=${DEFAULT_EMP_ID}&limit=24`).then(r => r.json()),
+        fetch(`/api/hcm/learning/my_courses?emp_id=${DEFAULT_EMP_ID}`).then(r => r.json()),
+      ]);
+    } catch (e) {
+      container.innerHTML = `<div class="skel">Не удалось загрузить: ${escapeHTML(e.message)}</div>`;
+      return;
+    }
+    const items = feed.items || [];
+    const myCourses = courses.items || [];
+
+    const completed = myCourses.filter(c => c.status === 'completed').length;
+    const inProgress = myCourses.filter(c => c.status === 'in_progress').length;
+
+    const kpiHTML = `
+      <div class="kpi-strip">
+        <div class="kpi"><div class="kpi-label">AI-лента</div><div class="kpi-value">${items.length}</div><div class="kpi-foot">рекомендаций сегодня</div></div>
+        <div class="kpi"><div class="kpi-label">мои курсы</div><div class="kpi-value">${myCourses.length}</div><div class="kpi-foot">${completed} ✓ · ${inProgress} в процессе</div></div>
+        <div class="kpi"><div class="kpi-label">сохранено</div><div class="kpi-value">${items.filter(i => i.bookmarked).length}</div></div>
+        <div class="kpi"><div class="kpi-label">просмотрено</div><div class="kpi-value">${items.filter(i => i.viewed).length}</div></div>
+      </div>`;
+
+    const cardsHTML = items.length ? `
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:0.7rem;">
+        ${items.map(i => {
+          const reason = REASON_RU[i.recommended_reason] || i.recommended_reason;
+          const badge = i.viewed
+            ? `<span class="pill pill-good">просмотрено</span>`
+            : (i.bookmarked ? `<span class="pill pill-neutral">в закладках</span>` : '');
+          return `
+            <div class="goal-card" style="margin-bottom:0;">
+              <div style="font-size:0.7rem;color:var(--p-fg-soft);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:0.3rem;">${escapeHTML(i.content_type)} · ${escapeHTML(i.source)}</div>
+              <h3 style="margin:0 0 0.3rem;font-size:0.96rem;line-height:1.3;">${escapeHTML(i.title)}</h3>
+              <div style="font-size:0.78rem;color:var(--p-fg-soft);margin-bottom:0.4rem;">AI рекомендует — ${escapeHTML(reason)}</div>
+              <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.78rem;color:var(--p-fg-soft);">
+                <span>${escapeHTML(i.recommended_date || '')}</span>
+                ${badge}
+              </div>
+            </div>`;
+        }).join('')}
+      </div>
+    ` : `<div class="skel">Лента пуста.</div>`;
+
+    container.innerHTML = `
+      <h1 class="tab-h1">Обучение и развитие</h1>
+      <p class="tab-sub">Лента сотрудника ${DEFAULT_EMP_ID}. Каждая карточка — с обоснованием рекомендации от Пульса.</p>
+      ${kpiHTML}
+      ${cardsHTML}
+      <aside class="presets">
+        <h3>📎 Что спросить Пульса про развитие</h3>
+        <div class="presets-list">
+          ${presetLink('Какой курс мне нужнее всего на ближайший квартал и почему?')}
+          ${presetLink('Покажи 3 коллег, у которых самые «соседние» по навыкам интересы.')}
+          ${presetLink('Сделай для меня план обучения на квартал с привязкой к моим целям.')}
+        </div>
+      </aside>`;
+  };
+
+  // ─── Renderer: assess (G2) ──────────────────────────────────────────
+  RENDERERS.assess = async function(container) {
+    setSkel(container, "Загружаю кампании и оценку…");
+    let camps, mine;
+    try {
+      [camps, mine] = await Promise.all([
+        fetch('/api/hcm/assess/campaigns').then(r => r.json()),
+        fetch(`/api/hcm/assess/my?emp_id=${DEFAULT_EMP_ID}`).then(r => r.json()),
+      ]);
+    } catch (e) {
+      container.innerHTML = `<div class="skel">Не удалось загрузить: ${escapeHTML(e.message)}</div>`;
+      return;
+    }
+
+    const a = camps.active || [];
+    const c = camps.completed || [];
+    const pr = mine.performance_review;
+    const ass = mine.assessments || {};
+    const peer = mine.peer_summary || {};
+
+    const kpiHTML = `
+      <div class="kpi-strip">
+        <div class="kpi"><div class="kpi-label">активных кампаний</div><div class="kpi-value">${a.length}</div></div>
+        <div class="kpi"><div class="kpi-label">завершённых</div><div class="kpi-value">${c.length}</div></div>
+        <div class="kpi"><div class="kpi-label">моя оценка</div><div class="kpi-value">${pr ? pr.score : '—'}</div><div class="kpi-foot">${pr ? pr.period : ''}</div></div>
+        <div class="kpi"><div class="kpi-label">peer-сентимент</div><div class="kpi-value">${peer.avg_sentiment != null ? peer.avg_sentiment : '—'}</div><div class="kpi-foot">${peer.n || 0} реплик</div></div>
+      </div>`;
+
+    function campCard(s) {
+      const pct = s.target_count ? Math.round(100 * s.completed_count / s.target_count) : 0;
+      const isImp = s.is_important ? `<span class="pill pill-bad" style="margin-left:0.4rem;">важно</span>` : '';
+      return `
+        <div class="goal-card" style="margin-bottom:0.45rem;">
+          <div class="goal-head">
+            <h3>${escapeHTML(s.name)} ${isImp}</h3>
+            <span class="goal-meta">${escapeHTML(s.kind)}</span>
+          </div>
+          <div class="goal-bar-wrap"><div class="goal-bar" style="width:${pct}%"></div></div>
+          <div class="goal-foot"><span>${pct}% участников · ${s.completed_count}/${s.target_count}</span><span>${escapeHTML(s.launched_date || '')}${s.ends_date ? ' → ' + s.ends_date : ''}</span></div>
+        </div>`;
+    }
+
+    const myAssBlock = `
+      <div class="profile-card" style="background:var(--p-surface);color:var(--p-fg);">
+        <h3 style="margin:0 0 0.7rem;font-family:var(--p-font-display);">Моя последняя оценка</h3>
+        <dl class="profile-grid-2" style="font-size:0.85rem;">
+          <div><dt>период</dt><dd>${pr ? escapeHTML(pr.period) : '—'}</dd></div>
+          <div><dt>итоговый балл</dt><dd>${pr ? pr.score : '—'}</dd></div>
+          <div><dt>самооценка</dt><dd>${ass.psych ? ass.psych.score : '—'}</dd></div>
+          <div><dt>360</dt><dd>${ass['360'] ? ass['360'].score : '—'}</dd></div>
+          <div><dt>SberQ</dt><dd>${ass.sberq ? ass.sberq.score : '—'}</dd></div>
+          <div><dt>системная</dt><dd>${ass.systemic ? ass.systemic.score : '—'}</dd></div>
+        </dl>
+        ${pr && pr.comment_summary ? `<div style="margin-top:0.7rem;padding:0.55rem 0.8rem;background:var(--p-tint);border-radius:var(--p-r-sm);font-size:0.85rem;color:var(--p-fg-muted);">«${escapeHTML(pr.comment_summary)}»</div>` : ''}
+      </div>`;
+
+    container.innerHTML = `
+      <h1 class="tab-h1">Оценка эффективности</h1>
+      <p class="tab-sub">${a.length} активных + ${c.length} завершённых кампаний.</p>
+      ${kpiHTML}
+      <div class="profile-grid">
+        <div>
+          <h3 style="margin:0 0 0.6rem;font-family:var(--p-font-display);font-size:1.05rem;">Кампании</h3>
+          ${a.length ? a.map(campCard).join('') : `<div class="skel">Нет активных.</div>`}
+          <h3 style="margin:1rem 0 0.6rem;font-family:var(--p-font-display);font-size:1.05rem;">Завершённые</h3>
+          ${c.length ? c.slice(0, 4).map(campCard).join('') : ''}
+        </div>
+        <div>${myAssBlock}</div>
+      </div>
+      <aside class="presets">
+        <h3>📎 Что спросить Пульса про оценку</h3>
+        <div class="presets-list">
+          ${presetLink('Объясни мне результаты последней оценки — что усилить, что оставить?')}
+          ${presetLink('Какие компетенции я недооценил у себя по сравнению с коллегами?')}
+          ${presetLink('Подготовь черновик ответа на письмо менеджера про мою оценку.')}
+        </div>
+      </aside>`;
+  };
+
+  // ─── Renderer: career (G3) ─────────────────────────────────────────
+  RENDERERS.career = async function(container) {
+    setSkel(container, "Загружаю карьеру…");
+    let mine, intern, deleg;
+    try {
+      [mine, intern, deleg] = await Promise.all([
+        fetch(`/api/hcm/career/my?emp_id=${DEFAULT_EMP_ID}`).then(r => r.json()),
+        fetch(`/api/hcm/career/internal_vacancies?emp_id=${DEFAULT_EMP_ID}`).then(r => r.json()),
+        fetch(`/api/hcm/career/delegations?emp_id=${DEFAULT_EMP_ID}`).then(r => r.json()),
+      ]);
+    } catch (e) {
+      container.innerHTML = `<div class="skel">Не удалось загрузить: ${escapeHTML(e.message)}</div>`;
+      return;
+    }
+    const tps = mine.talent_pool_status || {};
+    const e = mine.employee || {};
+    const items = intern.items || [];
+    const iDel = deleg.i_delegate || [];
+    const toMe = deleg.delegated_to_me || [];
+
+    const statusPill = tps.open_to_offers
+      ? `<span class="pill pill-good">открыт для предложений</span>`
+      : `<span class="pill pill-neutral">не открыт</span>`;
+
+    const kpiHTML = `
+      <div class="kpi-strip">
+        <div class="kpi"><div class="kpi-label">мой статус</div><div class="kpi-value" style="font-size:1.1rem;line-height:1.4;">${statusPill}</div><div class="kpi-foot">${tps.open_to_offers_date ? 'с ' + tps.open_to_offers_date : ''}</div></div>
+        <div class="kpi"><div class="kpi-label">меня рекомендуют</div><div class="kpi-value">${tps.recommended_by_count || 0}</div><div class="kpi-foot">${tps.last_recommended_date ? 'последний раз ' + tps.last_recommended_date : '—'}</div></div>
+        <div class="kpi"><div class="kpi-label">внутренние вакансии</div><div class="kpi-value">${items.length}</div><div class="kpi-foot">подходят по грейду</div></div>
+        <div class="kpi"><div class="kpi-label">делегирования</div><div class="kpi-value">${iDel.length + toMe.length}</div><div class="kpi-foot">от меня ${iDel.length} · мне ${toMe.length}</div></div>
+      </div>`;
+
+    const vacanciesHTML = items.length ? `
+      <table class="data-table">
+        <thead><tr><th>вакансия</th><th>грейд</th><th>подразделение</th><th>кандидаты</th></tr></thead>
+        <tbody>
+          ${items.slice(0, 6).map(v => `
+            <tr>
+              <td><div class="name-cell">${escapeHTML(v.title)}</div><div class="muted">опубликовано ${escapeHTML(v.opened_date || '')}</div></td>
+              <td>${v.position_grade || '—'}</td>
+              <td>${escapeHTML(v.unit_name || '—')}</td>
+              <td>${v.candidates_count || 0}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>` : `<div class="skel">Подходящих вакансий не найдено.</div>`;
+
+    function delCard(d, side) {
+      return `
+        <div class="goal-card" style="margin-bottom:0.4rem;">
+          <div class="goal-head">
+            <h3 style="font-size:0.92rem;">${escapeHTML(d.title)}</h3>
+            <span class="goal-meta">${escapeHTML(d.status)}</span>
+          </div>
+          <div class="goal-foot">
+            <span>${escapeHTML(side === 'i' ? 'кому: ' : 'от кого: ')}<b>${escapeHTML(d.counterparty_name)}</b></span>
+            <span>${escapeHTML(d.scope_summary || '')}</span>
+          </div>
+        </div>`;
+    }
+
+    container.innerHTML = `
+      <h1 class="tab-h1">Карьерное продвижение</h1>
+      <p class="tab-sub">${escapeHTML(e.full_name || DEFAULT_EMP_ID)} — карьерный статус, рекомендованные внутренние вакансии, делегирования.</p>
+      ${kpiHTML}
+      <h3 style="margin:1.2rem 0 0.5rem;font-family:var(--p-font-display);font-size:1.05rem;">Внутренние вакансии под мой профиль</h3>
+      ${vacanciesHTML}
+      <div class="profile-grid" style="margin-top:1.4rem;">
+        <div>
+          <h3 style="margin:0 0 0.5rem;font-family:var(--p-font-display);font-size:1.05rem;">Я делегирую</h3>
+          ${iDel.length ? iDel.map(d => delCard(d, 'i')).join('') : `<div class="skel">Я никому не делегирую.</div>`}
+        </div>
+        <div>
+          <h3 style="margin:0 0 0.5rem;font-family:var(--p-font-display);font-size:1.05rem;">Мне делегировали</h3>
+          ${toMe.length ? toMe.map(d => delCard(d, 't')).join('') : `<div class="skel">Мне никто не делегирует.</div>`}
+        </div>
+      </div>
+      <aside class="presets">
+        <h3>📎 Что спросить Пульса про карьеру</h3>
+        <div class="presets-list">
+          ${presetLink('Кому я могу делегировать часть своих функций без риска?')}
+          ${presetLink('Покажи, у кого из моей команды правильное состояние для роста на грейд +1.')}
+          ${presetLink('Какие внутренние вакансии стоит мне рассмотреть и почему?')}
+        </div>
+      </aside>`;
   };
 
   // ─── Tab content dispatch ────────────────────────────────────────────
