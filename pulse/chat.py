@@ -132,9 +132,26 @@ def _format_history(history: list[dict[str, str]] | None) -> str:
 
 
 def _compose_user_message(question: str,
-                           history: list[dict[str, str]] | None) -> str:
+                           history: list[dict[str, str]] | None,
+                           tab_context: str | None = None) -> str:
+    """Render the user message: optional tab context + history + question.
+
+    `tab_context` is the v2.6.0+ HCM façade hook (P14): when the question
+    arrives from a non-Pulse tab dock, the front-end forwards the tab key
+    (e.g. "goals", "recruit") so the system prompt's «Контекст HCM-фасада»
+    section knows which panel the user is looking at. We surface it as a
+    short tagged line BEFORE the conversation history so the agent reads
+    the freshest context first.
+    """
     prefix = _format_history(history)
-    return prefix + question if prefix else question
+    parts: list[str] = []
+    if tab_context:
+        tag = tab_context.strip()[:60]
+        parts.append(f"[Контекст вкладки: {tag}]\n")
+    if prefix:
+        parts.append(prefix)
+    parts.append(question)
+    return "".join(parts)
 
 
 def build_system_prompt() -> str:
@@ -237,7 +254,8 @@ def _classify_block(block: Any) -> tuple[str, dict[str, Any]]:
 
 async def stream_chat_events(question: str,
                              history: list[dict[str, str]] | None = None,
-                             *, model: str = "sonnet") -> AsyncIterator[dict[str, Any]]:
+                             *, model: str = "sonnet",
+                             tab_context: str | None = None) -> AsyncIterator[dict[str, Any]]:
     """Run one chat turn and yield events as the SDK produces them.
 
     Event shapes:
@@ -276,7 +294,7 @@ async def stream_chat_events(question: str,
     usage = None
     failed = False
 
-    user_message = _compose_user_message(question, history)
+    user_message = _compose_user_message(question, history, tab_context=tab_context)
 
     try:
         async with ClaudeSDKClient(options=options) as client:
@@ -338,7 +356,8 @@ async def stream_chat_events(question: str,
 # ---------------------------------------------------------------------------
 
 async def handle_chat(question: str, history: list[dict[str, str]] | None = None,
-                      *, model: str = "sonnet") -> dict[str, Any]:
+                      *, model: str = "sonnet",
+                      tab_context: str | None = None) -> dict[str, Any]:
     """One chat turn. Returns {message_id, answer, meta}.
 
     Drains `stream_chat_events` and returns the final `done` payload. If the
@@ -347,7 +366,8 @@ async def handle_chat(question: str, history: list[dict[str, str]] | None = None
     """
     final: dict[str, Any] | None = None
     error_msg: str | None = None
-    async for ev in stream_chat_events(question, history, model=model):
+    async for ev in stream_chat_events(question, history, model=model,
+                                          tab_context=tab_context):
         if ev["type"] == "done":
             final = {"message_id": ev["message_id"],
                       "answer": ev["answer"],

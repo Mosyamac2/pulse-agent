@@ -40,16 +40,78 @@ def app_with_db(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
 
     from pulse import server, chat
 
-    async def fake_handle_chat(question, history=None, model="sonnet"):
+    async def fake_handle_chat(question, history=None, model="sonnet", tab_context=None):
         msg_id = chat._new_message_id()
         chat.log_chat(question, "fake answer for: " + question, msg_id,
-                      {"model": model, "tool_calls": [], "history_len": 0})
+                      {"model": model, "tool_calls": [], "history_len": 0,
+                       "tab_context": tab_context})
         return {"message_id": msg_id, "answer": "fake answer for: " + question, "meta": {}}
 
     monkeypatch.setattr(chat, "handle_chat", fake_handle_chat, raising=True)
     monkeypatch.setattr(server, "handle_chat", fake_handle_chat, raising=False)
 
     return TestClient(server.app)
+
+
+# ---------------------------------------------------------------------------
+# Pure unit tests for v2.6.0+ tab_context plumbing — no DB/seed needed.
+# ---------------------------------------------------------------------------
+
+def test_compose_user_message_threads_tab_context():
+    """v2.6.0: when tab_context is set, _compose_user_message prefixes the
+    user message with `[Контекст вкладки: …]` so prompts/SYSTEM.md's
+    «Контекст HCM-фасада» rule kicks in."""
+    from pulse.chat import _compose_user_message
+    out = _compose_user_message("вопрос", history=None, tab_context="goals")
+    assert out.startswith("[Контекст вкладки: goals]")
+    assert "вопрос" in out
+
+
+def test_compose_user_message_no_tab_context_unchanged():
+    from pulse.chat import _compose_user_message
+    out = _compose_user_message("привет", history=None, tab_context=None)
+    assert out == "привет"
+    out2 = _compose_user_message("привет", history=None)  # default
+    assert out2 == "привет"
+
+
+def test_compose_user_message_truncates_long_tab_label():
+    """Defence-in-depth: even if a malicious client sends a 5KB tab label,
+    we cap it to 60 chars before injecting into the user message."""
+    from pulse.chat import _compose_user_message
+    long = "A" * 200
+    out = _compose_user_message("q", history=None, tab_context=long)
+    # 60 char cap
+    assert "A" * 60 in out
+    assert "A" * 200 not in out
+
+
+def test_compose_user_message_combines_with_history():
+    from pulse.chat import _compose_user_message
+    history = [{"question": "первый", "answer": "ответ"}]
+    out = _compose_user_message("второй", history=history, tab_context="recruit")
+    # Tab context comes first, then history, then question.
+    idx_tab = out.index("[Контекст вкладки: recruit]")
+    idx_hist = out.index("[Контекст диалога")
+    idx_q = out.rindex("второй")
+    assert idx_tab < idx_hist < idx_q
+
+
+def test_chat_request_accepts_tab_context_field():
+    """ChatRequest pydantic model accepts and validates the new optional field."""
+    from pulse.server import ChatRequest
+    r1 = ChatRequest(question="x")
+    assert r1.tab_context is None
+    r2 = ChatRequest(question="x", tab_context="goals")
+    assert r2.tab_context == "goals"
+    # ≤60 chars allowed
+    r3 = ChatRequest(question="x", tab_context="A" * 60)
+    assert r3.tab_context == "A" * 60
+    # >60 should be rejected
+    import pytest
+    from pydantic import ValidationError
+    with pytest.raises(ValidationError):
+        ChatRequest(question="x", tab_context="A" * 61)
 
 
 def test_build_system_prompt_smoke(tmp_path, monkeypatch):

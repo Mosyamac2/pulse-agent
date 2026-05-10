@@ -1071,13 +1071,19 @@
     overlayTabLabel.textContent = `· контекст: ${TAB_LABELS[tabKey] || tabKey}`;
     openOverlay();
 
-    const tagged = `[Контекст вкладки: ${TAB_LABELS[tabKey] || tabKey}]\n\n${question}`;
+    // v2.6.0+: tab context goes through the structured field so the agent
+    // sees a single canonical [Контекст вкладки: …] prefix injected by
+    // _compose_user_message — no double-tagging.
     let resp;
     try {
       resp = await fetch('/api/chat/stream', {
         method: 'POST',
         headers: {'Content-Type': 'application/json', 'Accept': 'text/event-stream'},
-        body: JSON.stringify({question: tagged, model: 'sonnet'}),
+        body: JSON.stringify({
+          question: question,
+          model: 'sonnet',
+          tab_context: TAB_LABELS[tabKey] || tabKey,
+        }),
       });
     } catch (e) {
       overlayStatus.textContent = `Сеть отвалилась: ${e.message}`;

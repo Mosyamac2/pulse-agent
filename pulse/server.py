@@ -129,6 +129,10 @@ class ChatRequest(BaseModel):
     question: str = Field(..., min_length=1)
     history: list[dict[str, str]] | None = None
     model: str | None = None  # "sonnet" | "opus" — default sonnet
+    tab_context: str | None = Field(default=None, max_length=60)
+    # ^ v2.6.0+ HCM façade hint: which tab the user is on
+    # (e.g. "goals", "recruit"). Surfaces as `[Контекст вкладки: …]`
+    # tag in the user message — see prompts/SYSTEM.md "Контекст HCM-фасада".
 
 
 @app.post("/api/chat")
@@ -136,7 +140,9 @@ async def api_chat(req: ChatRequest) -> JSONResponse:
     from .chat import handle_chat
     if not PATHS.db.exists():
         raise HTTPException(503, "DB missing — run `python -m scripts.seed --force` first.")
-    out = await handle_chat(req.question, history=req.history, model=req.model or "sonnet")
+    out = await handle_chat(req.question, history=req.history,
+                             model=req.model or "sonnet",
+                             tab_context=req.tab_context)
     return JSONResponse(out)
 
 
@@ -155,7 +161,8 @@ async def api_chat_stream(req: ChatRequest) -> StreamingResponse:
     async def sse() -> Any:
         try:
             async for ev in stream_chat_events(req.question, history=req.history,
-                                                model=req.model or "sonnet"):
+                                                model=req.model or "sonnet",
+                                                tab_context=req.tab_context):
                 yield f"data: {json.dumps(ev, ensure_ascii=False)}\n\n"
         except Exception as ex:  # last-resort guard — stream_chat_events normally yields error events itself
             log.exception("chat stream crashed")
