@@ -8,6 +8,36 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
+  <!-- Markdown rendering for the «Спросите Пульса» overlay (v2.7.10+):
+       same vendored libraries the legacy chat uses. If absent (the bank
+       VM has no internet, vendor copies missing) we fall back to plain-
+       text via escapeHTML(). CDN fallback only fires when vendor 404s,
+       and is itself optional. -->
+  <script src="/static/vendor/marked.min.js"></script>
+  <script src="/static/vendor/purify.min.js"></script>
+  <script>
+  (function () {
+    function loadCdn(src) {
+      return new Promise(function (resolve) {
+        var s = document.createElement('script');
+        s.src = src; s.crossOrigin = 'anonymous';
+        s.onload = function () { resolve(true); };
+        s.onerror = function () { resolve(false); };
+        document.head.appendChild(s);
+      });
+    }
+    window.__appMdReady = (async function () {
+      try {
+        if (typeof window.marked === 'undefined') {
+          await loadCdn('https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js');
+        }
+        if (typeof window.DOMPurify === 'undefined') {
+          await loadCdn('https://cdn.jsdelivr.net/npm/dompurify@3.1.4/dist/purify.min.js');
+        }
+      } catch (_) { /* offline: plain-text fallback */ }
+    })();
+  })();
+  </script>
   <style>
     :root {
       color-scheme: light dark;
@@ -1368,90 +1398,123 @@
   }
   overlayClose.addEventListener('click', closeOverlay);
   overlayOpenPulse.addEventListener('click', () => {
-    if (!lastAskedQuestion) {
-      // Just switch tab.
-      const params = new URLSearchParams(location.search);
-      params.set('tab', 'pulse'); params.delete('q');
-      history.pushState({tab: 'pulse'}, '', `?${params.toString()}`);
-      activateTab('pulse');
-      return;
-    }
-    // Hand off the asked question to the chat iframe via /chat?q=...
-    const params = new URLSearchParams();
+    // v2.7.10: the iframe already ran the turn (relay-mode), so the Q+A
+    // is already in the chat thread. Just switch to the Pulse tab — no
+    // need to re-prefill via ?q=, that would just duplicate the question
+    // in the composer (and confuse the user into asking it twice).
+    const params = new URLSearchParams(location.search);
     params.set('tab', 'pulse');
-    params.set('q', lastAskedQuestion);
+    params.delete('q');
     history.pushState({tab: 'pulse'}, '', `?${params.toString()}`);
     activateTab('pulse');
-    syncPulseFrameQuery();
+    closeOverlay();
   });
 
-  async function streamAsk(question, tabKey) {
+  // v2.7.10: the dock no longer fetches /api/chat/stream itself. Instead it
+  // RELAYS to the chat iframe (the canonical chat surface): the iframe runs
+  // the turn with full session.history continuity, the answer lands in the
+  // chat thread (so it's mirrored in the Pulse tab), and the iframe echoes
+  // every SSE event back via window.postMessage so this overlay can render
+  // the same answer in parallel — with full Markdown support.
+  let _dockTurnInflight = false;
+  let _dockTextBuf = "";
+  let _dockToolHTML = "";
+
+  function renderOverlayMarkdown(text) {
+    const ready = (typeof window.marked === 'object' || typeof window.marked === 'function')
+                  && typeof window.DOMPurify === 'object';
+    if (!ready) {
+      overlayText.innerHTML = _dockToolHTML + `<div>${escapeHTML(text)}</div>`;
+      return;
+    }
+    let html;
+    try {
+      const parsed = (typeof window.marked.parse === 'function'
+                       ? window.marked.parse(text)
+                       : window.marked(text));
+      html = window.DOMPurify.sanitize(parsed);
+    } catch (_) {
+      html = `<div>${escapeHTML(text)}</div>`;
+    }
+    overlayText.innerHTML = _dockToolHTML + html;
+  }
+
+  function streamAsk(question, tabKey) {
+    if (_dockTurnInflight) {
+      overlayStatus.textContent = "Пульс ещё дописывает предыдущий ответ — подождите секунду.";
+      return;
+    }
     lastAskedQuestion = question;
     overlayQ.textContent = question;
-    overlayStatus.textContent = "Пульс готовится отвечать…";
+    overlayStatus.textContent = "Передаю в Пульс…";
     overlayText.innerHTML = "";
     overlayTabLabel.textContent = `· контекст: ${TAB_LABELS[tabKey] || tabKey}`;
+    _dockTextBuf = "";
+    _dockToolHTML = "";
+    _dockTurnInflight = true;
     openOverlay();
 
-    // v2.6.0+: tab context goes through the structured field so the agent
-    // sees a single canonical [Контекст вкладки: …] prefix injected by
-    // _compose_user_message — no double-tagging.
-    let resp;
+    const frame = document.getElementById('pulse-frame');
+    if (!frame || !frame.contentWindow) {
+      overlayStatus.textContent = "Чат-фрейм не готов — попробуйте обновить страницу.";
+      _dockTurnInflight = false;
+      return;
+    }
     try {
-      resp = await fetch('/api/chat/stream', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json', 'Accept': 'text/event-stream'},
-        body: JSON.stringify({
-          question: question,
-          model: 'sonnet',
-          tab_context: TAB_LABELS[tabKey] || tabKey,
-        }),
-      });
+      frame.contentWindow.postMessage({
+        type: 'ask-from-dock',
+        question: question,
+        tab_context: TAB_LABELS[tabKey] || tabKey,
+      }, window.location.origin);
     } catch (e) {
-      overlayStatus.textContent = `Сеть отвалилась: ${e.message}`;
-      return;
-    }
-    if (!resp.ok || !resp.body) {
-      overlayStatus.textContent = `Не получилось дозвониться до агента (${resp.status}).`;
-      return;
-    }
-
-    const reader = resp.body.getReader();
-    const decoder = new TextDecoder('utf-8');
-    let buffer = "";
-    let textBuf = "";
-    let toolHTML = "";
-
-    while (true) {
-      const {value, done} = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, {stream: true});
-      const frames = buffer.split('\n\n');
-      buffer = frames.pop() || "";
-      for (const frame of frames) {
-        if (!frame.startsWith('data: ')) continue;
-        let ev;
-        try { ev = JSON.parse(frame.slice(6)); } catch { continue; }
-        if (ev.type === 'status') {
-          overlayStatus.textContent = ev.message || "…";
-        } else if (ev.type === 'tool_call') {
-          const name = ev.name || ev.tool || 'tool';
-          toolHTML += `<div class="overlay-tool">→ ${name}${ev.args ? ' ' + JSON.stringify(ev.args).slice(0,140) : ''}</div>`;
-          overlayText.innerHTML = toolHTML + `<div>${escapeHTML(textBuf)}</div>`;
-        } else if (ev.type === 'tool_result') {
-          // Already shown as part of tool_call line; could append a 'done' marker.
-        } else if (ev.type === 'text') {
-          if (ev.text) textBuf += ev.text;
-          overlayText.innerHTML = toolHTML + `<div>${escapeHTML(textBuf)}</div>`;
-          overlayEl.querySelector('.overlay-body').scrollTop = 1e9;
-        } else if (ev.type === 'done') {
-          overlayStatus.textContent = "Готово. Откройте в Пульсе, чтобы продолжить разговор.";
-        } else if (ev.type === 'error') {
-          overlayStatus.textContent = `Ошибка: ${ev.message || 'неизвестная'}`;
-        }
-      }
+      overlayStatus.textContent = `Не удалось передать в Пульс: ${e.message}`;
+      _dockTurnInflight = false;
     }
   }
+
+  // Receive mirrored SSE events from the chat iframe (single source of truth).
+  window.addEventListener('message', (ev) => {
+    if (ev.origin && ev.origin !== window.location.origin) return;
+    const data = ev.data;
+    if (!data || data.type !== 'chat-stream') return;
+    if (data.event === 'started') {
+      overlayStatus.textContent = "Пульс готовится отвечать…";
+      return;
+    }
+    if (data.event === 'tick' && data.sse) {
+      const sse = data.sse;
+      if (sse.type === 'status' && sse.phase === 'starting') {
+        overlayStatus.textContent =
+          `Думаю · ${(sse.model || '').replace(/^claude-/, '')}`;
+      } else if (sse.type === 'tool_call') {
+        const name = sse.name || sse.tool || 'tool';
+        const argSummary = sse.args ? ' ' + JSON.stringify(sse.args).slice(0, 140) : '';
+        _dockToolHTML += `<div class="overlay-tool">→ ${escapeHTML(name)}${escapeHTML(argSummary)}</div>`;
+        renderOverlayMarkdown(_dockTextBuf);
+      } else if (sse.type === 'text' && sse.text) {
+        _dockTextBuf += sse.text;
+        renderOverlayMarkdown(_dockTextBuf);
+        const body = overlayEl.querySelector('.overlay-body');
+        if (body) body.scrollTop = 1e9;
+      } else if (sse.type === 'error') {
+        overlayStatus.textContent = `Ошибка: ${sse.message || 'неизвестная'}`;
+      }
+      return;
+    }
+    if (data.event === 'done') {
+      _dockTurnInflight = false;
+      overlayStatus.textContent =
+        "Готово. Тот же ответ уже есть во вкладке Пульс — клик «Открыть в Пульсе» переключит.";
+      // Final answer is the canonical one — render the full Markdown.
+      _dockTextBuf = data.answer || _dockTextBuf;
+      renderOverlayMarkdown(_dockTextBuf);
+      return;
+    }
+    if (data.event === 'error') {
+      _dockTurnInflight = false;
+      overlayStatus.textContent = `Ошибка: ${data.message || 'неизвестная'}`;
+    }
+  });
 
   function escapeHTML(s) {
     return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);

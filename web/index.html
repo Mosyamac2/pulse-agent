@@ -339,6 +339,14 @@
       font-size: 0.74rem; color: var(--p-fg-soft); font-weight: 500;
       font-family: var(--p-font-mono); letter-spacing: 0.04em;
     }
+    h1 .muted-by {
+      font-size: 0.78rem;
+      font-family: var(--p-font-body);
+      font-weight: 400;
+      color: var(--p-fg-faint);
+      letter-spacing: 0.02em;
+      opacity: 0.7;
+    }
     .nav-link {
       margin-left: auto;
       font-family: var(--p-font-body);
@@ -1034,7 +1042,7 @@
     </aside>
 
     <main>
-      <h1>HRoboros в Пульсе <small id="version">— загружается…</small>
+      <h1>Пульс <span class="muted-by">powered by HRoboros</span> <small id="version">— загружается…</small>
           <a class="nav-link" href="/dashboard">→ дашборд руководителя</a></h1>
       <div id="thread"></div>
     </main>
@@ -1047,9 +1055,9 @@
        Submits to POST /api/feedback/general which the next evolution
        cycle will pass through evaluate_general_alignment(). -->
   <button id="editor-note-btn" class="editor-note-btn" type="button"
-          aria-label="Открыть заметку редактору">
+          aria-label="Доработай Пульс под себя">
     <span class="seal">✦</span>
-    <span class="note-label">заметка<small>редактору</small></span>
+    <span class="note-label">доработай<small>Пульс под себя</small></span>
   </button>
 
   <dialog id="editor-note-dialog" class="editor-note-dialog">
@@ -1347,10 +1355,28 @@ function attachFeedback(wrap, msgId) {
   downBtn.addEventListener('click', () => sendFeedback(msgId, 'down', commentInput.value, downBtn, upBtn));
 }
 
-async function ask(question) {
+async function ask(question, opts) {
+  // v2.7.10+: opts = { tab_context?: string, dockEcho?: bool }
+  // - tab_context: forwarded to /api/chat/stream as a structured field so
+  //   prompts/SYSTEM.md «Контекст HCM-фасада» knows which façade panel
+  //   the user was on when they typed.
+  // - dockEcho: when true, every SSE event is also posted up to the parent
+  //   window via postMessage so the «Спросите Пульса» overlay in app.html
+  //   can render the same answer in parallel — mirror behavior for the dock.
+  opts = opts || {};
   send.disabled = true;
   appendUser(question);
   q.value = '';
+
+  function echoToParent(payload) {
+    if (!opts.dockEcho) return;
+    try {
+      window.parent.postMessage(
+        Object.assign({ type: 'chat-stream' }, payload),
+        window.location.origin
+      );
+    } catch (_) { /* parent gone or cross-origin — silent */ }
+  }
 
   // Placeholder bubble: live activity log replaces "думаю…" as events arrive,
   // then the bubble's body is swapped for the final answer on `done`.
@@ -1370,13 +1396,17 @@ async function ask(question) {
   // Snapshot the activity steps for the post-answer trace details panel.
   const traceSteps = [];
 
+  echoToParent({ event: 'started', question: question, tab_context: opts.tab_context || null });
+
   try {
+    const fetchBody = {
+      question,
+      history: session.history.slice(-HISTORY_SEND_LIMIT),
+    };
+    if (opts.tab_context) fetchBody.tab_context = opts.tab_context;
     const r = await fetch('/api/chat/stream', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        question,
-        history: session.history.slice(-HISTORY_SEND_LIMIT),
-      }),
+      body: JSON.stringify(fetchBody),
     });
     if (!r.ok) throw new Error(await r.text());
 
@@ -1404,6 +1434,9 @@ async function ask(question) {
       } else if (ev.type === 'done') {
         finalEv = ev;
       }
+      // Mirror this event to parent (app.html overlay) — only when this
+      // turn was triggered from the dock relay.
+      echoToParent({ event: 'tick', sse: ev });
       // Stream tick. Do NOT yank the page — only follow if the user is still
       // pinned to the bottom. If they scrolled up to read an earlier message,
       // they stay there and the «Вниз» pill appears in the corner.
@@ -1449,8 +1482,14 @@ async function ask(question) {
       wrap.appendChild(det);
     }
     attachFeedback(wrap, finalEv.message_id);
+    echoToParent({
+      event: 'done',
+      answer: finalEv.answer || '',
+      message_id: finalEv.message_id || null,
+    });
   } catch (e) {
     body.textContent = 'Ошибка: ' + e.message;
+    echoToParent({ event: 'error', message: e.message || String(e) });
   } finally {
     send.disabled = false;
     q.focus();
@@ -1461,6 +1500,31 @@ composer.addEventListener('submit', (ev) => {
   ev.preventDefault();
   const text = q.value.trim();
   if (text) ask(text);
+});
+
+// v2.7.10+: postMessage relay from app.html dock «Спросите Пульса …».
+// The dock sends `{type:'ask-from-dock', question, tab_context}`. We treat
+// it as a normal turn (full session.history continuity, threads into the
+// chat DOM, gets logged), and echo the SSE events back so the overlay in
+// app.html can render the same answer in parallel.
+window.addEventListener('message', (ev) => {
+  if (ev.origin && ev.origin !== window.location.origin) return;
+  const data = ev.data;
+  if (!data || data.type !== 'ask-from-dock') return;
+  const question = (data.question || '').trim();
+  if (!question) return;
+  if (send.disabled) {
+    // Mid-stream — politely refuse via echo
+    try {
+      window.parent.postMessage(
+        { type: 'chat-stream', event: 'error',
+          message: 'Пульс ещё дописывает предыдущий ответ — попробуйте через секунду.' },
+        window.location.origin
+      );
+    } catch (_) {}
+    return;
+  }
+  ask(question, { tab_context: data.tab_context || null, dockEcho: true });
 });
 q.addEventListener('keydown', (ev) => {
   if (ev.ctrlKey && ev.key === 'Enter') {
