@@ -1,6 +1,6 @@
 # Пульс — самоэволюционирующий HR‑агент
 
-[![version](https://img.shields.io/badge/version-2.4.1-blue)](VERSION)
+[![version](https://img.shields.io/badge/version-2.5.0-blue)](VERSION)
 
 Пульс — становящийся цифровой ассистент сотрудника крупного банка. Помогает отслеживать «оптимальное боевое состояние»: эффективность, нагрузку, риск выгорания, маршруты роста. Идеологически наследник [Ouroboros](https://github.com/joi-lab/ouroboros-desktop), но без desktop‑овой инфраструктуры и с одним LLM‑бэкендом — Claude Agent SDK через OAuth Max‑подписку.
 
@@ -34,6 +34,8 @@ UI открывается на `http://VM:8080`.
 - `docs/DEVELOPMENT.md` — как разрабатывать.
 
 ## Changelog
+
+- `v2.5.0` — Phase F (F1+F2+F3) — содержательное наполнение трёх первых вкладок: Профиль и структура (карточка + дерево юнитов), Подбор (KPI + chip-row статусов + таблица вакансий с раскрытием воронки кандидатов), Цели (KPI + карточки целей с progress bar и KR). Lazy-load на активацию таба, единый dispatch RENDERERS[name].
 
 - `v2.4.1` — Phase E2 — persistent footer-dock «Спросите Пульса» во всех не-Pulse вкладках, slide-up overlay со стримом из /api/chat/stream (SSE), кнопка «Открыть в Пульсе» делает handoff в iframe через ?q=. Body[data-active-tab] определяет видимость dock.
 

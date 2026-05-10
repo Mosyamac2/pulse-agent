@@ -383,6 +383,334 @@
     /* When overlay is up, hide the dock to avoid double composers. */
     .overlay[data-open="true"] ~ .dock { display: none !important; }
 
+    /* ─── Tab content scaffolding (F1+F2+F3 onwards) ─────────── */
+    .tab-content {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 1.4rem 1.6rem 4.5rem;
+    }
+    .tab-h1 {
+      font-family: var(--p-font-display);
+      font-size: 1.6rem;
+      font-weight: 600;
+      margin: 0 0 0.4rem;
+    }
+    .tab-sub {
+      color: var(--p-fg-soft);
+      font-size: 0.9rem;
+      margin: 0 0 1.4rem;
+    }
+
+    /* KPI strip */
+    .kpi-strip {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 0.8rem;
+      margin-bottom: 1.4rem;
+    }
+    .kpi {
+      background: var(--p-surface);
+      border: 1px solid var(--p-border-soft);
+      border-radius: var(--p-r);
+      padding: 0.95rem 1rem;
+    }
+    .kpi-label {
+      color: var(--p-fg-soft);
+      font-size: 0.78rem;
+      letter-spacing: 0.02em;
+      text-transform: lowercase;
+      margin-bottom: 0.3rem;
+    }
+    .kpi-value {
+      font-family: var(--p-font-display);
+      font-size: 1.7rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--p-fg);
+    }
+    .kpi-foot {
+      color: var(--p-fg-soft);
+      font-size: 0.75rem;
+      margin-top: 0.25rem;
+    }
+
+    /* Filter chip row */
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-bottom: 1rem;
+    }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.32rem 0.7rem;
+      border-radius: 999px;
+      background: var(--p-surface);
+      border: 1px solid var(--p-border-soft);
+      color: var(--p-fg-muted);
+      font-size: 0.83rem;
+      cursor: pointer;
+      user-select: none;
+    }
+    .chip:hover { background: var(--p-tint-2); }
+    .chip[aria-pressed="true"] {
+      background: var(--p-fg);
+      color: var(--p-bg);
+      border-color: var(--p-fg);
+    }
+    .chip .chip-count {
+      font-family: var(--p-font-mono);
+      font-size: 0.78rem;
+      color: var(--p-fg-soft);
+    }
+    .chip[aria-pressed="true"] .chip-count { color: var(--p-bg); opacity: 0.7; }
+
+    /* Tables */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--p-bg);
+      border-radius: var(--p-r);
+      overflow: hidden;
+      box-shadow: var(--p-shadow-sm);
+      border: 1px solid var(--p-border-soft);
+    }
+    .data-table th, .data-table td {
+      text-align: left;
+      padding: 0.75rem 0.95rem;
+      border-bottom: 1px solid var(--p-border-soft);
+      font-size: 0.9rem;
+      vertical-align: top;
+    }
+    .data-table th {
+      color: var(--p-fg-soft);
+      font-size: 0.78rem;
+      font-weight: 500;
+      text-transform: lowercase;
+      background: var(--p-surface);
+    }
+    .data-table tr:last-child td { border-bottom: 0; }
+    .data-table tr.expandable { cursor: pointer; }
+    .data-table tr.expandable:hover td { background: var(--p-tint-2); }
+    .data-table .name-cell { font-weight: 500; color: var(--p-fg); }
+    .data-table .muted { color: var(--p-fg-soft); font-size: 0.85rem; }
+    .data-table .pill {
+      display: inline-block;
+      padding: 0.18rem 0.55rem;
+      border-radius: 999px;
+      font-size: 0.74rem;
+      font-weight: 500;
+    }
+    .pill.pill-good { background: #e8f5ec; color: var(--p-good); }
+    .pill.pill-bad { background: #fbe4e8; color: var(--p-bad); }
+    .pill.pill-neutral { background: var(--p-tint-2); color: var(--p-fg-muted); }
+    @media (prefers-color-scheme: dark) {
+      .pill.pill-good { background: rgba(89,193,114,0.18); }
+      .pill.pill-bad { background: rgba(255,87,114,0.18); }
+    }
+
+    /* Funnel detail row */
+    .funnel-row {
+      background: var(--p-tint);
+    }
+    .funnel-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 0.6rem;
+      padding: 0.7rem 0.95rem 1rem;
+    }
+    .funnel-stage {
+      background: var(--p-bg);
+      border: 1px solid var(--p-border-soft);
+      border-radius: var(--p-r-sm);
+      padding: 0.5rem 0.7rem;
+    }
+    .funnel-stage h4 {
+      margin: 0 0 0.3rem;
+      font-size: 0.78rem;
+      color: var(--p-fg-soft);
+      text-transform: lowercase;
+      letter-spacing: 0.02em;
+      font-weight: 500;
+    }
+    .funnel-stage .fcand {
+      font-size: 0.82rem;
+      color: var(--p-fg);
+      margin: 0.15rem 0;
+    }
+
+    /* Goals cards */
+    .goal-card {
+      background: var(--p-bg);
+      border: 1px solid var(--p-border-soft);
+      border-radius: var(--p-r);
+      padding: 0.85rem 1rem;
+      margin-bottom: 0.6rem;
+      box-shadow: var(--p-shadow-sm);
+    }
+    .goal-head {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      gap: 0.8rem;
+      margin-bottom: 0.45rem;
+    }
+    .goal-head h3 {
+      margin: 0;
+      font-size: 0.98rem;
+      font-weight: 600;
+    }
+    .goal-meta {
+      color: var(--p-fg-soft);
+      font-size: 0.78rem;
+    }
+    .goal-bar-wrap {
+      height: 6px;
+      background: var(--p-tint-2);
+      border-radius: 3px;
+      overflow: hidden;
+      margin: 0.5rem 0 0.35rem;
+    }
+    .goal-bar {
+      height: 100%;
+      background: var(--p-accent);
+      border-radius: 3px;
+      transition: width 0.3s ease;
+    }
+    .goal-bar.bar-overdue { background: var(--p-bad); }
+    .goal-bar.bar-done { background: var(--p-good); }
+    .goal-foot {
+      display: flex; justify-content: space-between;
+      font-size: 0.78rem;
+      color: var(--p-fg-soft);
+    }
+    .goal-kr {
+      margin-top: 0.5rem;
+      padding-top: 0.45rem;
+      border-top: 1px dashed var(--p-border-soft);
+      font-size: 0.83rem;
+      color: var(--p-fg-muted);
+    }
+    .goal-kr-row {
+      display: flex; justify-content: space-between; padding: 0.15rem 0;
+    }
+
+    /* Profile card layout */
+    .profile-grid {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 1.4rem;
+    }
+    @media (max-width: 980px) {
+      .profile-grid { grid-template-columns: 1fr; }
+    }
+    .profile-card {
+      background: linear-gradient(135deg, #e6efff 0%, #d1e0ff 100%);
+      border-radius: var(--p-r-lg);
+      padding: 1.4rem 1.6rem;
+      color: #1a2742;
+    }
+    @media (prefers-color-scheme: dark) {
+      .profile-card {
+        background: linear-gradient(135deg, #1c2745 0%, #1a2640 100%);
+        color: var(--p-fg);
+      }
+    }
+    .profile-name {
+      font-family: var(--p-font-display);
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin: 0 0 0.2rem;
+    }
+    .profile-position {
+      font-size: 0.94rem;
+      opacity: 0.85;
+      margin-bottom: 0.9rem;
+    }
+    .profile-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.8rem 1.2rem;
+      font-size: 0.86rem;
+    }
+    .profile-grid-2 dt {
+      color: rgba(0,0,0,0.55);
+      margin-bottom: 0.15rem;
+      font-size: 0.74rem;
+      text-transform: lowercase;
+      letter-spacing: 0.02em;
+    }
+    @media (prefers-color-scheme: dark) {
+      .profile-grid-2 dt { color: var(--p-fg-soft); }
+    }
+    .profile-grid-2 dd {
+      margin: 0 0 0.5rem;
+      font-weight: 500;
+    }
+
+    /* Org tree */
+    .org-tree { padding: 0.6rem 0; }
+    .org-root {
+      background: var(--p-surface);
+      border: 1px solid var(--p-border-soft);
+      border-radius: var(--p-r);
+      padding: 0.95rem 1.1rem;
+      margin-bottom: 0.6rem;
+    }
+    .org-root h3 { margin: 0 0 0.3rem; font-size: 1.05rem; }
+    .org-root .org-meta { color: var(--p-fg-soft); font-size: 0.82rem; display: flex; gap: 1rem; flex-wrap: wrap; }
+    .org-children {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 0.5rem;
+    }
+    .org-child {
+      background: var(--p-bg);
+      border: 1px solid var(--p-border-soft);
+      border-radius: var(--p-r);
+      padding: 0.7rem 0.85rem;
+      font-size: 0.86rem;
+    }
+    .org-child h4 { margin: 0 0 0.25rem; font-size: 0.92rem; font-weight: 600; }
+    .org-child small { color: var(--p-fg-soft); }
+    .org-child .leader { margin-top: 0.4rem; color: var(--p-fg-muted); font-size: 0.8rem; }
+
+    /* Chat presets aside */
+    .presets {
+      margin-top: 1.6rem;
+      padding: 1rem 1.2rem;
+      background: var(--p-tint);
+      border: 1px dashed var(--p-tint-3);
+      border-radius: var(--p-r);
+    }
+    .presets h3 {
+      margin: 0 0 0.5rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--p-fg);
+    }
+    .presets-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+    .preset-link {
+      color: var(--p-accent-deep);
+      text-decoration: none;
+      font-size: 0.92rem;
+      padding: 0.4rem 0.6rem;
+      background: var(--p-bg);
+      border-radius: var(--p-r-sm);
+      border: 1px solid var(--p-border-soft);
+      display: inline-block;
+    }
+    .preset-link:hover {
+      background: var(--p-tint-2);
+      border-color: var(--p-tint-3);
+    }
+
+    .skel { color: var(--p-fg-faint); font-style: italic; padding: 1rem 0; }
+
     /* Mobile */
     @media (max-width: 720px) {
       .app-layout { grid-template-columns: var(--rail-width) 1fr; }
@@ -495,39 +823,26 @@
 
     <!-- Other tabs: placeholders for Phase F/G/H -->
     <section class="tab-pane" data-tab="profile">
-      <div class="placeholder">
-        <h1>Профиль и структура</h1>
-        <p>Здесь будет профиль сотрудника и навигация по структуре компании. Тонкая read-only обёртка над <code>GET /api/hcm/profile/{emp_id}</code> и <code>GET /api/hcm/structure</code>.</p>
-        <p>Любое действие из этой панели — переход в чат с предзаполненным вопросом. Например, чтобы развернуть состояние сотрудника, я загляну в данные через те же тулы, что и обычно.</p>
-        <a class="ask-pulse-btn" href="?tab=pulse&q=Покажи%20мне%20состояние%20Филатовой%20Елены%20%E2%80%94%20профиль%2C%20риски%2C%20peer-group">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-          Спросить Пульса о профиле
-        </a>
-        <div class="ph-hint">📦 Backend готов: <code>/api/hcm/profile/&lt;emp_id&gt;</code>, <code>/api/hcm/structure</code>. Содержательная панель появится в Phase F1.</div>
+      <div class="tab-content" data-loaded="false" data-renderer="profile">
+        <h1 class="tab-h1">Профиль и структура</h1>
+        <p class="tab-sub">Один сотрудник + дерево юнитов. Карточка читает <code>/api/hcm/profile/{emp_id}</code>, дерево — <code>/api/hcm/structure</code>.</p>
+        <div class="skel">Загружаю карточку…</div>
       </div>
     </section>
 
     <section class="tab-pane" data-tab="recruit">
-      <div class="placeholder">
-        <h1>Подбор и адаптация</h1>
-        <p>23 вакансии в системе. KPI: 5 в работе, 3 на согласовании, 2 приостановленных, 10 закрытых, 3 черновика. Полная воронка кандидатов прячется в <code>/api/hcm/recruit/vacancies/{id}</code>.</p>
-        <a class="ask-pulse-btn" href="?tab=pulse&q=Кто%20из%20открытых%20вакансий%20висит%20дольше%20нормы%3F%20Дай%20краткий%20разбор%20по%20нанимающим%20руководителям.">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-          Спросить про вакансии
-        </a>
-        <div class="ph-hint">📦 Backend готов. Содержательная панель — Phase F2.</div>
+      <div class="tab-content" data-loaded="false" data-renderer="recruit">
+        <h1 class="tab-h1">Подбор и адаптация</h1>
+        <p class="tab-sub">Открытые вакансии и воронки кандидатов. Кликом на строку — раскрытие воронки.</p>
+        <div class="skel">Загружаю сводку…</div>
       </div>
     </section>
 
     <section class="tab-pane" data-tab="goals">
-      <div class="placeholder">
-        <h1>Цели и задачи</h1>
-        <p>1041 целей по 92 активным сотрудникам × 3 периодам. Вес каждой цели нормирован, прогресс архетип-зависимый.</p>
-        <a class="ask-pulse-btn" href="?tab=pulse&q=Какие%20из%20моих%20целей%20самые%20рисковые%20с%20точки%20зрения%20дедлайнов%3F">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-          Спросить про мои цели
-        </a>
-        <div class="ph-hint">📦 Backend готов. Карточки целей — Phase F3.</div>
+      <div class="tab-content" data-loaded="false" data-renderer="goals">
+        <h1 class="tab-h1">Цели и задачи</h1>
+        <p class="tab-sub">Сводка по компании за период (по умолчанию 2026-Q2) + список целей одного сотрудника с KR.</p>
+        <div class="skel">Загружаю сводку…</div>
       </div>
     </section>
 
@@ -854,6 +1169,358 @@
     activateTab(readTab());
     syncPulseFrameQuery();
   });
+
+  // ─── Lazy tab content renderers (F1+F2+F3) ────────────────────────────
+  const RENDERERS = {};
+  let DEFAULT_EMP_ID = "emp_001";  // synthetic "current user"
+
+  // helpers
+  function el(html) {
+    const t = document.createElement('template');
+    t.innerHTML = html.trim();
+    return t.content.firstElementChild;
+  }
+  function setSkel(container, msg = "Загружаю…") {
+    container.innerHTML = `<div class="skel">${escapeHTML(msg)}</div>`;
+  }
+  function fmtPct(v) { return Math.round((+v || 0) * 100) + "%"; }
+  function fmtDays(v) { return v == null ? "—" : Math.round(v) + " дн."; }
+  function presetLink(q) {
+    return `<a class="preset-link" href="?tab=pulse&q=${encodeURIComponent(q)}">«${escapeHTML(q)}»</a>`;
+  }
+
+  // ─── Renderer: profile (F1) ────────────────────────────────────────────
+  RENDERERS.profile = async function(container) {
+    setSkel(container, "Загружаю профиль и структуру…");
+    let prof, structure;
+    try {
+      [prof, structure] = await Promise.all([
+        fetch(`/api/hcm/profile/${encodeURIComponent(DEFAULT_EMP_ID)}`).then(r => r.json()),
+        fetch('/api/hcm/structure').then(r => r.json()),
+      ]);
+    } catch (e) {
+      container.innerHTML = `<div class="skel">Не удалось получить данные: ${escapeHTML(e.message)}</div>`;
+      return;
+    }
+    if (!prof || !prof.employee) {
+      container.innerHTML = `<div class="skel">Сотрудник ${escapeHTML(DEFAULT_EMP_ID)} не найден.</div>`;
+      return;
+    }
+    const e = prof.employee;
+    const p = prof.position || {};
+    const u = prof.unit || {};
+    const fam = prof.family || {};
+    const pr = (prof.performance_reviews || [])[0];
+    const peer = prof.peer_summary || {};
+    const cs = prof.course_summary || {};
+
+    const profileCard = `
+      <div class="profile-card">
+        <div class="profile-name">${escapeHTML(e.full_name)}</div>
+        <div class="profile-position">${escapeHTML(p.title || '—')} · грейд ${e.grade_level} · ${escapeHTML(u.name || '—')}</div>
+        <dl class="profile-grid-2">
+          <div><dt>статус</dt><dd>${escapeHTML(e.status)}</dd></div>
+          <div><dt>дата найма</dt><dd>${escapeHTML(e.hire_date || '—')}</dd></div>
+          <div><dt>город</dt><dd>${escapeHTML(e.city || '—')}</dd></div>
+          <div><dt>образование</dt><dd>${escapeHTML(e.education || '—')}</dd></div>
+          <div><dt>семья</dt><dd>${escapeHTML(fam.marital_status || '—')}, ${fam.kids_count || 0} детей</dd></div>
+          <div><dt>архетип (внутр.)</dt><dd>${escapeHTML(e.archetype || '—')}</dd></div>
+          <div><dt>последняя оценка</dt><dd>${pr ? (pr.score + ' за ' + pr.period) : '—'}</dd></div>
+          <div><dt>peer-сентимент</dt><dd>${peer.avg_sentiment != null ? peer.avg_sentiment : '—'} (${peer.n || 0} реплик)</dd></div>
+          <div><dt>курсы</dt><dd>${cs.completed || 0} ✓ · ${cs.in_progress || 0} в процессе</dd></div>
+        </dl>
+      </div>`;
+
+    const root = structure.root || {};
+    const children = structure.children || [];
+    const orgTree = `
+      <div class="org-tree">
+        <div class="org-root">
+          <h3>${escapeHTML(root.name || '—')}</h3>
+          <div class="org-meta">
+            <span>всего людей: <b>${root.headcount || 0}</b></span>
+            <span>открытые вакансии: <b>${root.open_vacancies || 0}</b></span>
+            ${root.leader ? `<span>руководитель: <b>${escapeHTML(root.leader.full_name)}</b></span>` : ''}
+          </div>
+        </div>
+        <div class="org-children">
+          ${children.map(c => `
+            <div class="org-child">
+              <h4>${escapeHTML(c.name)}</h4>
+              <small>уровень ${c.level} · ${c.headcount || 0} чел.${c.open_vacancies ? ` · ${c.open_vacancies} вак.` : ''}</small>
+              ${c.leader ? `<div class="leader">руководитель: ${escapeHTML(c.leader.full_name)}</div>` : ''}
+            </div>
+          `).join('')}
+        </div>
+      </div>`;
+
+    const presets = [
+      `Расскажи про ${e.full_name} — состояние, риски, peer-group`,
+      `Кто из подразделения «${u.name || ''}» ближе всего к выгоранию?`,
+      `Сравни ${e.full_name} с peer-group: где сильнее, где провисает?`,
+    ];
+
+    container.innerHTML = `
+      <h1 class="tab-h1">Профиль и структура</h1>
+      <p class="tab-sub">Сотрудник по умолчанию: ${escapeHTML(e.full_name)}. Структура — корень + первый уровень юнитов.</p>
+      <div class="profile-grid">
+        ${profileCard}
+        ${orgTree}
+      </div>
+      <aside class="presets">
+        <h3>📎 Что мог бы спросить Пульс по этому профилю</h3>
+        <div class="presets-list">${presets.map(presetLink).join('')}</div>
+      </aside>`;
+  };
+
+  // ─── Renderer: recruit (F2) ───────────────────────────────────────────
+  const RECRUIT_STATUSES = [
+    {key: 'draft',     label: 'черновики',       countKey: 'draft_count'},
+    {key: 'in_review', label: 'на согласовании', countKey: 'in_review_count'},
+    {key: 'active',    label: 'в работе',        countKey: 'active_count'},
+    {key: 'paused',    label: 'приостановленные',countKey: 'paused_count'},
+    {key: 'closed',    label: 'закрытые',        countKey: 'closed_count'},
+  ];
+  const RECRUIT_FUNNEL_STAGES = [
+    'applied','screening','tech','manager','offer','hired','rejected'
+  ];
+
+  RENDERERS.recruit = async function(container) {
+    setSkel(container, "Загружаю сводку по подбору…");
+    let summary;
+    try {
+      summary = await fetch('/api/hcm/recruit/summary').then(r => r.json());
+    } catch (e) {
+      container.innerHTML = `<div class="skel">Не удалось загрузить: ${escapeHTML(e.message)}</div>`;
+      return;
+    }
+
+    const kpiHTML = `
+      <div class="kpi-strip">
+        <div class="kpi"><div class="kpi-label">в работе</div><div class="kpi-value">${summary.active_count}</div><div class="kpi-foot">активные вакансии</div></div>
+        <div class="kpi"><div class="kpi-label">на согласовании</div><div class="kpi-value">${summary.in_review_count}</div><div class="kpi-foot">черновиков ${summary.draft_count}</div></div>
+        <div class="kpi"><div class="kpi-label">кандидаты в воронке</div><div class="kpi-value">${summary.candidates_in_pipeline}</div></div>
+        <div class="kpi"><div class="kpi-label">время до закрытия</div><div class="kpi-value">${fmtDays(summary.avg_time_to_close_days)}</div><div class="kpi-foot">средн. по закрытым</div></div>
+      </div>
+    `;
+
+    const chipsHTML = `
+      <div class="chip-row" id="recruit-chips">
+        ${RECRUIT_STATUSES.map(s =>
+          `<button class="chip" data-status="${s.key}" aria-pressed="${s.key==='active'?'true':'false'}">${s.label} <span class="chip-count">${summary[s.countKey] || 0}</span></button>`
+        ).join('')}
+      </div>
+    `;
+
+    const presetsHTML = `
+      <aside class="presets">
+        <h3>📎 Что спросить Пульса про подбор</h3>
+        <div class="presets-list">
+          ${presetLink('Кто из открытых вакансий висит дольше нормы? Дай разбор по нанимающим руководителям.')}
+          ${presetLink('У кого из менеджеров самая высокая нагрузка по подбору?')}
+          ${presetLink('Какие позиции системно сложно закрыть и почему?')}
+        </div>
+      </aside>
+    `;
+
+    container.innerHTML = `
+      <h1 class="tab-h1">Подбор и адаптация</h1>
+      <p class="tab-sub">23 вакансии · 110 кандидатов в системе. Click по строке — раскрытие воронки.</p>
+      ${kpiHTML}
+      ${chipsHTML}
+      <div id="recruit-table-wrap">${`<div class="skel">Подгружаю «в работе»…</div>`}</div>
+      ${presetsHTML}
+    `;
+
+    container.querySelectorAll('#recruit-chips .chip').forEach(c => {
+      c.addEventListener('click', () => {
+        container.querySelectorAll('#recruit-chips .chip').forEach(x => x.setAttribute('aria-pressed','false'));
+        c.setAttribute('aria-pressed','true');
+        loadRecruitTable(container, c.dataset.status);
+      });
+    });
+
+    loadRecruitTable(container, 'active');
+  };
+
+  async function loadRecruitTable(container, status) {
+    const wrap = container.querySelector('#recruit-table-wrap');
+    setSkel(wrap, `Загружаю вакансии (${status})…`);
+    let items = [];
+    try {
+      items = (await fetch(`/api/hcm/recruit/vacancies?status=${encodeURIComponent(status)}`)
+                .then(r => r.json())).items;
+    } catch (e) {
+      wrap.innerHTML = `<div class="skel">Ошибка: ${escapeHTML(e.message)}</div>`;
+      return;
+    }
+    if (!items.length) {
+      wrap.innerHTML = `<div class="skel">Нет вакансий со статусом «${escapeHTML(status)}».</div>`;
+      return;
+    }
+    wrap.innerHTML = `
+      <table class="data-table">
+        <thead><tr>
+          <th>вакансия</th><th>срок</th><th>нанимающий руководитель</th>
+          <th>рекрутер</th><th>кандидаты</th>
+        </tr></thead>
+        <tbody>
+          ${items.map(v => `
+            <tr class="expandable" data-vid="${escapeHTML(v.vacancy_id)}">
+              <td>
+                <div class="name-cell">${escapeHTML(v.title)}</div>
+                <div class="muted">${escapeHTML(v.unit_name || '')} · ${escapeHTML(v.type)}</div>
+              </td>
+              <td>
+                <div>${v.days_open} дн.</div>
+                <div class="muted">с ${escapeHTML(v.opened_date || '—')}</div>
+              </td>
+              <td>${escapeHTML(v.hiring_manager_name || '—')}</td>
+              <td>${escapeHTML(v.recruiter_name || '<span class="muted">не назначен</span>')}</td>
+              <td>${v.candidates_count} <span class="muted">кандидата</span></td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+    wrap.querySelectorAll('tr.expandable').forEach(row => {
+      row.addEventListener('click', () => toggleVacancyDetail(row));
+    });
+  }
+
+  async function toggleVacancyDetail(row) {
+    const vid = row.dataset.vid;
+    const next = row.nextElementSibling;
+    if (next && next.classList.contains('funnel-row') && next.dataset.for === vid) {
+      next.remove();
+      return;
+    }
+    const tr = document.createElement('tr');
+    tr.className = 'funnel-row';
+    tr.dataset.for = vid;
+    tr.innerHTML = `<td colspan="5"><div class="skel">Загружаю воронку…</div></td>`;
+    row.after(tr);
+    let detail;
+    try {
+      detail = await fetch(`/api/hcm/recruit/vacancies/${encodeURIComponent(vid)}`).then(r => r.json());
+    } catch (e) {
+      tr.querySelector('td').innerHTML = `Ошибка: ${escapeHTML(e.message)}`;
+      return;
+    }
+    const stages = detail.funnel || {};
+    tr.querySelector('td').innerHTML = `
+      <div class="funnel-grid">
+        ${RECRUIT_FUNNEL_STAGES.map(s => {
+          const list = stages[s] || [];
+          if (!list.length) return '';
+          return `
+            <div class="funnel-stage">
+              <h4>${s} · ${list.length}</h4>
+              ${list.slice(0,4).map(c => `<div class="fcand">${escapeHTML(c.full_name)} <span class="muted">· ${escapeHTML(c.source)} · ${Math.round(c.score)}</span></div>`).join('')}
+              ${list.length > 4 ? `<div class="muted">…и ещё ${list.length - 4}</div>` : ''}
+            </div>
+          `;
+        }).join('')}
+      </div>`;
+  }
+
+  // ─── Renderer: goals (F3) ─────────────────────────────────────────────
+  RENDERERS.goals = async function(container) {
+    setSkel(container, "Загружаю сводку по целям…");
+    const period = "2026-Q2";
+
+    let companyS, mySummary, myGoals;
+    try {
+      [companyS, mySummary, myGoals] = await Promise.all([
+        fetch(`/api/hcm/goals/summary?period=${period}`).then(r => r.json()),
+        fetch(`/api/hcm/goals/summary?emp_id=${DEFAULT_EMP_ID}&period=${period}`).then(r => r.json()),
+        fetch(`/api/hcm/goals/my?emp_id=${DEFAULT_EMP_ID}&period=${period}`).then(r => r.json()),
+      ]);
+    } catch (e) {
+      container.innerHTML = `<div class="skel">Не удалось получить данные: ${escapeHTML(e.message)}</div>`;
+      return;
+    }
+
+    const items = (myGoals && myGoals.items) || [];
+
+    const kpiHTML = `
+      <div class="kpi-strip">
+        <div class="kpi"><div class="kpi-label">мои цели · ${period}</div><div class="kpi-value">${mySummary.goals_total}</div><div class="kpi-foot">accepted ${mySummary.accepted}, proposed ${mySummary.proposed}</div></div>
+        <div class="kpi"><div class="kpi-label">прогресс</div><div class="kpi-value">${fmtPct(mySummary.avg_progress)}</div><div class="kpi-foot">в работе ${mySummary.in_progress}</div></div>
+        <div class="kpi"><div class="kpi-label">просрочено</div><div class="kpi-value" style="color:${mySummary.overdue ? 'var(--p-bad)' : 'var(--p-good)'}">${mySummary.overdue}</div></div>
+        <div class="kpi"><div class="kpi-label">по компании</div><div class="kpi-value">${companyS.goals_total}</div><div class="kpi-foot">средн. прогресс ${fmtPct(companyS.avg_progress)}</div></div>
+      </div>
+    `;
+
+    const goalsHTML = items.length ? items.map(g => {
+      const cls = g.is_overdue ? 'bar-overdue' : (g.status === 'done' ? 'bar-done' : '');
+      const krBlock = (g.key_results || []).length ? `
+        <div class="goal-kr">
+          ${g.key_results.map(kr => `
+            <div class="goal-kr-row">
+              <span>${escapeHTML(kr.title)}</span>
+              <span>${kr.current_value}/${kr.target_value} ${escapeHTML(kr.metric_unit || '')}</span>
+            </div>
+          `).join('')}
+        </div>` : '';
+      return `
+        <div class="goal-card">
+          <div class="goal-head">
+            <h3>${escapeHTML(g.title)}</h3>
+            <span class="goal-meta">вес ${(g.weight || 0).toFixed(2)} · ${escapeHTML(g.status)}</span>
+          </div>
+          <div class="goal-bar-wrap"><div class="goal-bar ${cls}" style="width:${Math.round((g.progress_pct || 0) * 100)}%"></div></div>
+          <div class="goal-foot">
+            <span>${fmtPct(g.progress_pct)}${g.is_overdue ? ' · просрочена' : ''}</span>
+            <span>до ${escapeHTML(g.due_date || '—')}</span>
+          </div>
+          ${krBlock}
+        </div>
+      `;
+    }).join('') : `<div class="skel">У сотрудника ${DEFAULT_EMP_ID} нет целей за ${period}.</div>`;
+
+    const presetsHTML = `
+      <aside class="presets">
+        <h3>📎 Что спросить Пульса про мои цели</h3>
+        <div class="presets-list">
+          ${presetLink('Какие из моих целей самые рисковые с точки зрения дедлайнов?')}
+          ${presetLink('У кого из моих подчинённых перегрузка по KR?')}
+          ${presetLink('Помоги сформулировать цель Q3 для моей текущей роли.')}
+        </div>
+      </aside>
+    `;
+
+    container.innerHTML = `
+      <h1 class="tab-h1">Цели и задачи</h1>
+      <p class="tab-sub">Период ${period}. Сотрудник по умолчанию: ${DEFAULT_EMP_ID}.</p>
+      ${kpiHTML}
+      <h3 style="margin:1.6rem 0 0.6rem;font-family:var(--p-font-display);font-size:1.05rem;">Мои цели</h3>
+      ${goalsHTML}
+      ${presetsHTML}
+    `;
+  };
+
+  // ─── Tab content dispatch ────────────────────────────────────────────
+  function loadTabContent(tab) {
+    const pane = document.querySelector(`.tab-pane[data-tab="${tab}"]`);
+    if (!pane) return;
+    const tc = pane.querySelector('.tab-content[data-renderer]');
+    if (!tc || tc.dataset.loaded === "true") return;
+    const renderer = RENDERERS[tc.dataset.renderer];
+    if (!renderer) return;
+    tc.dataset.loaded = "true";
+    renderer(tc).catch(err => {
+      tc.dataset.loaded = "false";
+      tc.innerHTML = `<div class="skel">Ошибка отрисовки: ${escapeHTML(err.message)}</div>`;
+    });
+  }
+
+  // Hook into activateTab to lazy-load content.
+  const origActivateTab = activateTab;
+  activateTab = function(tab) {
+    origActivateTab(tab);
+    loadTabContent(tab);
+  };
 
   // Initial paint
   activateTab(readTab());
