@@ -247,10 +247,147 @@
     .ask-pulse-btn:hover { background: var(--p-accent-deep); }
     .ask-pulse-btn svg { width: 14px; height: 14px; }
 
+    /* ─── Ask-Pulse dock (footer in non-Pulse tabs) ──────────── */
+    .dock {
+      position: fixed;
+      left: var(--rail-width);
+      right: 0;
+      bottom: 0;
+      background: var(--p-bg);
+      border-top: 1px solid var(--p-border);
+      padding: 0.75rem 1.4rem;
+      display: none; /* shown only when non-Pulse tab is active */
+      z-index: 8;
+      box-shadow: 0 -4px 14px rgba(0, 0, 0, 0.04);
+    }
+    body[data-active-tab="pulse"] .dock { display: none; }
+    body:not([data-active-tab="pulse"]) .dock { display: flex; gap: 0.6rem; align-items: flex-end; }
+    .dock-input {
+      flex: 1;
+      min-height: 38px; max-height: 110px;
+      padding: 0.55rem 0.85rem;
+      font-family: var(--p-font-body);
+      font-size: 0.95rem;
+      background: var(--p-surface);
+      border: 1px solid var(--p-border);
+      border-radius: var(--p-r);
+      color: var(--p-fg);
+      resize: none;
+      line-height: 1.4;
+      outline: 0;
+    }
+    .dock-input:focus {
+      border-color: var(--p-accent-soft);
+      background: var(--p-bg);
+      box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.10);
+    }
+    .dock-send {
+      padding: 0.55rem 1rem;
+      background: var(--p-accent);
+      color: white;
+      font-family: var(--p-font-body);
+      font-weight: 500;
+      border: 0;
+      border-radius: var(--p-r);
+      cursor: pointer;
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      transition: background-color 0.12s;
+    }
+    .dock-send:hover { background: var(--p-accent-deep); }
+    .dock-send:disabled { background: var(--p-fg-faint); cursor: wait; }
+    .dock-hint {
+      font-size: 0.76rem;
+      color: var(--p-fg-soft);
+      align-self: center;
+      margin-right: 0.25rem;
+      max-width: 260px;
+    }
+
+    /* ─── Slide-up overlay for the dock answer ───────────────── */
+    .overlay {
+      position: fixed;
+      left: var(--rail-width);
+      right: 0;
+      bottom: 0;
+      top: auto;
+      max-height: 70vh;
+      min-height: 240px;
+      background: var(--p-bg);
+      border-top: 1px solid var(--p-border);
+      box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.12);
+      transform: translateY(100%);
+      transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+      z-index: 9;
+      display: flex;
+      flex-direction: column;
+    }
+    .overlay[data-open="true"] { transform: translateY(0); }
+    .overlay-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.75rem 1.4rem;
+      border-bottom: 1px solid var(--p-border-soft);
+    }
+    .overlay-title {
+      font-family: var(--p-font-display);
+      font-weight: 600;
+      font-size: 1rem;
+    }
+    .overlay-title span { color: var(--p-fg-soft); font-weight: 400; font-size: 0.85rem; margin-left: 0.4rem; }
+    .overlay-actions { display: flex; gap: 0.5rem; align-items: center; }
+    .overlay-btn {
+      padding: 0.4rem 0.8rem;
+      border-radius: var(--p-r);
+      border: 1px solid var(--p-border);
+      background: var(--p-bg);
+      color: var(--p-fg);
+      font-family: var(--p-font-body);
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+    .overlay-btn:hover { background: var(--p-tint-2); }
+    .overlay-btn.primary {
+      background: var(--p-accent); color: white; border-color: var(--p-accent);
+    }
+    .overlay-btn.primary:hover { background: var(--p-accent-deep); }
+    .overlay-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.1rem 1.4rem 1.4rem;
+      font-size: 0.95rem;
+      line-height: 1.55;
+    }
+    .overlay-q {
+      color: var(--p-fg-soft);
+      font-size: 0.85rem;
+      margin-bottom: 0.6rem;
+      padding-left: 0.7rem;
+      border-left: 2px solid var(--p-tint-3);
+    }
+    .overlay-status {
+      color: var(--p-fg-soft);
+      font-size: 0.85rem;
+      font-style: italic;
+      margin-bottom: 0.4rem;
+    }
+    .overlay-text { white-space: pre-wrap; word-wrap: break-word; }
+    .overlay-tool {
+      background: var(--p-tint-2);
+      border-radius: var(--p-r-sm);
+      padding: 0.4rem 0.65rem;
+      margin: 0.35rem 0;
+      font-family: var(--p-font-mono);
+      font-size: 0.8rem;
+      color: var(--p-fg-muted);
+    }
+
+    /* When overlay is up, hide the dock to avoid double composers. */
+    .overlay[data-open="true"] ~ .dock { display: none !important; }
+
     /* Mobile */
     @media (max-width: 720px) {
       .app-layout { grid-template-columns: var(--rail-width) 1fr; }
       .placeholder { margin: 1rem; padding: 1.2rem; }
+      .dock, .overlay { left: 0; }
     }
   </style>
 </head>
@@ -471,6 +608,35 @@
     </section>
 
   </main>
+
+  <!-- ─── Slide-up overlay for the dock answer (shared across tabs) ─── -->
+  <aside class="overlay" id="overlay" aria-hidden="true">
+    <div class="overlay-head">
+      <div class="overlay-title">Пульс отвечает<span id="overlay-tab-label"></span></div>
+      <div class="overlay-actions">
+        <button class="overlay-btn primary" id="overlay-open-pulse" type="button">
+          Открыть в Пульсе →
+        </button>
+        <button class="overlay-btn" id="overlay-close" type="button">Свернуть</button>
+      </div>
+    </div>
+    <div class="overlay-body">
+      <div class="overlay-q" id="overlay-q"></div>
+      <div class="overlay-status" id="overlay-status">…</div>
+      <div class="overlay-text" id="overlay-text"></div>
+    </div>
+  </aside>
+
+  <!-- ─── Persistent dock «Спросите Пульса» (visible only on non-pulse tabs) ─── -->
+  <div class="dock" id="dock">
+    <div class="dock-hint">Спросите Пульса об этом — контекст вкладки прилетит в подсказку.</div>
+    <textarea class="dock-input" id="dock-input" rows="1"
+              placeholder="Спросите Пульса …"></textarea>
+    <button class="dock-send" id="dock-send" type="button">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      Отправить
+    </button>
+  </div>
 </div>
 
 <script>
@@ -508,7 +674,142 @@
       `главная / <b>${TAB_LABELS[tab]}</b>`;
 
     document.title = `Пульс — ${TAB_LABELS[tab]}`;
+    document.body.dataset.activeTab = tab;
+
+    // close overlay when navigating
+    closeOverlay();
   }
+
+  // ─── Overlay: stream from /api/chat/stream and render into slide-up panel ──
+  const overlayEl       = document.getElementById('overlay');
+  const overlayQ        = document.getElementById('overlay-q');
+  const overlayStatus   = document.getElementById('overlay-status');
+  const overlayText     = document.getElementById('overlay-text');
+  const overlayTabLabel = document.getElementById('overlay-tab-label');
+  const overlayClose    = document.getElementById('overlay-close');
+  const overlayOpenPulse= document.getElementById('overlay-open-pulse');
+
+  let lastAskedQuestion = null;
+
+  function openOverlay() {
+    overlayEl.dataset.open = "true";
+    overlayEl.setAttribute('aria-hidden', 'false');
+  }
+  function closeOverlay() {
+    overlayEl.dataset.open = "false";
+    overlayEl.setAttribute('aria-hidden', 'true');
+  }
+  overlayClose.addEventListener('click', closeOverlay);
+  overlayOpenPulse.addEventListener('click', () => {
+    if (!lastAskedQuestion) {
+      // Just switch tab.
+      const params = new URLSearchParams(location.search);
+      params.set('tab', 'pulse'); params.delete('q');
+      history.pushState({tab: 'pulse'}, '', `?${params.toString()}`);
+      activateTab('pulse');
+      return;
+    }
+    // Hand off the asked question to the chat iframe via /chat?q=...
+    const params = new URLSearchParams();
+    params.set('tab', 'pulse');
+    params.set('q', lastAskedQuestion);
+    history.pushState({tab: 'pulse'}, '', `?${params.toString()}`);
+    activateTab('pulse');
+    syncPulseFrameQuery();
+  });
+
+  async function streamAsk(question, tabKey) {
+    lastAskedQuestion = question;
+    overlayQ.textContent = question;
+    overlayStatus.textContent = "Пульс готовится отвечать…";
+    overlayText.innerHTML = "";
+    overlayTabLabel.textContent = `· контекст: ${TAB_LABELS[tabKey] || tabKey}`;
+    openOverlay();
+
+    const tagged = `[Контекст вкладки: ${TAB_LABELS[tabKey] || tabKey}]\n\n${question}`;
+    let resp;
+    try {
+      resp = await fetch('/api/chat/stream', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'Accept': 'text/event-stream'},
+        body: JSON.stringify({question: tagged, model: 'sonnet'}),
+      });
+    } catch (e) {
+      overlayStatus.textContent = `Сеть отвалилась: ${e.message}`;
+      return;
+    }
+    if (!resp.ok || !resp.body) {
+      overlayStatus.textContent = `Не получилось дозвониться до агента (${resp.status}).`;
+      return;
+    }
+
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let buffer = "";
+    let textBuf = "";
+    let toolHTML = "";
+
+    while (true) {
+      const {value, done} = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, {stream: true});
+      const frames = buffer.split('\n\n');
+      buffer = frames.pop() || "";
+      for (const frame of frames) {
+        if (!frame.startsWith('data: ')) continue;
+        let ev;
+        try { ev = JSON.parse(frame.slice(6)); } catch { continue; }
+        if (ev.type === 'status') {
+          overlayStatus.textContent = ev.message || "…";
+        } else if (ev.type === 'tool_call') {
+          const name = ev.name || ev.tool || 'tool';
+          toolHTML += `<div class="overlay-tool">→ ${name}${ev.args ? ' ' + JSON.stringify(ev.args).slice(0,140) : ''}</div>`;
+          overlayText.innerHTML = toolHTML + `<div>${escapeHTML(textBuf)}</div>`;
+        } else if (ev.type === 'tool_result') {
+          // Already shown as part of tool_call line; could append a 'done' marker.
+        } else if (ev.type === 'text') {
+          if (ev.text) textBuf += ev.text;
+          overlayText.innerHTML = toolHTML + `<div>${escapeHTML(textBuf)}</div>`;
+          overlayEl.querySelector('.overlay-body').scrollTop = 1e9;
+        } else if (ev.type === 'done') {
+          overlayStatus.textContent = "Готово. Откройте в Пульсе, чтобы продолжить разговор.";
+        } else if (ev.type === 'error') {
+          overlayStatus.textContent = `Ошибка: ${ev.message || 'неизвестная'}`;
+        }
+      }
+    }
+  }
+
+  function escapeHTML(s) {
+    return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+  }
+
+  // ─── Dock wiring ───────────────────────────────────────────────────────
+  const dockInput = document.getElementById('dock-input');
+  const dockSend  = document.getElementById('dock-send');
+
+  async function submitDock() {
+    const q = (dockInput.value || "").trim();
+    if (!q) return;
+    dockSend.disabled = true;
+    dockInput.value = "";
+    try {
+      await streamAsk(q, readTab());
+    } finally {
+      dockSend.disabled = false;
+    }
+  }
+  dockSend.addEventListener('click', submitDock);
+  dockInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      submitDock();
+    }
+  });
+  dockInput.addEventListener('input', () => {
+    dockInput.style.height = 'auto';
+    dockInput.style.height = Math.min(dockInput.scrollHeight, 110) + 'px';
+  });
 
   function readTab() {
     const params = new URLSearchParams(location.search);

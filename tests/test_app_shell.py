@@ -71,3 +71,34 @@ class TestQueryForwarding:
         r = client.get("/?q=hello&tab=goals")
         assert r.status_code == 200
         assert 'data-tab="pulse"' in r.text  # shell content unchanged
+
+
+# ---------------------------------------------------------------------------
+# Phase E2 — dock + slide-up overlay + "open in Pulse" handoff
+# ---------------------------------------------------------------------------
+
+class TestDock:
+    def test_shell_has_dock(self, client: TestClient):
+        body = client.get("/").text
+        assert 'id="dock"' in body
+        assert 'id="dock-input"' in body
+        assert 'id="dock-send"' in body
+
+    def test_shell_has_overlay(self, client: TestClient):
+        body = client.get("/").text
+        assert 'id="overlay"' in body
+        assert 'id="overlay-open-pulse"' in body
+        assert 'id="overlay-close"' in body
+
+    def test_shell_streams_via_chat_endpoint(self, client: TestClient):
+        # The dock JS calls /api/chat/stream with [Контекст вкладки: …] prefix.
+        # We just verify the shell HTML references that endpoint.
+        body = client.get("/").text
+        assert "/api/chat/stream" in body
+        assert "Контекст вкладки" in body
+
+    def test_shell_hides_dock_on_pulse_tab(self, client: TestClient):
+        body = client.get("/").text
+        # CSS rule that hides dock when activeTab==pulse.
+        assert 'data-active-tab="pulse"' in body
+        assert 'body[data-active-tab="pulse"] .dock' in body
