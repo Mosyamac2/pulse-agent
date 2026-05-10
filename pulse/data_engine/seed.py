@@ -1010,6 +1010,18 @@ def seed(db_path: Path, force: bool = False) -> dict[str, int]:
     db["similarity_to_unit"].insert_all(gen_similarity(rng, employees, units))
     db["event_participation"].insert_all(gen_event_participation(rng, employees, events), batch_size=2000)
 
+    # 11) HCM façade tables (P14, v2.2.0+)
+    # Recruit module first (Phase C1: vacancies + candidates). Subsequent
+    # façade tables (goals, learning_feed, talent_pool_status, delegations,
+    # hr_requests, surveys_meta) are filled in Phase C2.
+    from . import hcm_seed as H
+    vacancies = H.gen_vacancies(rng, employees, positions, units, END_DATE)
+    if vacancies:
+        db["vacancies"].insert_all(vacancies)
+        candidates = H.gen_candidates(rng, vacancies, employees)
+        if candidates:
+            db["candidates"].insert_all(candidates)
+
     # 9) snapshots in data/synthetic for transparency
     snap_dir = db_path.parent / "synthetic"
     snap_dir.mkdir(parents=True, exist_ok=True)
