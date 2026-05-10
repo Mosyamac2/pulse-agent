@@ -96,14 +96,6 @@
       padding: 0.6rem 0;
       z-index: 10;
     }
-    .rail-brand {
-      width: 36px; height: 36px;
-      display: grid; place-items: center;
-      margin: 0.2rem 0 0.4rem;
-      color: var(--p-fg-soft);
-      opacity: 0.65;
-    }
-    .rail-brand svg { width: 22px; height: 22px; }
     .rail-divider {
       width: 36px; height: 1px;
       background: var(--p-border);
@@ -1055,15 +1047,10 @@
 
   <!-- ─── Module rail ─── -->
   <nav class="rail" aria-label="Модули Пульс-HCM">
-    <!-- Tiny brand wordmark up top, just to identify the strip -->
-    <a class="rail-brand" href="?tab=pulse" aria-label="Пульс">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M3 12h3l2-7 4 14 2-7h3"/>
-      </svg>
-    </a>
-
     <!-- ──────────────────────────────────────────────────────────────────
-         Core HRoboros button — distinct from façade panels.
+         Core HRoboros button — distinct from façade panels. The big
+         square Pulse-mark on top of the rail is itself the brand —
+         a separate small wordmark above it would be redundant.
          Bigger, gradient-filled, with a green pulse dot. This represents
          the agent itself (the chat); the icons below it are presentation
          panels over the agent's data.
