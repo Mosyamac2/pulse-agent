@@ -188,7 +188,7 @@
       background: var(--p-accent-deep);
     }
     .rail-btn--core .rail-tip::before {
-      content: "ядро · ";
+      content: "сердце · ";
       opacity: 0.7;
     }
     .rail-tip {
@@ -798,6 +798,190 @@
       border-style: solid;
     }
     .panel-feedback svg { width: 12px; height: 12px; }
+    /* On the Pulse (chat) tab the legacy чат already shows its own
+       fancy «Заметка редактору» pill INSIDE the iframe — hiding the
+       outer dashed pill avoids double-feedback-buttons. */
+    body[data-active-tab="pulse"] .panel-feedback { display: none; }
+
+    /* ===========================================================
+       Modal «Фидбэк для HRoboros — сердце Пульса» (v2.7.6+)
+       Ported from web/index.html «Заметка редактору» so non-Pulse
+       tabs get the same look as the legacy chat. The single source
+       of POST is /api/feedback/general; per-tab opening prepends
+       `[panel-<tab>]` to the body so the evolution loop sees it
+       as a panel-class signal.
+       =========================================================== */
+    .editor-note-dialog {
+      border: 1px solid var(--p-border-soft);
+      background: var(--p-bg);
+      color: var(--p-fg);
+      padding: 0;
+      border-radius: var(--p-r-lg);
+      box-shadow: 0 8px 28px rgba(0,0,0,0.16);
+      max-width: 580px;
+      width: calc(100% - 4rem);
+      font-family: var(--p-font-body);
+      overflow: hidden;
+    }
+    .editor-note-dialog::backdrop {
+      background: rgba(11, 18, 32, 0.45);
+      backdrop-filter: blur(2px);
+    }
+    .editor-note-header {
+      padding: 1.25rem 1.5rem 1rem;
+      border-bottom: 1px solid var(--p-border-soft);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.4rem;
+      text-align: center;
+      background: var(--p-tint);
+    }
+    .editor-note-header .dateline {
+      font-family: var(--p-font-mono);
+      font-size: 0.66rem;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--p-fg-soft);
+    }
+    .editor-note-header .masthead {
+      font-family: var(--p-font-display);
+      font-size: 1.18rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--p-fg);
+      line-height: 1.2;
+    }
+    .editor-note-header .context-chip {
+      padding: 0.32rem 0.75rem;
+      font-family: var(--p-font-body);
+      font-size: 0.78rem;
+      color: var(--p-fg-muted);
+      background: var(--p-bg);
+      border-radius: 999px;
+      border: 1px solid var(--p-border-soft);
+    }
+    .editor-note-header .context-chip b {
+      color: var(--p-accent-deep);
+      font-weight: 600;
+    }
+    .editor-note-dialog textarea {
+      width: 100%;
+      min-height: 220px;
+      box-sizing: border-box;
+      border: none;
+      background: transparent;
+      font-family: var(--p-font-body);
+      font-size: 1rem;
+      line-height: 1.55;
+      padding: 1.2rem 1.5rem;
+      resize: vertical;
+      color: var(--p-fg);
+      outline: none;
+    }
+    .editor-note-dialog textarea::placeholder {
+      color: var(--p-fg-soft);
+      opacity: 1;
+    }
+    .editor-note-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.85rem 1.5rem 1rem;
+      border-top: 1px solid var(--p-border-soft);
+      background: var(--p-surface);
+      gap: 1rem;
+    }
+    .editor-note-footer .meta {
+      display: flex;
+      flex-direction: column;
+      gap: 0.18rem;
+      font-family: var(--p-font-mono);
+      font-size: 0.72rem;
+      color: var(--p-fg-soft);
+      letter-spacing: 0.02em;
+    }
+    .editor-note-footer .meta .gate {
+      font-family: var(--p-font-body);
+      letter-spacing: 0;
+      color: var(--p-fg-muted);
+      font-size: 0.78rem;
+    }
+    .editor-note-footer .actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .editor-note-footer button {
+      font-family: var(--p-font-body);
+      font-weight: 500;
+      font-size: 0.88rem;
+      background: var(--p-bg);
+      border: 1px solid var(--p-border);
+      padding: 0.5rem 1rem;
+      color: var(--p-fg);
+      cursor: pointer;
+      border-radius: var(--p-r-sm);
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+    }
+    .editor-note-footer button:hover {
+      background: var(--p-tint);
+      border-color: var(--p-accent);
+      color: var(--p-accent);
+    }
+    .editor-note-footer .send-btn {
+      background: var(--p-accent);
+      color: #fff;
+      border-color: var(--p-accent);
+    }
+    .editor-note-footer .send-btn:hover {
+      background: var(--p-accent-deep);
+      border-color: var(--p-accent-deep);
+      color: #fff;
+    }
+    .editor-note-footer .send-btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+    .editor-note-footer .send-btn .stamp { margin-right: 0.35rem; }
+
+    .editor-note-toast {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      z-index: 110;
+      background: var(--p-fg);
+      color: var(--p-bg);
+      padding: 0.9rem 1.1rem;
+      font-family: var(--p-font-body);
+      font-size: 0.94rem;
+      line-height: 1.4;
+      border-left: 4px solid var(--p-accent);
+      border-radius: var(--p-r-sm);
+      max-width: 360px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.20);
+      opacity: 0;
+      transform: translateY(-6px);
+      transition: opacity 0.25s ease, transform 0.25s ease;
+      pointer-events: none;
+    }
+    .editor-note-toast.show {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+    .editor-note-toast strong {
+      font-family: var(--p-font-display);
+      font-weight: 600;
+      display: block;
+      margin-bottom: 0.2rem;
+    }
+    .editor-note-toast .stamp-name {
+      font-family: var(--p-font-mono);
+      color: var(--p-accent-soft);
+      font-size: 0.72rem;
+      letter-spacing: 0.06em;
+      display: block;
+    }
 
     /* Analytics iframe */
     .analytics-iframe-wrap {
@@ -884,11 +1068,11 @@
          the agent itself (the chat); the icons below it are presentation
          panels over the agent's data.
     ─────────────────────────────────────────────────────────────────────── -->
-    <button class="rail-btn rail-btn--core" data-tab="pulse" aria-current="page" aria-label="HRoboros — ядро (чат с Пульсом)">
+    <button class="rail-btn rail-btn--core" data-tab="pulse" aria-current="page" aria-label="HRoboros — сердце Пульса (чат)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M3 12h3l2-7 4 14 2-7h3"/>
       </svg>
-      <span class="rail-tip">HRoboros — чат с Пульсом</span>
+      <span class="rail-tip">HRoboros — сердце Пульса (чат)</span>
     </button>
 
     <span class="rail-divider"></span>
@@ -1072,6 +1256,37 @@
       <div class="overlay-text" id="overlay-text"></div>
     </div>
   </aside>
+
+  <!-- Modal «Фидбэк для HRoboros — сердце Пульса» (v2.7.6+).
+       Same fancy UI as the legacy chat's «Заметка редактору». Opens on
+       click of #panel-feedback (in ws-header). Per-tab context is shown
+       as a chip in the header and prepended as `[panel-<tab>]` to the
+       body so the evolution loop sees a panel-class signal. -->
+  <dialog id="editor-note-dialog" class="editor-note-dialog">
+    <form method="dialog">
+      <header class="editor-note-header">
+        <span class="dateline">от пользователя</span>
+        <span class="masthead">Фидбэк для HRoboros — сердце Пульса</span>
+        <span class="context-chip" id="editor-note-context"></span>
+      </header>
+      <textarea id="editor-note-text"
+                placeholder="Что Пульсу стоит делать иначе? Какой паттерн вы заметили? Что важно для вас, но он этого ещё не понимает? Пишите свободно — это не про конкретный ответ, это про общее направление. Перед попаданием в эволюционный шаг текст пройдёт сверку с конституцией, системным промптом, бэклогом и памятью Пульса."
+                maxlength="4000"></textarea>
+      <footer class="editor-note-footer">
+        <span class="meta">
+          <span><span id="editor-note-char-count">0</span>/4000</span>
+          <span class="gate">проверяется на соответствие BIBLE.md</span>
+        </span>
+        <div class="actions">
+          <button type="button" id="editor-note-cancel">отозвать</button>
+          <button type="button" id="editor-note-send" class="send-btn">
+            <span class="stamp">✉</span>отправить в эволюцию
+          </button>
+        </div>
+      </footer>
+    </form>
+  </dialog>
+  <div id="editor-note-toast" class="editor-note-toast" role="status" aria-live="polite"></div>
 
   <!-- ─── Persistent dock «Спросите Пульса» (visible only on non-pulse tabs) ─── -->
   <div class="dock" id="dock">
@@ -2119,34 +2334,94 @@
     document.getElementById('ws-version').textContent = j.version || '?';
   }).catch(() => {});
 
-  // ─── Per-tab feedback button (Phase J) ───────────────────────────────
-  // Feeds general-feedback channel which goes through evaluate_general_alignment
-  // and lands as a panel-X-Y feedback class. Plain prompt-dialog so we don't
-  // build a modal yet — Phase J is bootstrap-level, the proper UI flows
-  // through evolution if the channel proves useful.
-  document.getElementById('panel-feedback').addEventListener('click', async () => {
-    const tab = readTab();
-    const tabLabel = TAB_LABELS[tab] || tab;
-    const note = window.prompt(
-      `Что неудобно или не нравится во вкладке «${tabLabel}»? Пульс прочитает заметку в следующем эволюционном цикле.`
-    );
-    if (!note || !note.trim()) return;
-    const body = `[panel-${tab}] заметка с вкладки «${tabLabel}»:\n\n${note.trim()}`;
-    try {
-      const r = await fetch('/api/feedback/general', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({text: body}),
-      });
-      if (r.ok) {
-        alert("Спасибо. Заметка ушла в эволюционный цикл — Пульс разберётся с классом жалоб panel-" + tab + ".");
-      } else {
-        alert("Не получилось отправить (" + r.status + ").");
-      }
-    } catch (e) {
-      alert("Ошибка сети: " + e.message);
+  // ─── Editor-note modal (v2.7.6) ────────────────────────────────────
+  // Same fancy modal as the legacy chat's «Заметка редактору», но теперь
+  // используется и на не-Pulse вкладках. Контекст вкладки показывается
+  // чипом в шапке и проставляется в body как `[panel-<tab>]` префикс,
+  // чтобы эволюционный loop видел этот класс жалоб.
+  (function () {
+    const btn        = document.getElementById('panel-feedback');
+    const dialog     = document.getElementById('editor-note-dialog');
+    const textarea   = document.getElementById('editor-note-text');
+    const charCount  = document.getElementById('editor-note-char-count');
+    const sendBtn    = document.getElementById('editor-note-send');
+    const cancelBtn  = document.getElementById('editor-note-cancel');
+    const ctxChip    = document.getElementById('editor-note-context');
+    const toast      = document.getElementById('editor-note-toast');
+    if (!btn || !dialog || !textarea) return;
+
+    function openDialog() {
+      const tab = readTab();
+      const label = TAB_LABELS[tab] || tab;
+      ctxChip.innerHTML = 'контекст: <b>' + escapeHTML(label) + '</b> · класс <code>panel-' + escapeHTML(tab) + '</code>';
+      dialog.dataset.tab = tab;
+      dialog.dataset.tabLabel = label;
+      if (typeof dialog.showModal === 'function') dialog.showModal();
+      else dialog.setAttribute('open', 'open');
+      setTimeout(() => textarea.focus(), 60);
     }
-  });
+    function closeDialog() {
+      try { dialog.close(); } catch (_) {}
+      dialog.removeAttribute('open');
+    }
+    function showToastMsg(headline, body) {
+      if (!toast) return;
+      toast.innerHTML = '<strong></strong><span class="stamp-name"></span>';
+      toast.querySelector('strong').textContent = headline;
+      toast.querySelector('.stamp-name').textContent = body || '';
+      toast.classList.add('show');
+      clearTimeout(toast._t);
+      toast._t = setTimeout(() => toast.classList.remove('show'), 4800);
+    }
+
+    btn.addEventListener('click', openDialog);
+    cancelBtn.addEventListener('click', closeDialog);
+    textarea.addEventListener('input', () => {
+      if (charCount) charCount.textContent = String(textarea.value.length);
+    });
+    textarea.addEventListener('keydown', (ev) => {
+      if ((ev.ctrlKey || ev.metaKey) && ev.key === 'Enter') {
+        ev.preventDefault();
+        sendBtn.click();
+      }
+    });
+
+    sendBtn.addEventListener('click', async () => {
+      const text = textarea.value.trim();
+      if (text.length < 4) {
+        showToastMsg('Слишком коротко', 'минимум 4 символа');
+        return;
+      }
+      sendBtn.disabled = true;
+      const origHTML = sendBtn.innerHTML;
+      sendBtn.innerHTML = '<span class="stamp">✦</span>отправляю…';
+      const tab = dialog.dataset.tab || readTab();
+      const label = dialog.dataset.tabLabel || (TAB_LABELS[tab] || tab);
+      const body = `[panel-${tab}] заметка с вкладки «${label}»:\n\n${text}`;
+      try {
+        const r = await fetch('/api/feedback/general', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: body }),
+        });
+        if (r.ok) {
+          showToastMsg('Принято в эволюцию',
+            `panel-${tab} · Пульс прочитает в следующем цикле`);
+          textarea.value = '';
+          if (charCount) charCount.textContent = '0';
+          closeDialog();
+        } else {
+          const errTxt = await r.text();
+          showToastMsg('Не получилось отправить', `${r.status}: ${errTxt.slice(0, 80)}`);
+        }
+      } catch (e) {
+        showToastMsg('Ошибка сети', e.message || String(e));
+      } finally {
+        sendBtn.disabled = false;
+        sendBtn.innerHTML = origHTML;
+      }
+    });
+  })();
 </script>
 
 </body>
