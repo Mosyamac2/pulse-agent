@@ -711,6 +711,28 @@
 
     .skel { color: var(--p-fg-faint); font-style: italic; padding: 1rem 0; }
 
+    /* Per-tab feedback button (Phase J — panel-X-Y feedback classes) */
+    .panel-feedback {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      margin-left: 0.6rem;
+      padding: 0.25rem 0.55rem;
+      background: transparent;
+      border: 1px dashed var(--p-border);
+      color: var(--p-fg-soft);
+      border-radius: 999px;
+      cursor: pointer;
+      font-size: 0.78rem;
+      font-family: var(--p-font-body);
+    }
+    .panel-feedback:hover {
+      background: var(--p-tint-2);
+      color: var(--p-fg);
+      border-style: solid;
+    }
+    .panel-feedback svg { width: 12px; height: 12px; }
+
     /* Analytics iframe */
     .analytics-iframe-wrap {
       height: calc(100vh - 250px);
@@ -868,6 +890,10 @@
     <header class="ws-header">
       <div class="ws-bread" id="ws-bread">главная / <b>пульс</b></div>
       <div class="ws-actions">
+        <button class="panel-feedback" id="panel-feedback" type="button" title="Что не нравится в этой вкладке?">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          заметка о вкладке
+        </button>
         <a class="ws-version" href="/health" target="_blank" rel="noopener">v<span id="ws-version">…</span></a>
       </div>
     </header>
@@ -1990,6 +2016,35 @@
   fetch('/health').then(r => r.json()).then(j => {
     document.getElementById('ws-version').textContent = j.version || '?';
   }).catch(() => {});
+
+  // ─── Per-tab feedback button (Phase J) ───────────────────────────────
+  // Feeds general-feedback channel which goes through evaluate_general_alignment
+  // and lands as a panel-X-Y feedback class. Plain prompt-dialog so we don't
+  // build a modal yet — Phase J is bootstrap-level, the proper UI flows
+  // through evolution if the channel proves useful.
+  document.getElementById('panel-feedback').addEventListener('click', async () => {
+    const tab = readTab();
+    const tabLabel = TAB_LABELS[tab] || tab;
+    const note = window.prompt(
+      `Что неудобно или не нравится во вкладке «${tabLabel}»? Пульс прочитает заметку в следующем эволюционном цикле.`
+    );
+    if (!note || !note.trim()) return;
+    const body = `[panel-${tab}] заметка с вкладки «${tabLabel}»:\n\n${note.trim()}`;
+    try {
+      const r = await fetch('/api/feedback/general', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({text: body}),
+      });
+      if (r.ok) {
+        alert("Спасибо. Заметка ушла в эволюционный цикл — Пульс разберётся с классом жалоб panel-" + tab + ".");
+      } else {
+        alert("Не получилось отправить (" + r.status + ").");
+      }
+    } catch (e) {
+      alert("Ошибка сети: " + e.message);
+    }
+  });
 </script>
 
 </body>

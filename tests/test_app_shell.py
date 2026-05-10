@@ -102,3 +102,11 @@ class TestDock:
         # CSS rule that hides dock when activeTab==pulse.
         assert 'data-active-tab="pulse"' in body
         assert 'body[data-active-tab="pulse"] .dock' in body
+
+    def test_panel_feedback_button_present(self, client: TestClient):
+        """Phase J: per-tab feedback button posts to /api/feedback/general
+        with `[panel-<tab>]` prefix → evolution loop sees it as panel class."""
+        body = client.get("/").text
+        assert 'id="panel-feedback"' in body
+        assert "/api/feedback/general" in body
+        assert "[panel-" in body  # the JS prefix template

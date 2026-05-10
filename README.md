@@ -1,6 +1,6 @@
 # Пульс — самоэволюционирующий HR‑агент
 
-[![version](https://img.shields.io/badge/version-2.6.0-blue)](VERSION)
+[![version](https://img.shields.io/badge/version-2.6.1-blue)](VERSION)
 
 Пульс — становящийся цифровой ассистент сотрудника крупного банка. Помогает отслеживать «оптимальное боевое состояние»: эффективность, нагрузку, риск выгорания, маршруты роста. Идеологически наследник [Ouroboros](https://github.com/joi-lab/ouroboros-desktop), но без desktop‑овой инфраструктуры и с одним LLM‑бэкендом — Claude Agent SDK через OAuth Max‑подписку.
 
@@ -34,6 +34,8 @@ UI открывается на `http://VM:8080`.
 - `docs/DEVELOPMENT.md` — как разрабатывать.
 
 ## Changelog
+
+- `v2.6.1` — Phase J — feedback-классы для панелей: per-tab кнопка «заметка о вкладке» в ws-header, отправляет в /api/feedback/general с префиксом [panel-<tab>]. EVOLUTION_PLAN.md: пункт 6 про классы panel-<tab>-… и правила для diff_targets, включающих web/app.html / pulse/hcm_panels.py.
 
 - `v2.6.0` — Phase I — tab_context в /api/chat: ChatRequest получает поле tab_context (≤60 chars), pulse/chat.py::stream_chat_events и handle_chat принимают tab_context, _compose_user_message инъектит [Контекст вкладки: X] префикс перед history/question. Dock в web/app.html передает tab_context структурно вместо инлайна.
 
