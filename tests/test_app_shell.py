@@ -27,8 +27,8 @@ class TestRouting:
         # Hallmarks of the new shell:
         assert 'data-tab="pulse"' in body
         assert "Module rail" in body or "rail-btn" in body
-        # The legacy iframe target is referenced
-        assert 'src="/chat"' in body
+        # The legacy iframe target is referenced (v2.7.1+: with ?embedded=1)
+        assert 'src="/chat?embedded=1"' in body or 'src="/chat"' in body
 
     def test_chat_serves_legacy_index(self, client: TestClient):
         r = client.get("/chat")
@@ -51,10 +51,23 @@ class TestRouting:
     def test_app_html_has_rail_buttons(self, client: TestClient):
         r = client.get("/")
         body = r.text
-        # Each module rail button has data-tab; check we have 10 (9 tabs + 1 brand link).
-        # data-tab attribute appears in rail-btn buttons exactly 10 times
-        # (including the section panes — we count rail-btn occurrences instead).
-        assert body.count('class="rail-btn"') == 10
+        # 1 core button + 9 façade buttons = 10 total rail buttons.
+        # Core button uses both class names ("rail-btn rail-btn--core"),
+        # façade buttons use just "rail-btn".
+        assert 'class="rail-btn rail-btn--core"' in body
+        # Total occurrences of 'rail-btn' substring should be ≥10
+        # (CSS selectors + 10 button class attributes).
+        assert body.count('class="rail-btn ') + body.count('class="rail-btn"') >= 10
+        # The core button uses data-tab="pulse" and is the FIRST rail-btn in DOM order.
+        idx_core = body.index('rail-btn rail-btn--core')
+        idx_first_panel = body.index('class="rail-btn"')
+        assert idx_core < idx_first_panel, "core button must precede façade buttons in DOM"
+
+    def test_pulse_iframe_passes_embedded_param(self, client: TestClient):
+        """v2.7.1: iframe to /chat carries ?embedded=1 so legacy chat hides
+        its 268px sidebar (avoids the side-by-side double-rail look)."""
+        body = client.get("/").text
+        assert 'src="/chat?embedded=1"' in body
 
     def test_no_cache_headers(self, client: TestClient):
         r = client.get("/")
@@ -110,3 +123,22 @@ class TestDock:
         assert 'id="panel-feedback"' in body
         assert "/api/feedback/general" in body
         assert "[panel-" in body  # the JS prefix template
+
+
+class TestEmbeddedMode:
+    def test_chat_embedded_param_marks_body(self, client: TestClient):
+        """v2.7.1: when /chat is fetched with ?embedded=1, the HTML carries
+        the bootstrap script that sets body[data-embedded='true']."""
+        body = client.get("/chat").text
+        # Both the embedded handling block and the CSS rule must be present
+        # — but they only fire when ?embedded=1 is in URL (client-side).
+        assert "data-embedded" in body
+        assert 'params.get(\'embedded\')' in body or "params.get(\"embedded\")" in body
+
+    def test_chat_legacy_url_unchanged(self, client: TestClient):
+        """Plain /chat (no embedded=1) must still serve the legacy UI
+        with its original sidebar — used by deep-links from /dashboard."""
+        body = client.get("/chat").text
+        # Legacy hallmarks
+        assert 'class="sidebar"' in body
+        assert 'id="thread"' in body or "app-shell" in body

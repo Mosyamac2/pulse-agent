@@ -109,6 +109,14 @@
       font-family: var(--p-font-body);
       font-size: 0.88rem;
     }
+    /* Embedded mode (v2.7.1+): когда чат загружен в iframe из app.html
+       (`/chat?embedded=1`), скрываем внутренний sidebar — module rail из
+       app.html уже служит навигацией, второй sidebar выглядел бы
+       избыточно. Composer (#composer) тоже теряет смещение слева. */
+    body[data-embedded="true"] .app-shell { grid-template-columns: 1fr; }
+    body[data-embedded="true"] .sidebar { display: none; }
+    body[data-embedded="true"] form#composer { left: 0; }
+    body[data-embedded="true"] .app-shell.rail form#composer { left: 0; }
     .sb-brand {
       display: flex;
       align-items: center;
@@ -1381,6 +1389,11 @@ q.addEventListener('keydown', (ev) => {
   // We do not auto-submit — CEO may want to tweak phrasing first.
   try {
     const params = new URLSearchParams(window.location.search);
+    // v2.7.1+: embedded=1 means we're loaded inside the app.html iframe.
+    // Mark the body so CSS hides the now-redundant inner sidebar.
+    if (params.get('embedded') === '1') {
+      document.body.dataset.embedded = 'true';
+    }
     const prefill = params.get('q');
     if (prefill) {
       q.value = prefill;
@@ -1388,8 +1401,12 @@ q.addEventListener('keydown', (ev) => {
       // Move cursor to end so it feels like they just typed it.
       const len = q.value.length;
       q.setSelectionRange(len, len);
-      // Clean the URL so a refresh doesn't re-prefill.
-      const clean = window.location.pathname + window.location.hash;
+      // Clean the URL so a refresh doesn't re-prefill — but preserve the
+      // embedded marker since the body class is already set above.
+      const cleanParams = new URLSearchParams();
+      if (params.get('embedded') === '1') cleanParams.set('embedded', '1');
+      const search = cleanParams.toString();
+      const clean = window.location.pathname + (search ? '?' + search : '') + window.location.hash;
       window.history.replaceState({}, '', clean);
     }
   } catch (e) { /* ignore */ }

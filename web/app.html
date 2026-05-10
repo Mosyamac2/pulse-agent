@@ -41,7 +41,7 @@
       --p-shadow-sm: 0 1px 0 rgba(0,0,0,0.04);
       --p-shadow:    0 2px 10px rgba(0,0,0,0.07);
 
-      --rail-width:   72px;
+      --rail-width:   84px;
     }
     @media (prefers-color-scheme: dark) {
       :root {
@@ -97,19 +97,28 @@
       z-index: 10;
     }
     .rail-brand {
-      width: 40px; height: 40px;
+      width: 36px; height: 36px;
       display: grid; place-items: center;
-      margin-bottom: 0.6rem;
-      color: var(--p-accent);
+      margin: 0.2rem 0 0.4rem;
+      color: var(--p-fg-soft);
+      opacity: 0.65;
     }
-    .rail-brand svg { width: 28px; height: 28px; }
+    .rail-brand svg { width: 22px; height: 22px; }
     .rail-divider {
-      width: 28px; height: 1px;
+      width: 36px; height: 1px;
       background: var(--p-border);
-      margin: 0.4rem 0 0.6rem;
+      margin: 0.55rem 0;
+    }
+    .rail-section-label {
+      font-size: 0.62rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--p-fg-faint);
+      margin: 0.15rem 0 0.45rem;
+      writing-mode: horizontal-tb;
     }
     .rail-btn {
-      width: 48px; height: 48px;
+      width: 52px; height: 52px;
       display: grid; place-items: center;
       margin-bottom: 0.35rem;
       border-radius: var(--p-r);
@@ -132,6 +141,56 @@
       background: var(--p-accent);
     }
     .rail-btn svg { width: 22px; height: 22px; }
+
+    /* ─── Core "HRoboros" button — distinct from façade panels ───────── */
+    .rail-btn--core {
+      width: 64px; height: 64px;
+      margin: 0.25rem 0 0.4rem;
+      border-radius: var(--p-r-lg);
+      background: linear-gradient(140deg, var(--p-accent) 0%, var(--p-accent-deep) 100%);
+      color: white;
+      box-shadow: 0 4px 14px rgba(0, 102, 255, 0.32),
+                   0 0 0 1px rgba(0, 102, 255, 0.10);
+      position: relative;
+    }
+    .rail-btn--core svg { width: 30px; height: 30px; }
+    .rail-btn--core:hover {
+      background: linear-gradient(140deg, var(--p-accent-soft) 0%, var(--p-accent) 100%);
+      color: white;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(0, 102, 255, 0.42),
+                   0 0 0 1px rgba(0, 102, 255, 0.16);
+    }
+    .rail-btn--core[aria-current="page"] {
+      background: linear-gradient(140deg, #a729ff 0%, var(--p-accent) 60%, var(--p-accent-deep) 100%);
+      color: white;
+    }
+    .rail-btn--core[aria-current="page"]::before { display: none; }
+    .rail-btn--core::after {
+      content: "";
+      position: absolute;
+      bottom: 5px; right: 6px;
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: #5cff95;
+      box-shadow: 0 0 0 2px rgba(0, 102, 255, 0.7),
+                   0 0 8px rgba(92, 255, 149, 0.7);
+      animation: corebeat 2.4s ease-in-out infinite;
+    }
+    @keyframes corebeat {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50%      { transform: scale(1.25); opacity: 0.65; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .rail-btn--core::after { animation: none; }
+    }
+    .rail-btn--core .rail-tip {
+      background: var(--p-accent-deep);
+    }
+    .rail-btn--core .rail-tip::before {
+      content: "ядро · ";
+      opacity: 0.7;
+    }
     .rail-tip {
       position: absolute; left: calc(100% + 8px); top: 50%;
       transform: translateY(-50%);
@@ -805,20 +864,28 @@
 
   <!-- ─── Module rail ─── -->
   <nav class="rail" aria-label="Модули Пульс-HCM">
-    <a class="rail-brand" href="?tab=pulse" aria-label="Пульс — главная">
-      <!-- Pulse wordmark glyph (compact) — пульс ECG dot motif -->
+    <!-- Tiny brand wordmark up top, just to identify the strip -->
+    <a class="rail-brand" href="?tab=pulse" aria-label="Пульс">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M3 12h3l2-7 4 14 2-7h3"/>
       </svg>
     </a>
-    <span class="rail-divider"></span>
 
-    <button class="rail-btn" data-tab="pulse" aria-current="page" aria-label="Пульс">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M21 12a9 9 0 1 1-3.5-7.1"/><path d="M21 4v5h-5"/>
+    <!-- ──────────────────────────────────────────────────────────────────
+         Core HRoboros button — distinct from façade panels.
+         Bigger, gradient-filled, with a green pulse dot. This represents
+         the agent itself (the chat); the icons below it are presentation
+         panels over the agent's data.
+    ─────────────────────────────────────────────────────────────────────── -->
+    <button class="rail-btn rail-btn--core" data-tab="pulse" aria-current="page" aria-label="HRoboros — ядро (чат с Пульсом)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 12h3l2-7 4 14 2-7h3"/>
       </svg>
-      <span class="rail-tip">Пульс</span>
+      <span class="rail-tip">HRoboros — чат с Пульсом</span>
     </button>
+
+    <span class="rail-divider"></span>
+    <span class="rail-section-label">панели</span>
 
     <button class="rail-btn" data-tab="profile" aria-label="Профиль и структура">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -901,7 +968,7 @@
     <!-- Pulse tab: iframe to legacy /chat — preserves full chat behaviour -->
     <section class="tab-pane" data-tab="pulse" data-active="true">
       <div class="pulse-frame-wrap">
-        <iframe id="pulse-frame" src="/chat" title="Чат с Пульсом" allow="clipboard-read; clipboard-write"></iframe>
+        <iframe id="pulse-frame" src="/chat?embedded=1" title="Чат с Пульсом" allow="clipboard-read; clipboard-write"></iframe>
       </div>
     </section>
 
@@ -1203,7 +1270,8 @@
     if (!frame) return;
     if (q && readTab() === 'pulse') {
       // Only reload if the iframe URL doesn't already carry this q.
-      const desired = `/chat?q=${encodeURIComponent(q)}`;
+      // Always preserve embedded=1 so the legacy chat keeps its sidebar hidden.
+      const desired = `/chat?q=${encodeURIComponent(q)}&embedded=1`;
       try {
         const cur = new URL(frame.src, location.origin);
         if (cur.pathname !== '/chat' || cur.searchParams.get('q') !== q) {
