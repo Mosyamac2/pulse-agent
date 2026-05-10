@@ -28,6 +28,7 @@ from faker import Faker
 from sqlite_utils import Database
 
 from . import archetypes as A
+from .hcm_schema import create_hcm_tables
 from .schema import create_tables
 
 log = logging.getLogger(__name__)
@@ -948,6 +949,7 @@ def seed(db_path: Path, force: bool = False) -> dict[str, int]:
 
     db = Database(db_path)
     create_tables(db)
+    create_hcm_tables(db)  # P14 façade tables (v2.0.0+) — empty rows in Phase B
 
     rng = np.random.default_rng(42)
     Faker.seed(42)
