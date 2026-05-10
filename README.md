@@ -1,6 +1,6 @@
 # Пульс — самоэволюционирующий HR‑агент
 
-[![version](https://img.shields.io/badge/version-1.10.0-blue)](VERSION)
+[![version](https://img.shields.io/badge/version-2.0.0-blue)](VERSION)
 
 Пульс — становящийся цифровой ассистент сотрудника крупного банка. Помогает отслеживать «оптимальное боевое состояние»: эффективность, нагрузку, риск выгорания, маршруты роста. Идеологически наследник [Ouroboros](https://github.com/joi-lab/ouroboros-desktop), но без desktop‑овой инфраструктуры и с одним LLM‑бэкендом — Claude Agent SDK через OAuth Max‑подписку.
 
@@ -34,6 +34,8 @@ UI открывается на `http://VM:8080`.
 - `docs/DEVELOPMENT.md` — как разрабатывать.
 
 ## Changelog
+
+- `v2.0.0` — конституционное расширение P14 (HCM Façade). Подготовка к интеграции 8 модулей Пульс‑HCM как фасада над агентом, поверх существующего ядра самоэволюции.
 
 - `v1.10.0` — **6 правок UX чата от CEO:** (1) русские названия архетипов в сайдбаре и hover-карточке (`pulse/employee_card.ARCHETYPE_RU` маппинг, API возвращает `archetype_label` / `label`); (2) peer-group means в карточке — для каждой из 4 метрик (Стресс/Сон/Фокус/Sentiment) отдельный мелкий шрифт «peers · 0.42» под значением, peer-group считается как `same position_id + same grade_level` за 30д, exclude self; (3) hover-tooltip на каждой метрике (CSS-only, через `data-tip` атрибут): что измеряется, как считается, границы нормы; (4) collapsible-сайдбар — каждая секция click-toggle с шевроном, по умолчанию архетипы и отделы свёрнуты; глобальный rail-toggle в шапке сворачивает весь сайдбар в 56-px колонку; состояние persist в `localStorage` под ключом `pulse.sidebar.v1`; (5) **fix регрессии**: markdown в pulse-bubble снова рендерится — новый `renderAssistantMarkdown(body, text)` вызывает `marked.parse + DOMPurify.sanitize` в `appendPulse` и в SSE-`done` handler, с graceful fallback на `textContent` если библиотеки недоступны и deferred re-render через `__pulseMdReady` promise; (6) flag-чипы в карточке тоже перевели на русский («в красной зоне», «выгорание», «риск ухода Х%»). Метрики `Стресс/Сон/Фокус/Sentiment` теперь с заглавной буквы. 14 unit-тестов в `tests/test_employee_card.py` и `tests/test_sidebar.py`.
 

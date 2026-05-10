@@ -1,4 +1,4 @@
-# Pulse v1.10.0 — Architecture Map
+# Pulse v2.0.0 — Architecture Map
 
 Это операционная карта Пульса. Single source of truth для разработки, отладки и саморевью.
 
@@ -49,6 +49,25 @@ FastAPI (uvicorn) → chat_loop / evolution_loop / consciousness_loop
 - `pulse/data_engine/schema.py` — схема БД
 
 Остальной Python-код в `pulse/` редактируется эволюцией; фильтрами достаточности служат self-test (pytest + replay) и Opus commit-review против `docs/CHECKLISTS.md`.
+
+## Façade layer (с v2.0.0, P14)
+
+Фасад — узнаваемые продукт‑оунерам HCM‑панели поверх агента. Read‑only, evolvable, вне immune core.
+
+| Слой | Файлы | Иммунный статус |
+|---|---|---|
+| Конституция фасада | P14 в `BIBLE.md` | immune (MAJOR-only) |
+| Расширение схемы | `pulse/data_engine/hcm_schema.py` (новые таблицы: vacancies, candidates, goals, key_results, learning_feed, talent_pool_status, delegations, hr_requests, surveys_meta) | редактируем эволюцией |
+| Синтетика | `pulse/data_engine/hcm_seed.py` (архетип-driven генераторы) | редактируем эволюцией |
+| Бэкенд панелей | `pulse/hcm_panels.py` (read-only агрегаты), `pulse/server.py::/api/hcm/*` (GET-only эндпоинты) | редактируем эволюцией |
+| UI shell | `web/app.html` (module rail + 9 вкладок), `web/index.html` (вкладка «Пульс» через iframe) | редактируем эволюцией |
+
+Маршруты после v2.0.0:
+- `GET /` → `web/app.html` (новый shell, дефолтная вкладка `pulse`)
+- `GET /chat` → `web/index.html` (старый прямой чат, используется в iframe и legacy-ссылках)
+- `GET /dashboard` → `web/dashboard.html` (CEO morning-brief, без изменений)
+- `GET /api/hcm/*` → новые read-only эндпоинты (см. `pulse/hcm_panels.py`)
+- `GET /api/dashboard/*`, `GET /api/sidebar/*`, `POST /api/chat*` — без изменений.
 
 ## Версионирование
 
