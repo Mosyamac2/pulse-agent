@@ -1011,9 +1011,9 @@ def seed(db_path: Path, force: bool = False) -> dict[str, int]:
     db["event_participation"].insert_all(gen_event_participation(rng, employees, events), batch_size=2000)
 
     # 11) HCM façade tables (P14, v2.2.0+)
-    # Recruit module first (Phase C1: vacancies + candidates). Subsequent
-    # façade tables (goals, learning_feed, talent_pool_status, delegations,
-    # hr_requests, surveys_meta) are filled in Phase C2.
+    # Recruit module (vacancies + candidates) and the rest of the panel
+    # backing tables. All archetype-driven where applicable so dashboard
+    # and ML signals stay coherent. See pulse/data_engine/hcm_seed.py.
     from . import hcm_seed as H
     vacancies = H.gen_vacancies(rng, employees, positions, units, END_DATE)
     if vacancies:
@@ -1021,6 +1021,23 @@ def seed(db_path: Path, force: bool = False) -> dict[str, int]:
         candidates = H.gen_candidates(rng, vacancies, employees)
         if candidates:
             db["candidates"].insert_all(candidates)
+    goals = H.gen_goals(rng, employees, END_DATE)
+    if goals:
+        db["goals"].insert_all(goals)
+        krs = H.gen_key_results(rng, goals)
+        if krs:
+            db["key_results"].insert_all(krs)
+    feed = H.gen_learning_feed(rng, employees, courses, END_DATE)
+    if feed:
+        db["learning_feed"].insert_all(feed, batch_size=2000)
+    db["talent_pool_status"].insert_all(H.gen_talent_pool_status(rng, employees, END_DATE))
+    delegations = H.gen_delegations(rng, employees, END_DATE)
+    if delegations:
+        db["delegations"].insert_all(delegations)
+    hrr = H.gen_hr_requests(rng, employees, END_DATE)
+    if hrr:
+        db["hr_requests"].insert_all(hrr)
+    db["surveys_meta"].insert_all(H.gen_surveys_meta(rng, END_DATE))
 
     # 9) snapshots in data/synthetic for transparency
     snap_dir = db_path.parent / "synthetic"
