@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
+from typing import Any
 
 from git import Actor, GitCommandError, Repo
 
@@ -123,6 +124,63 @@ def create_annotated_tag(tag_name: str, msg: str) -> None:
         r.create_tag(tag_name, message=msg)
 
 
+def push_to_origin_with_tags(branch: str = "master") -> dict[str, Any]:
+    """Push branch + tags to origin using `PULSE_GITHUB_PAT` from env.
+
+    Used by the evolution loop (since v1.5.0) so a self-evolved commit
+    propagates to GitHub without manual intervention. Behaviour:
+
+      * If `PULSE_GITHUB_PAT` is unset → return {pushed: False,
+        reason: 'no_pat'}. Cycle continues — push is best-effort.
+      * If origin is not an https URL → returns no_https reason.
+      * On success → {pushed: True}.
+      * On any GitCommandError → {pushed: False, reason: <stderr with
+        the PAT redacted>}.
+
+    The PAT is injected into the URL only for this single git invocation
+    via `git -c http.extraheader=...` — ideally we would use that, but
+    the simpler `https://x-access-token:PAT@github.com/...` form
+    matches what the user uses interactively and works through the
+    xray HTTP proxy without extra config.
+    """
+    import os
+    pat = os.environ.get("PULSE_GITHUB_PAT", "").strip()
+    if not pat:
+        return {"pushed": False, "reason": "no_pat"}
+
+    r = repo()
+    try:
+        remote_url = r.remotes.origin.url
+    except Exception as ex:  # noqa: BLE001
+        return {"pushed": False, "reason": f"no_origin: {ex}"}
+
+    if not remote_url.startswith("https://"):
+        return {"pushed": False, "reason": f"unsupported_remote: {remote_url}"}
+
+    # Strip any embedded creds, then inject our PAT for this push only.
+    rest = remote_url[len("https://"):]
+    if "@" in rest:
+        rest = rest.split("@", 1)[1]
+    push_url = f"https://x-access-token:{pat}@{rest}"
+
+    env = {
+        "GIT_AUTHOR_NAME": PULSE_GIT_NAME,
+        "GIT_AUTHOR_EMAIL": PULSE_GIT_EMAIL,
+        "GIT_COMMITTER_NAME": PULSE_GIT_NAME,
+        "GIT_COMMITTER_EMAIL": PULSE_GIT_EMAIL,
+    }
+    try:
+        with r.git.custom_environment(**env):
+            r.git.push(push_url, branch, "--follow-tags")
+    except GitCommandError as ex:
+        clean = str(ex).replace(pat, "***REDACTED***")
+        log.warning("push_to_origin failed: %s", clean[:300])
+        return {"pushed": False, "reason": clean[:300]}
+
+    log.info("push_to_origin: %s pushed with tags", branch)
+    return {"pushed": True}
+
+
 def rollback_workdir() -> None:
     """Revert worktree changes. Used after a failed evolution self-test."""
     r = repo()
@@ -147,5 +205,6 @@ __all__ = [
     "protected_paths_in_changes",
     "commit_all_with_msg",
     "create_annotated_tag",
+    "push_to_origin_with_tags",
     "rollback_workdir",
 ]

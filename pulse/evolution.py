@@ -40,6 +40,7 @@ from .git_ops import (
     diff_with_head,
     is_protected_path,
     protected_paths_in_changes,
+    push_to_origin_with_tags,
     rollback_workdir,
 )
 from .llm import _query_simple
@@ -288,7 +289,10 @@ def _parse_plan_yaml(raw: str) -> EvolutionPlan:
         return str(v).strip().lower() in ("true", "yes", "1")
 
     return EvolutionPlan(
-        intent=str(fields.get("intent") or "").strip()[:240],
+        # Cap at 1000 chars (was 240 — that truncated mid-word in v0.2.0
+        # and v1.4.1 commit messages). With smart subject extraction in
+        # commit_evolution we no longer need a tight cap here.
+        intent=str(fields.get("intent") or "").strip()[:1000],
         class_addressed=str(fields.get("class_addressed") or "").strip(),
         diff_targets=list(fields.get("diff_targets") or []),
         plan=str(fields.get("plan") or "").strip(),
@@ -464,17 +468,68 @@ def _bump_level_for(plan: EvolutionPlan) -> str:
     return "patch"
 
 
+_SUBJECT_MAX = 72
+
+
+def _build_commit_message(plan: EvolutionPlan, new_version: Any,
+                            replay_score: float | None) -> str:
+    """Build a Git-conventional commit message: short subject + full body.
+
+    Subject is `v<X.Y.Z>: <first sentence or first 72 chars>`.
+    Body carries the full intent (so long Opus-generated intents are
+    not lost the way they were in v0.2.0 / v1.4.1) plus provenance
+    trailers — `Self-Evolved-By` flags this as an autonomous commit
+    so the GitHub timeline distinguishes evolution-cycle commits
+    from human-driven ones.
+    """
+    intent_full = (plan.intent or "").strip()
+    short = intent_full
+    # Prefer the first sentence as the subject; fall back to a hard
+    # 72-char cap with a word-boundary break.
+    for sep in (". ", "! ", "? ", "; ", ": "):
+        head, _, _rest = intent_full.partition(sep)
+        if head and len(head) < len(short):
+            short = head
+    if len(short) > _SUBJECT_MAX:
+        short = short[:_SUBJECT_MAX].rstrip()
+        if " " in short[40:]:
+            short = short.rsplit(" ", 1)[0]
+        short += "…"
+    subject = f"v{new_version}: {short}".strip()
+
+    body_lines: list[str] = [""]
+    if intent_full and len(intent_full) > len(short.rstrip("…")):
+        body_lines.extend([intent_full, ""])
+    body_lines.append(f"Class addressed: {plan.class_addressed or 'n/a'}")
+    if replay_score is not None:
+        body_lines.append(f"Replay score: {replay_score:.2f}")
+    body_lines.extend([
+        "",
+        "Self-Evolved-By: pulse evolution_cycle (autonomous, since v1.5.0)",
+        "Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>",
+    ])
+    return subject + "\n" + "\n".join(body_lines)
+
+
 async def commit_evolution(plan: EvolutionPlan, replay_score: float | None = None) -> dict[str, Any]:
-    """Bump → review → commit → tag. If review blocks, rollback."""
+    """Bump → review → commit → tag → push. If review blocks, rollback.
+
+    Push step (since v1.5.0): if `PULSE_GITHUB_PAT` is set in the env,
+    the commit + tag are pushed to origin master. Without the PAT the
+    commit stays local and the cycle still reports success.
+    """
     from . import commit_review
 
     level = _bump_level_for(plan)
     new_version = bump(level, changelog_line=plan.intent)
 
     diff = diff_with_head()
-    msg = f"v{new_version}: {plan.intent}".strip()
+    msg = _build_commit_message(plan, new_version, replay_score)
+    # Pass only the subject line to commit_review for compactness — the
+    # body is mostly trailers and would dilute Opus's attention.
+    review_subject = msg.splitlines()[0]
     verdict = await commit_review.review(
-        diff=diff, new_version=str(new_version), commit_message=msg,
+        diff=diff, new_version=str(new_version), commit_message=review_subject,
         intent=plan.intent, acceptance=plan.acceptance, replay_score=replay_score,
     )
     if verdict.is_block:
@@ -484,10 +539,21 @@ async def commit_evolution(plan: EvolutionPlan, replay_score: float | None = Non
         return {"ok": False, "reason": "commit_review_block", "verdict": verdict.verdict}
 
     sha = commit_all_with_msg(msg)
-    create_annotated_tag(f"v{new_version}", plan.intent or msg)
+    create_annotated_tag(f"v{new_version}", plan.intent or review_subject)
     _log_event("evolution_committed", version=str(new_version), sha=sha,
                 intent=plan.intent, class_addressed=plan.class_addressed)
-    return {"ok": True, "sha": sha, "version": str(new_version), "verdict": verdict.verdict}
+
+    # Auto-push to GitHub if PAT configured — see git_ops.push_to_origin_with_tags.
+    push_result = push_to_origin_with_tags()
+    if push_result.get("pushed"):
+        _log_event("evolution_pushed", version=str(new_version), sha=sha)
+    else:
+        _log_event("evolution_push_skipped",
+                    version=str(new_version),
+                    reason=push_result.get("reason", "unknown"))
+
+    return {"ok": True, "sha": sha, "version": str(new_version),
+             "verdict": verdict.verdict, "pushed": push_result.get("pushed", False)}
 
 
 # ---------------------------------------------------------------------------

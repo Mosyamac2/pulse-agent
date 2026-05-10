@@ -1,6 +1,6 @@
 # Пульс — самоэволюционирующий HR‑агент
 
-[![version](https://img.shields.io/badge/version-1.4.1-blue)](VERSION)
+[![version](https://img.shields.io/badge/version-1.5.0-blue)](VERSION)
 
 Пульс — становящийся цифровой ассистент сотрудника крупного банка. Помогает отслеживать «оптимальное боевое состояние»: эффективность, нагрузку, риск выгорания, маршруты роста. Идеологически наследник [Ouroboros](https://github.com/joi-lab/ouroboros-desktop), но без desktop‑овой инфраструктуры и с одним LLM‑бэкендом — Claude Agent SDK через OAuth Max‑подписку.
 
@@ -34,6 +34,8 @@ UI открывается на `http://VM:8080`.
 - `docs/DEVELOPMENT.md` — как разрабатывать.
 
 ## Changelog
+
+- `v1.5.0` — **настоящая самоэволюция**: после успешного `commit_evolution` Pulse автоматически пушит ветку + тег на GitHub origin. `pulse/git_ops.py::push_to_origin_with_tags` читает `PULSE_GITHUB_PAT` из env, инжектит токен в URL только для одного `git push`, не персистится в `.git/config`. Без PAT — пуш пропускается с логом `evolution_push_skipped`, цикл считается успешным локально. Параллельно: исправлен truncation `intent[:240]` (мульти-словесный обрыв в subject коммитов v0.2.0/v1.4.1) — лимит поднят до 1000, и теперь `commit_evolution` строит Git-conventional message: краткий subject (≤72 символа, по первому предложению или word-boundary), полный intent в body, плюс trailers `Self-Evolved-By: pulse evolution_cycle (autonomous)` + `Co-Authored-By: Claude Opus 4.7`. На GitHub теперь видно, какие коммиты пришли от автономной эволюции, а какие — от человека.
 
 - `v1.4.1` — Включить полноценный рендер Markdown в веб-чате (web/index.html): подключить marked + DOMPurify, рендерить ассистентские сообщения как HTML с поддержкой GFM (таблицы, заголовки, списки, code, жирный/курсив, ссылки), сохранить отображение по
 
