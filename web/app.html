@@ -1423,18 +1423,21 @@
   let _dockToolHTML = "";
 
   function renderOverlayMarkdown(text) {
-    const ready = (typeof window.marked === 'object' || typeof window.marked === 'function')
-                  && typeof window.DOMPurify === 'object';
+    // v2.7.12 fix: same trap as the chat — DOMPurify is `typeof function` in
+    // v3, not `object`. Test for the methods we actually call instead of the
+    // top-level types.
+    const ready = window.marked
+                  && typeof window.marked.parse === 'function'
+                  && window.DOMPurify
+                  && typeof window.DOMPurify.sanitize === 'function';
     if (!ready) {
       overlayText.innerHTML = _dockToolHTML + `<div>${escapeHTML(text)}</div>`;
       return;
     }
     let html;
     try {
-      const parsed = (typeof window.marked.parse === 'function'
-                       ? window.marked.parse(text)
-                       : window.marked(text));
-      html = window.DOMPurify.sanitize(parsed);
+      const parsed = window.marked.parse(text || '', { gfm: true, breaks: false });
+      html = window.DOMPurify.sanitize(parsed, { USE_PROFILES: { html: true } });
     } catch (_) {
       html = `<div>${escapeHTML(text)}</div>`;
     }

@@ -1220,8 +1220,14 @@ function appendUser(text) {
 // itself once libraries become available — `body.dataset.mdSource` keeps the
 // raw markdown so we can re-render in place.
 function renderAssistantMarkdown(body, text) {
-  const ready = (typeof window.marked === 'object' || typeof window.marked === 'function')
-                && typeof window.DOMPurify === 'object';
+  // v2.7.12 fix: DOMPurify v3 exposes itself as a FUNCTION (createDOMPurify
+  // factory), not an object — so the previous `typeof === 'object'` check was
+  // always false and we silently fell through to body.textContent every time.
+  // The truly correct readiness check is whether the methods we call exist.
+  const ready = window.marked
+                && typeof window.marked.parse === 'function'
+                && window.DOMPurify
+                && typeof window.DOMPurify.sanitize === 'function';
   body.dataset.mdSource = text || '';
   if (!ready) {
     body.textContent = text || '';
