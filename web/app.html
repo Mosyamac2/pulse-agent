@@ -448,6 +448,13 @@
       margin: 0 auto;
       padding: 1.4rem 1.6rem 4.5rem;
     }
+    /* Full-bleed variant for the Dashboard tab — the dashboard provides
+       its own internal padding and max-width, so we just give it the
+       canvas. */
+    .tab-content--bleed {
+      max-width: none;
+      padding: 0;
+    }
     .tab-h1 {
       font-family: var(--p-font-display);
       font-size: 1.6rem;
@@ -461,33 +468,33 @@
     }
 
     /* KPI strip */
-    .kpi-strip {
+    .fc-strip {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
       gap: 0.8rem;
       margin-bottom: 1.4rem;
     }
-    .kpi {
+    .fc-kpi {
       background: var(--p-surface);
       border: 1px solid var(--p-border-soft);
       border-radius: var(--p-r);
       padding: 0.95rem 1rem;
     }
-    .kpi-label {
+    .fc-label {
       color: var(--p-fg-soft);
       font-size: 0.78rem;
       letter-spacing: 0.02em;
       text-transform: lowercase;
       margin-bottom: 0.3rem;
     }
-    .kpi-value {
+    .fc-value {
       font-family: var(--p-font-display);
       font-size: 1.7rem;
       font-weight: 700;
       letter-spacing: -0.01em;
       color: var(--p-fg);
     }
-    .kpi-foot {
+    .fc-foot {
       color: var(--p-fg-soft);
       font-size: 0.75rem;
       margin-top: 0.25rem;
@@ -887,6 +894,13 @@
     <span class="rail-divider"></span>
     <span class="rail-section-label">панели</span>
 
+    <button class="rail-btn" data-tab="analytics" aria-label="Дашборд руководителя">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="3" y1="3" x2="3" y2="21"/><line x1="3" y1="21" x2="21" y2="21"/><rect x="7" y="13" width="3" height="6"/><rect x="12" y="9" width="3" height="10"/><rect x="17" y="5" width="3" height="14"/>
+      </svg>
+      <span class="rail-tip">Дашборд руководителя</span>
+    </button>
+
     <button class="rail-btn" data-tab="profile" aria-label="Профиль и структура">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
@@ -927,13 +941,6 @@
         <polyline points="3 17 9 11 13 15 21 7"/><polyline points="14 7 21 7 21 14"/>
       </svg>
       <span class="rail-tip">Карьерное продвижение</span>
-    </button>
-
-    <button class="rail-btn" data-tab="analytics" aria-label="Дашборд руководителя">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="3" y1="3" x2="3" y2="21"/><line x1="3" y1="21" x2="21" y2="21"/><rect x="7" y="13" width="3" height="6"/><rect x="12" y="9" width="3" height="10"/><rect x="17" y="5" width="3" height="14"/>
-      </svg>
-      <span class="rail-tip">Дашборд руководителя</span>
     </button>
 
     <button class="rail-btn" data-tab="docs" aria-label="КЭДО — работа и отдых">
@@ -1022,10 +1029,11 @@
     </section>
 
     <section class="tab-pane" data-tab="analytics">
-      <div class="tab-content" data-loaded="false" data-renderer="analytics">
-        <h1 class="tab-h1">Дашборд руководителя</h1>
-        <p class="tab-sub">Утренний обзор организации — встроенный <code>/dashboard</code>.</p>
-        <div class="skel">Загружаю дашборд…</div>
+      <!-- No tab-h1/tab-sub here — Dashboard is rendered inline by fetching
+           /dashboard?embed=1 and injecting its <main> + <style> + <script>.
+           Side container so dashboard's CSS doesn't need scoping. -->
+      <div class="tab-content tab-content--bleed" data-loaded="false" data-renderer="analytics">
+        <div class="skel" style="padding:2rem;text-align:center;">Загружаю дашборд…</div>
       </div>
     </section>
 
@@ -1437,11 +1445,11 @@
     }
 
     const kpiHTML = `
-      <div class="kpi-strip">
-        <div class="kpi"><div class="kpi-label">в работе</div><div class="kpi-value">${summary.active_count}</div><div class="kpi-foot">активные вакансии</div></div>
-        <div class="kpi"><div class="kpi-label">на согласовании</div><div class="kpi-value">${summary.in_review_count}</div><div class="kpi-foot">черновиков ${summary.draft_count}</div></div>
-        <div class="kpi"><div class="kpi-label">кандидаты в воронке</div><div class="kpi-value">${summary.candidates_in_pipeline}</div></div>
-        <div class="kpi"><div class="kpi-label">время до закрытия</div><div class="kpi-value">${fmtDays(summary.avg_time_to_close_days)}</div><div class="kpi-foot">средн. по закрытым</div></div>
+      <div class="fc-strip">
+        <div class="fc-kpi"><div class="fc-label">в работе</div><div class="fc-value">${summary.active_count}</div><div class="fc-foot">активные вакансии</div></div>
+        <div class="fc-kpi"><div class="fc-label">на согласовании</div><div class="fc-value">${summary.in_review_count}</div><div class="fc-foot">черновиков ${summary.draft_count}</div></div>
+        <div class="fc-kpi"><div class="fc-label">кандидаты в воронке</div><div class="fc-value">${summary.candidates_in_pipeline}</div></div>
+        <div class="fc-kpi"><div class="fc-label">время до закрытия</div><div class="fc-value">${fmtDays(summary.avg_time_to_close_days)}</div><div class="fc-foot">средн. по закрытым</div></div>
       </div>
     `;
 
@@ -1585,11 +1593,11 @@
     const items = (myGoals && myGoals.items) || [];
 
     const kpiHTML = `
-      <div class="kpi-strip">
-        <div class="kpi"><div class="kpi-label">мои цели · ${period}</div><div class="kpi-value">${mySummary.goals_total}</div><div class="kpi-foot">accepted ${mySummary.accepted}, proposed ${mySummary.proposed}</div></div>
-        <div class="kpi"><div class="kpi-label">прогресс</div><div class="kpi-value">${fmtPct(mySummary.avg_progress)}</div><div class="kpi-foot">в работе ${mySummary.in_progress}</div></div>
-        <div class="kpi"><div class="kpi-label">просрочено</div><div class="kpi-value" style="color:${mySummary.overdue ? 'var(--p-bad)' : 'var(--p-good)'}">${mySummary.overdue}</div></div>
-        <div class="kpi"><div class="kpi-label">по компании</div><div class="kpi-value">${companyS.goals_total}</div><div class="kpi-foot">средн. прогресс ${fmtPct(companyS.avg_progress)}</div></div>
+      <div class="fc-strip">
+        <div class="fc-kpi"><div class="fc-label">мои цели · ${period}</div><div class="fc-value">${mySummary.goals_total}</div><div class="fc-foot">accepted ${mySummary.accepted}, proposed ${mySummary.proposed}</div></div>
+        <div class="fc-kpi"><div class="fc-label">прогресс</div><div class="fc-value">${fmtPct(mySummary.avg_progress)}</div><div class="fc-foot">в работе ${mySummary.in_progress}</div></div>
+        <div class="fc-kpi"><div class="fc-label">просрочено</div><div class="fc-value" style="color:${mySummary.overdue ? 'var(--p-bad)' : 'var(--p-good)'}">${mySummary.overdue}</div></div>
+        <div class="fc-kpi"><div class="fc-label">по компании</div><div class="fc-value">${companyS.goals_total}</div><div class="fc-foot">средн. прогресс ${fmtPct(companyS.avg_progress)}</div></div>
       </div>
     `;
 
@@ -1668,11 +1676,11 @@
     const inProgress = myCourses.filter(c => c.status === 'in_progress').length;
 
     const kpiHTML = `
-      <div class="kpi-strip">
-        <div class="kpi"><div class="kpi-label">AI-лента</div><div class="kpi-value">${items.length}</div><div class="kpi-foot">рекомендаций сегодня</div></div>
-        <div class="kpi"><div class="kpi-label">мои курсы</div><div class="kpi-value">${myCourses.length}</div><div class="kpi-foot">${completed} ✓ · ${inProgress} в процессе</div></div>
-        <div class="kpi"><div class="kpi-label">сохранено</div><div class="kpi-value">${items.filter(i => i.bookmarked).length}</div></div>
-        <div class="kpi"><div class="kpi-label">просмотрено</div><div class="kpi-value">${items.filter(i => i.viewed).length}</div></div>
+      <div class="fc-strip">
+        <div class="fc-kpi"><div class="fc-label">AI-лента</div><div class="fc-value">${items.length}</div><div class="fc-foot">рекомендаций сегодня</div></div>
+        <div class="fc-kpi"><div class="fc-label">мои курсы</div><div class="fc-value">${myCourses.length}</div><div class="fc-foot">${completed} ✓ · ${inProgress} в процессе</div></div>
+        <div class="fc-kpi"><div class="fc-label">сохранено</div><div class="fc-value">${items.filter(i => i.bookmarked).length}</div></div>
+        <div class="fc-kpi"><div class="fc-label">просмотрено</div><div class="fc-value">${items.filter(i => i.viewed).length}</div></div>
       </div>`;
 
     const cardsHTML = items.length ? `
@@ -1732,11 +1740,11 @@
     const peer = mine.peer_summary || {};
 
     const kpiHTML = `
-      <div class="kpi-strip">
-        <div class="kpi"><div class="kpi-label">активных кампаний</div><div class="kpi-value">${a.length}</div></div>
-        <div class="kpi"><div class="kpi-label">завершённых</div><div class="kpi-value">${c.length}</div></div>
-        <div class="kpi"><div class="kpi-label">моя оценка</div><div class="kpi-value">${pr ? pr.score : '—'}</div><div class="kpi-foot">${pr ? pr.period : ''}</div></div>
-        <div class="kpi"><div class="kpi-label">отзывы коллег</div><div class="kpi-value">${peer.avg_sentiment != null ? peer.avg_sentiment : '—'}</div><div class="kpi-foot">${peer.n || 0} реплик · сентимент −1…+1</div></div>
+      <div class="fc-strip">
+        <div class="fc-kpi"><div class="fc-label">активных кампаний</div><div class="fc-value">${a.length}</div></div>
+        <div class="fc-kpi"><div class="fc-label">завершённых</div><div class="fc-value">${c.length}</div></div>
+        <div class="fc-kpi"><div class="fc-label">моя оценка</div><div class="fc-value">${pr ? pr.score : '—'}</div><div class="fc-foot">${pr ? pr.period : ''}</div></div>
+        <div class="fc-kpi"><div class="fc-label">отзывы коллег</div><div class="fc-value">${peer.avg_sentiment != null ? peer.avg_sentiment : '—'}</div><div class="fc-foot">${peer.n || 0} реплик · сентимент −1…+1</div></div>
       </div>`;
 
     function campCard(s) {
@@ -1815,11 +1823,11 @@
       : `<span class="pill pill-neutral">не открыт</span>`;
 
     const kpiHTML = `
-      <div class="kpi-strip">
-        <div class="kpi"><div class="kpi-label">мой статус</div><div class="kpi-value" style="font-size:1.1rem;line-height:1.4;">${statusPill}</div><div class="kpi-foot">${tps.open_to_offers_date ? 'с ' + tps.open_to_offers_date : ''}</div></div>
-        <div class="kpi"><div class="kpi-label">меня рекомендуют</div><div class="kpi-value">${tps.recommended_by_count || 0}</div><div class="kpi-foot">${tps.last_recommended_date ? 'последний раз ' + tps.last_recommended_date : '—'}</div></div>
-        <div class="kpi"><div class="kpi-label">внутренние вакансии</div><div class="kpi-value">${items.length}</div><div class="kpi-foot">подходят по грейду</div></div>
-        <div class="kpi"><div class="kpi-label">делегирования</div><div class="kpi-value">${iDel.length + toMe.length}</div><div class="kpi-foot">от меня ${iDel.length} · мне ${toMe.length}</div></div>
+      <div class="fc-strip">
+        <div class="fc-kpi"><div class="fc-label">мой статус</div><div class="fc-value" style="font-size:1.1rem;line-height:1.4;">${statusPill}</div><div class="fc-foot">${tps.open_to_offers_date ? 'с ' + tps.open_to_offers_date : ''}</div></div>
+        <div class="fc-kpi"><div class="fc-label">меня рекомендуют</div><div class="fc-value">${tps.recommended_by_count || 0}</div><div class="fc-foot">${tps.last_recommended_date ? 'последний раз ' + tps.last_recommended_date : '—'}</div></div>
+        <div class="fc-kpi"><div class="fc-label">внутренние вакансии</div><div class="fc-value">${items.length}</div><div class="fc-foot">подходят по грейду</div></div>
+        <div class="fc-kpi"><div class="fc-label">делегирования</div><div class="fc-value">${iDel.length + toMe.length}</div><div class="fc-foot">от меня ${iDel.length} · мне ${toMe.length}</div></div>
       </div>`;
 
     const vacanciesHTML = items.length ? `
@@ -1877,25 +1885,57 @@
       </aside>`;
   };
 
-  // ─── Renderer: analytics — Дашборд руководителя (H1) ────────────────
-  // По запросу с v2.7.3: фасадная вкладка не дублирует HR-аналитику в виде
-  // KPI-плашек поверх такого же дашборда. Здесь — чистый iframe в /dashboard
-  // (полный morning-brief руководителя) + chat-presets рядом.
+  // ─── Renderer: analytics — Дашборд руководителя ────────────────────
+  // С v2.7.5: больше НЕ iframe. Грузим /dashboard?embed=1 (без брендинг-
+  // header'а и колофона) и инлайн вставляем <style> + <main> + <script>
+  // в DOM таба. Это даёт нативный, не-вложенный рендер: KPI-страйп,
+  // heatmap, at-risk, scatter архетипов, trust timeline, evolution log,
+  // отвергнутые, cost-breakdown — всё родными виджетами дашборда, без
+  // wrapper-текста и без фрейма.
   RENDERERS.analytics = async function(container) {
-    container.innerHTML = `
-      <h1 class="tab-h1">Дашборд руководителя</h1>
-      <p class="tab-sub">Утренний обзор «состояния организма» — то же, что открывается в <code>/dashboard</code>. KPI-страйп, тепловая карта подразделений, at-risk сотрудники, динамика доверия, лог эволюционных циклов и cost-breakdown.</p>
-      <div class="analytics-iframe-wrap" style="height:calc(100vh - 180px);">
-        <iframe src="/dashboard" title="Дашборд руководителя" loading="lazy"></iframe>
-      </div>
-      <aside class="presets">
-        <h3>📎 Что спросить Пульса по дашборду</h3>
-        <div class="presets-list">
-          ${presetLink('Сделай свежий обзор по at-risk сотрудникам — кто сейчас под красной чертой?')}
-          ${presetLink('Какие отделы заметнее всего ухудшились за последний месяц?')}
-          ${presetLink('Покажи cost-breakdown эволюционных циклов и обоснуй стоимость.')}
-        </div>
-      </aside>`;
+    setSkel(container, "Загружаю дашборд…");
+    let html;
+    try {
+      const r = await fetch('/dashboard?embed=1');
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      html = await r.text();
+    } catch (e) {
+      container.innerHTML =
+        `<div class="skel" style="padding:2rem;text-align:center;">Не удалось загрузить дашборд: ${escapeHTML(e.message)}</div>`;
+      return;
+    }
+
+    // Parse the embed HTML in a detached document so we can pull pieces.
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+
+    // CSS: combine all <style> blocks (in document order).
+    const styleText = Array.from(doc.querySelectorAll('style'))
+      .map(s => s.textContent || '').join('\n');
+
+    // Body — strip any leftover script tags so we can re-create them
+    // (DOMParser does not execute scripts; re-creating ensures they run).
+    const main = doc.querySelector('main');
+    const mainHtml = main ? main.outerHTML : '';
+
+    // Scripts (text content only — dashboard scripts are inline).
+    const scripts = Array.from(doc.querySelectorAll('script'))
+      .map(s => s.textContent || '');
+
+    // Inject styles inside the tab so they live alongside the inlined
+    // dashboard content. The renamed facade KPI classes (.fc-kpi etc.)
+    // mean the dashboard's `.kpi-strip`/`.kpi` rules don't collide with
+    // the rest of app.html.
+    container.innerHTML =
+      `<style data-source="dashboard-embed">${styleText}</style>` +
+      mainHtml;
+
+    // Re-execute dashboard scripts in document scope so renderKpi/Heatmap/…
+    // hooks find the inlined #kpi-strip/#heatmap/etc. elements.
+    for (const code of scripts) {
+      const tag = document.createElement('script');
+      tag.textContent = code;
+      container.appendChild(tag);
+    }
   };
 
   // ─── Renderer: docs / КЭДО (H2) ──────────────────────────────────────

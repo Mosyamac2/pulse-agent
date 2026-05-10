@@ -88,22 +88,46 @@ def chat_page() -> Any:
 
 
 @app.get("/dashboard", response_class=HTMLResponse)
-def dashboard_page() -> Any:
-    """CEO dashboard (v1.7.0). 30-day window. Editorial morning-brief aesthetic.
+def dashboard_page(embed: int = 0) -> Any:
+    """Дашборд руководителя (v1.7.0). 30-day window. Editorial morning-brief.
 
     Drill-down links use `/?q=…` — the chat UI on `/` reads the query and
     pre-fills the input box.
+
+    With `?embed=1` (v2.7.5+) the page is served stripped of the brand
+    header and the colophon footer, so `web/app.html` can fetch and
+    inject it inline into the «Дэшборд руководителя» tab without the
+    Frankenstein double-header you'd get with iframe nesting.
     """
     p = WEB_DIR / "dashboard.html"
-    if p.exists():
+    if not p.exists():
+        return HTMLResponse(
+            "<html><body style='font-family:system-ui;padding:2rem'>"
+            f"<h1>Пульс {read_version()}</h1>"
+            "<p>Дашборд отсутствует. Файл web/dashboard.html не найден.</p>"
+            "</body></html>",
+            headers=_NOCACHE,
+        )
+    if not embed:
         return FileResponse(str(p), headers=_NOCACHE)
-    return HTMLResponse(
-        "<html><body style='font-family:system-ui;padding:2rem'>"
-        f"<h1>Пульс {read_version()}</h1>"
-        "<p>Дашборд отсутствует. Файл web/dashboard.html не найден.</p>"
-        "</body></html>",
-        headers=_NOCACHE,
-    )
+    # ?embed=1 — strip header + colophon for inline injection.
+    txt = p.read_text(encoding="utf-8")
+    return HTMLResponse(_strip_for_embed(txt), headers=_NOCACHE)
+
+
+def _strip_for_embed(html: str) -> str:
+    """Remove `<header class="app-header">…</header>` and the colophon div.
+
+    Naive but works because dashboard.html structure is stable. We keep
+    everything else (style, main, script) untouched so the embedded
+    instance behaves identically to the standalone /dashboard.
+    """
+    import re
+    out = re.sub(r"<header\s+class=\"app-header\">.*?</header>\s*", "",
+                  html, flags=re.S)
+    out = re.sub(r"<div\s+class=\"colophon\">.*?</div>\s*", "",
+                  out, flags=re.S)
+    return out
 
 
 # ---------------------------------------------------------------------------
