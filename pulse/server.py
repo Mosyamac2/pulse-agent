@@ -435,6 +435,87 @@ def api_employee_sparkline(emp_id: str, metric: str, window: int = 30) -> JSONRe
     return JSONResponse(out)
 
 
+# ---------------------------------------------------------------------------
+# /api/hcm/* — façade panels (P14, v2.3.0+). Phase D1 surface:
+# recruit / goals / learning / assess. Read-only, GET-only — any «action»
+# from the UI routes back into chat with tab_context.
+# ---------------------------------------------------------------------------
+
+@app.get("/api/hcm/recruit/summary")
+def api_hcm_recruit_summary(window: int = 30) -> JSONResponse:
+    _require_db()
+    from .hcm_panels import get_recruit_summary
+    return JSONResponse(get_recruit_summary(window=window))
+
+
+@app.get("/api/hcm/recruit/vacancies")
+def api_hcm_recruit_vacancies(status: str | None = "active") -> JSONResponse:
+    _require_db()
+    from .hcm_panels import list_active_vacancies
+    return JSONResponse({"items": list_active_vacancies(status=status)})
+
+
+@app.get("/api/hcm/recruit/vacancies/{vacancy_id}")
+def api_hcm_recruit_vacancy_detail(vacancy_id: str) -> JSONResponse:
+    _require_db()
+    from .hcm_panels import get_vacancy_detail
+    out = get_vacancy_detail(vacancy_id)
+    if out is None:
+        raise HTTPException(404, f"vacancy {vacancy_id} not found")
+    return JSONResponse(out)
+
+
+@app.get("/api/hcm/goals/summary")
+def api_hcm_goals_summary(emp_id: str | None = None,
+                            period: str | None = None) -> JSONResponse:
+    _require_db()
+    from .hcm_panels import get_goals_summary
+    return JSONResponse(get_goals_summary(emp_id=emp_id, period=period))
+
+
+@app.get("/api/hcm/goals/my")
+def api_hcm_goals_my(emp_id: str, period: str | None = None) -> JSONResponse:
+    _require_db()
+    from .hcm_panels import list_my_goals
+    return JSONResponse({"items": list_my_goals(emp_id, period=period)})
+
+
+@app.get("/api/hcm/goals/team")
+def api_hcm_goals_team(manager_emp_id: str,
+                         period: str | None = None) -> JSONResponse:
+    _require_db()
+    from .hcm_panels import list_team_goals
+    return JSONResponse({"items": list_team_goals(manager_emp_id, period=period)})
+
+
+@app.get("/api/hcm/learning/feed")
+def api_hcm_learning_feed(emp_id: str, limit: int = 20) -> JSONResponse:
+    _require_db()
+    from .hcm_panels import get_learning_feed
+    return JSONResponse({"items": get_learning_feed(emp_id, limit=limit)})
+
+
+@app.get("/api/hcm/learning/my_courses")
+def api_hcm_learning_courses(emp_id: str, status: str | None = None) -> JSONResponse:
+    _require_db()
+    from .hcm_panels import get_my_courses
+    return JSONResponse({"items": get_my_courses(emp_id, status=status)})
+
+
+@app.get("/api/hcm/assess/campaigns")
+def api_hcm_assess_campaigns() -> JSONResponse:
+    _require_db()
+    from .hcm_panels import get_assessment_campaigns
+    return JSONResponse(get_assessment_campaigns())
+
+
+@app.get("/api/hcm/assess/my")
+def api_hcm_assess_my(emp_id: str, period: str | None = None) -> JSONResponse:
+    _require_db()
+    from .hcm_panels import get_my_assessment
+    return JSONResponse(get_my_assessment(emp_id, period=period))
+
+
 @app.on_event("startup")
 def _start_background_loops() -> None:
     """Kick off the consciousness loop on app start. Idempotent."""

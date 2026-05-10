@@ -1,6 +1,6 @@
 # Пульс — самоэволюционирующий HR‑агент
 
-[![version](https://img.shields.io/badge/version-2.2.1-blue)](VERSION)
+[![version](https://img.shields.io/badge/version-2.3.0-blue)](VERSION)
 
 Пульс — становящийся цифровой ассистент сотрудника крупного банка. Помогает отслеживать «оптимальное боевое состояние»: эффективность, нагрузку, риск выгорания, маршруты роста. Идеологически наследник [Ouroboros](https://github.com/joi-lab/ouroboros-desktop), но без desktop‑овой инфраструктуры и с одним LLM‑бэкендом — Claude Agent SDK через OAuth Max‑подписку.
 
@@ -34,6 +34,8 @@ UI открывается на `http://VM:8080`.
 - `docs/DEVELOPMENT.md` — как разрабатывать.
 
 ## Changelog
+
+- `v2.3.0` — Phase D1 — pulse/hcm_panels.py: read-only фасадные агрегаты для табов Подбор/Цели/Обучение/Оценка + 10 GET-эндпоинтов /api/hcm/recruit/*, /api/hcm/goals/*, /api/hcm/learning/*, /api/hcm/assess/*. Стиль зеркалит pulse/dashboard.py — pure functions, optional db arg для тестов, 0 побочных эффектов.
 
 - `v2.2.1` — Phase C2 — hcm_seed.py: gen_goals (архетип-driven, ~1000 строк, weights нормализованы), gen_key_results (~1600), gen_learning_feed (~1200, AI-лента), gen_talent_pool_status (one row per emp, open=0 для non-active), gen_delegations (~25), gen_hr_requests (~95, 70%+ done), gen_surveys_meta (~6 кампаний). Hooked into seed.py block 11.
 
