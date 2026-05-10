@@ -34,10 +34,20 @@ def db(seeded_db_path: Path) -> Database:
 @pytest.fixture(scope="module")
 def patched_paths(seeded_db_path: Path):
     """Point pulse.config.PATHS.db at the seeded fixture so panels and the
-    FastAPI client see the same DB."""
+    FastAPI client see the same DB.
+
+    PATHS is a frozen dataclass; we mutate via object.__setattr__ and MUST
+    restore the original on teardown — otherwise later tests like
+    test_smoke.py::test_pulse_config_paths see the deleted tmp path and
+    fail with `PATHS.db.exists() is False`.
+    """
     from pulse.config import PATHS
+    original_db = PATHS.db
     object.__setattr__(PATHS, "db", seeded_db_path)
-    yield
+    try:
+        yield
+    finally:
+        object.__setattr__(PATHS, "db", original_db)
 
 
 @pytest.fixture(scope="module")
