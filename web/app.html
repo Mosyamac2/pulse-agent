@@ -1306,6 +1306,25 @@
   function activateTab(tab) {
     if (!TAB_LABELS[tab]) tab = "pulse";
 
+    // v2.7.9 fix: when leaving the analytics tab, tear down its injected
+    // dashboard content (style + main + scripts). The dashboard's CSS has
+    // global rules (`body { ... }`, `main { max-width: 1200px; }`, `a { ... }`)
+    // that leak to the whole page once injected — squeezing the Pulse chat
+    // into a narrow centre column on the next visit. Cheaper to re-fetch
+    // /dashboard?embed=1 on the next analytics activation than to scope a
+    // 600-line CSS file.
+    const previousTab = document.body.dataset.activeTab;
+    if (previousTab && previousTab !== tab && previousTab === 'analytics') {
+      const tc = document.querySelector(
+        '.tab-pane[data-tab="analytics"] .tab-content[data-renderer="analytics"]'
+      );
+      if (tc) {
+        tc.dataset.loaded = "false";
+        tc.innerHTML =
+          '<div class="skel" style="padding:2rem;text-align:center;">Загружаю дашборд…</div>';
+      }
+    }
+
     // visibility
     document.querySelectorAll('.tab-pane').forEach(p => {
       p.dataset.active = (p.dataset.tab === tab) ? "true" : "false";
