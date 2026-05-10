@@ -421,6 +421,48 @@
                      padding: 0.85rem; background: var(--p-bg);
                      border-top: 1px solid var(--p-border-soft);
                      box-shadow: 0 -2px 12px rgba(0,0,0,0.04); }
+
+    /* «Вниз» — floating button that appears when the user has scrolled away
+       from the latest message. Sits above the composer, bottom-right. */
+    .scroll-bottom-btn {
+      position: fixed;
+      right: 1.2rem;
+      bottom: 5.6rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.45rem 0.8rem 0.45rem 0.7rem;
+      background: var(--p-bg);
+      color: var(--p-fg-muted);
+      border: 1px solid var(--p-border);
+      border-radius: 999px;
+      cursor: pointer;
+      font-family: var(--p-font-body);
+      font-size: 0.82rem;
+      font-weight: 500;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.10);
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.18s ease, transform 0.18s ease, background-color 0.15s, color 0.15s;
+      pointer-events: none;
+      z-index: 50;
+    }
+    .scroll-bottom-btn[data-visible="true"] {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+    .scroll-bottom-btn:hover {
+      background: var(--p-tint-2);
+      color: var(--p-fg);
+      border-color: var(--p-tint-3);
+    }
+    .scroll-bottom-btn svg { width: 14px; height: 14px; }
+    /* Embedded chat (loaded from app.html iframe): composer is full-width
+       since the inner sidebar is hidden — keep button position consistent. */
+    @media (max-width: 800px) {
+      .scroll-bottom-btn { right: 0.8rem; }
+    }
     @media (max-width: 800px) {
       form#composer { left: 0; }
     }
@@ -1042,6 +1084,17 @@
       <button type="submit" class="primary" id="send">→</button>
     </div>
   </form>
+
+  <!-- «Вниз» — appears when user scrolls up away from latest message;
+       click → smooth scrolls to bottom. Hidden when already at bottom. -->
+  <button id="scroll-bottom-btn" class="scroll-bottom-btn" type="button"
+          title="К последнему сообщению" aria-label="К последнему сообщению">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="6 9 12 15 18 9"/>
+    </svg>
+    <span>Вниз</span>
+  </button>
+
   <div id="toast" class="toast"></div>
 
 <!--
@@ -1099,12 +1152,57 @@ function showToast(text) {
   setTimeout(() => toast.classList.remove('show'), 1800);
 }
 
+// ──────────────────────────────────────────────────────────────────────
+// Smart auto-scroll. The chat used to call .scrollIntoView() on every
+// streaming event (tool_call / text chunk / status), which yanked the
+// page down even when the user had explicitly scrolled up to read older
+// content. Now we only auto-scroll if the user is *already* near the
+// bottom (pinned), or if the caller explicitly forces it (e.g. user just
+// pressed Enter).
+// ──────────────────────────────────────────────────────────────────────
+function isPinnedToBottom(threshold = 120) {
+  return (window.innerHeight + window.scrollY)
+         >= document.documentElement.scrollHeight - threshold;
+}
+function maybeAutoScroll(force = false) {
+  if (force || isPinnedToBottom()) {
+    window.scrollTo({
+      top: document.documentElement.scrollHeight,
+      behavior: 'smooth',
+    });
+  }
+}
+
+// «Вниз» pill — visible only when user is NOT pinned to bottom.
+const scrollBottomBtn = document.getElementById('scroll-bottom-btn');
+function refreshScrollBtn() {
+  if (!scrollBottomBtn) return;
+  scrollBottomBtn.dataset.visible = isPinnedToBottom(120) ? 'false' : 'true';
+}
+window.addEventListener('scroll', refreshScrollBtn, { passive: true });
+window.addEventListener('resize', refreshScrollBtn, { passive: true });
+if (scrollBottomBtn) {
+  scrollBottomBtn.addEventListener('click', () => maybeAutoScroll(true));
+}
+// Re-evaluate visibility whenever new content lands in the thread (the
+// page height grows even without scrolling). Cheap; observer fires on
+// any descendant change so it covers tool_call rendering, text chunks
+// streaming in, and the final answer markdown swap.
+{
+  const t = document.getElementById('thread');
+  if (t && 'MutationObserver' in window) {
+    new MutationObserver(refreshScrollBtn)
+      .observe(t, { childList: true, subtree: true, characterData: true });
+  }
+}
+
 function appendUser(text) {
   const d = document.createElement('div');
   d.className = 'msg user';
   d.textContent = text;
   thread.appendChild(d);
-  d.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  // User just pressed Enter — they want to see what they typed.
+  maybeAutoScroll(true);
 }
 
 // Render assistant content as Markdown via marked + DOMPurify; fall back to
@@ -1154,7 +1252,9 @@ function appendPulse(text, msgId) {
                              { textContent: msgId, style: 'font-family:monospace; font-size:0.75rem' }));
   wrap.appendChild(meta);
   thread.appendChild(wrap);
-  wrap.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  // Final answer rendered: only follow if the user is still pinned to bottom.
+  // If they scrolled up to read something earlier, don't yank them.
+  maybeAutoScroll(false);
 
   upBtn.addEventListener('click', () => sendFeedback(msgId, 'up', commentInput.value, upBtn, downBtn));
   downBtn.addEventListener('click', () => sendFeedback(msgId, 'down', commentInput.value, downBtn, upBtn));
@@ -1263,7 +1363,9 @@ async function ask(question) {
   body.appendChild(activity);
   wrap.appendChild(body);
   thread.appendChild(wrap);
-  wrap.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  // Placeholder bubble appears immediately after the user's message; the user
+  // is still pinned at this moment, so this just keeps the flow visible.
+  maybeAutoScroll(false);
 
   // Snapshot the activity steps for the post-answer trace details panel.
   const traceSteps = [];
@@ -1302,7 +1404,10 @@ async function ask(question) {
       } else if (ev.type === 'done') {
         finalEv = ev;
       }
-      wrap.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      // Stream tick. Do NOT yank the page — only follow if the user is still
+      // pinned to the bottom. If they scrolled up to read an earlier message,
+      // they stay there and the «Вниз» pill appears in the corner.
+      maybeAutoScroll(false);
     };
 
     while (true) {
