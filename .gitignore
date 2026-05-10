@@ -41,6 +41,9 @@ data/memory/deep_review.md
 data/memory/knowledge/*.md
 data/memory/knowledge/*.lock
 
+# Overnight CEO emulation runtime data
+data/ceo_emulation/
+
 # Pytest / coverage
 .pytest_cache/
 .coverage

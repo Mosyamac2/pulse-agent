@@ -1,6 +1,6 @@
 # Пульс — самоэволюционирующий HR‑агент
 
-[![version](https://img.shields.io/badge/version-1.2.0-blue)](VERSION)
+[![version](https://img.shields.io/badge/version-1.3.0-blue)](VERSION)
 
 Пульс — становящийся цифровой ассистент сотрудника крупного банка. Помогает отслеживать «оптимальное боевое состояние»: эффективность, нагрузку, риск выгорания, маршруты роста. Идеологически наследник [Ouroboros](https://github.com/joi-lab/ouroboros-desktop), но без desktop‑овой инфраструктуры и с одним LLM‑бэкендом — Claude Agent SDK через OAuth Max‑подписку.
 
@@ -34,6 +34,8 @@ UI открывается на `http://VM:8080`.
 - `docs/DEVELOPMENT.md` — как разрабатывать.
 
 ## Changelog
+
+- `v1.3.0` — `scripts/ceo_emulation.py` — overnight автономный CEO‑эмулятор. Драйвер для `/loop`-цикла: `ask` (выбрать вопрос из 30-элементного банка с deterministic shuffle, отправить в `/api/chat` с накопленной session_history, вернуть JSON), `feedback ID up|down comment` (записать в /api/feedback, обновить downvote-счётчик), `maybe_evolve` (триггерит /api/evolution force=false при ≥5 дизлайков), `status`. Состояние в `data/ceo_emulation/state.json`, лог в `log.jsonl`, ошибки в `errors.jsonl` — всё gitignored. Прогон 114 итераций × 5 мин ночью дал 102/21 like/dislike, 4 запуска evolution-цикла (1 committed v0.2.0, 3 escalated на fb-class-003 UI Markdown).
 
 - `v1.2.0` — `run_python_analysis(code, timeout_s)` — sandboxed pandas/numpy execution. Subprocess-isolation через `multiprocessing.Process` + hard kill по таймауту, SQLite read-only (`?mode=ro` URI), restricted builtins (нет `open`/`__import__`/`exec`/`compile`/`eval`), pre-loaded DataFrames `df_employees`/`df_activity`/`df_digital`/`df_wearables`/`df_collab`/`df_peer` (последние 90 дней) + `pd`/`np`. Stdout cap 8KB, default timeout 15s, max 60s. 10 тестов покрывают исполнение, песочницу (open/import/exec заблокированы), read-only БД, kill по таймауту, обрезку вывода. Для разовых аналитических вопросов где нет витрины. Если запрос повторяется — Пульс создаёт постоянную витрину через эволюцию, а не запекает в sandbox.
 
