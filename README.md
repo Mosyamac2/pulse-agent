@@ -1,6 +1,6 @@
 # Пульс — самоэволюционирующий HR‑агент
 
-[![version](https://img.shields.io/badge/version-2.5.1-blue)](VERSION)
+[![version](https://img.shields.io/badge/version-2.5.2-blue)](VERSION)
 
 Пульс — становящийся цифровой ассистент сотрудника крупного банка. Помогает отслеживать «оптимальное боевое состояние»: эффективность, нагрузку, риск выгорания, маршруты роста. Идеологически наследник [Ouroboros](https://github.com/joi-lab/ouroboros-desktop), но без desktop‑овой инфраструктуры и с одним LLM‑бэкендом — Claude Agent SDK через OAuth Max‑подписку.
 
@@ -34,6 +34,8 @@ UI открывается на `http://VM:8080`.
 - `docs/DEVELOPMENT.md` — как разрабатывать.
 
 ## Changelog
+
+- `v2.5.2` — Phase H (H1+H2+H3) — Аналитика (KPI overview + iframe в /dashboard), КЭДО (календарь команды × месяц + каталог 6 типов обращений + мои запросы), Коммуникации (лента corp_events). Новая endpoint /api/hcm/comms/events.
 
 - `v2.5.1` — Phase G (G1+G2+G3) — содержательное наполнение Обучение / Оценка / Карьера: AI-лента карточек с reason RU-маппингом, кампании 360+самооценка+peer summary в split-grid, карьерный статус + внутренние вакансии + делегирования (i/me).
 

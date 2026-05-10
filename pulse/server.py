@@ -626,6 +626,13 @@ def api_hcm_analytics_overview(window: int = 30) -> JSONResponse:
     return JSONResponse(get_hr_analytics_overview(window=window))
 
 
+@app.get("/api/hcm/comms/events")
+def api_hcm_comms_events(n: int = 8) -> JSONResponse:
+    _require_db()
+    from .hcm_panels import get_upcoming_events
+    return JSONResponse({"items": get_upcoming_events(n=n)})
+
+
 @app.on_event("startup")
 def _start_background_loops() -> None:
     """Kick off the consciousness loop on app start. Idempotent."""

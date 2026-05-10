@@ -711,6 +711,64 @@
 
     .skel { color: var(--p-fg-faint); font-style: italic; padding: 1rem 0; }
 
+    /* Analytics iframe */
+    .analytics-iframe-wrap {
+      height: calc(100vh - 250px);
+      min-height: 480px;
+      margin-top: 1rem;
+      border-radius: var(--p-r);
+      overflow: hidden;
+      border: 1px solid var(--p-border-soft);
+    }
+    .analytics-iframe-wrap iframe {
+      width: 100%; height: 100%; border: 0; display: block;
+    }
+
+    /* Calendar grid */
+    .cal-table { width: 100%; border-collapse: collapse; }
+    .cal-table th, .cal-table td {
+      padding: 0.4rem 0.55rem;
+      border: 1px solid var(--p-border-soft);
+      font-size: 0.78rem;
+      text-align: left;
+    }
+    .cal-day {
+      width: 22px;
+      text-align: center;
+      padding: 0.3rem 2px !important;
+      color: var(--p-fg-soft);
+      font-family: var(--p-font-mono);
+    }
+    .cal-cell {
+      width: 22px;
+      text-align: center;
+      padding: 0.25rem 2px !important;
+    }
+    .cal-cell[data-vac="annual"] { background: rgba(255, 174, 0, 0.18); }
+    .cal-cell[data-vac="sick"]   { background: rgba(255, 99, 99, 0.18); }
+    .cal-cell[data-vac="sick_long"] { background: rgba(255, 99, 99, 0.32); }
+    .cal-cell[data-vac="maternity"] { background: rgba(167, 41, 255, 0.18); }
+    .cal-name { font-size: 0.82rem; }
+    .cal-name small { color: var(--p-fg-soft); display: block; }
+
+    /* Catalog list */
+    .catalog-list { display: grid; gap: 0.5rem; }
+    .catalog-item {
+      background: var(--p-bg);
+      border: 1px solid var(--p-border-soft);
+      border-radius: var(--p-r-sm);
+      padding: 0.7rem 0.95rem;
+      cursor: pointer;
+    }
+    .catalog-item:hover {
+      background: var(--p-tint-2);
+      border-color: var(--p-tint-3);
+    }
+    .catalog-item h4 {
+      margin: 0 0 0.2rem; font-size: 0.95rem; font-weight: 500;
+    }
+    .catalog-item small { color: var(--p-fg-soft); }
+
     /* Mobile */
     @media (max-width: 720px) {
       .app-layout { grid-template-columns: var(--rail-width) 1fr; }
@@ -871,42 +929,26 @@
     </section>
 
     <section class="tab-pane" data-tab="analytics">
-      <div class="placeholder">
-        <h1>Сквозная HR-аналитика</h1>
-        <p>В Phase H1 эта вкладка станет iframe-ом к существующему CEO-дашборду <code>/dashboard</code>. Сегодня — открой его в новой вкладке.</p>
-        <a class="ask-pulse-btn" href="/dashboard" target="_blank" rel="noopener">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/><path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/></svg>
-          Открыть CEO-дашборд
-        </a>
-        <a class="ask-pulse-btn" style="margin-left:0.5rem;background:var(--p-fg);color:var(--p-bg);" href="?tab=pulse&q=Сделай%20свежий%20обзор%20по%20at-risk%20сотрудникам.">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-          Спросить про at-risk
-        </a>
-        <div class="ph-hint">📦 Backend готов: <code>/api/hcm/analytics/overview</code> + весь <code>/api/dashboard/*</code>.</div>
+      <div class="tab-content" data-loaded="false" data-renderer="analytics">
+        <h1 class="tab-h1">Сквозная HR-аналитика</h1>
+        <p class="tab-sub">Лёгкий обзор + полный CEO-дашборд во встроенном фрейме.</p>
+        <div class="skel">Загружаю обзор…</div>
       </div>
     </section>
 
     <section class="tab-pane" data-tab="docs">
-      <div class="placeholder">
-        <h1>КЭДО — работа и отдых</h1>
-        <p>95 запросов в системе. Календарь команды + каталог обращений (6 типов: 2-НДФЛ, копия трудовой, заявление о счёте, ...).</p>
-        <a class="ask-pulse-btn" href="?tab=pulse&q=Сформируй%20мне%20запрос%20на%20справку%202-НДФЛ%20за%20прошлый%20год.">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-          Спросить про справку
-        </a>
-        <div class="ph-hint">📦 Backend готов. Календарь и каталог — Phase H2.</div>
+      <div class="tab-content" data-loaded="false" data-renderer="docs">
+        <h1 class="tab-h1">КЭДО — работа и отдых</h1>
+        <p class="tab-sub">Календарь команды + каталог обращений + мои запросы.</p>
+        <div class="skel">Загружаю каталог и календарь…</div>
       </div>
     </section>
 
     <section class="tab-pane" data-tab="comms">
-      <div class="placeholder">
-        <h1>Корпоративные коммуникации</h1>
-        <p>В оригинальной презентации Пульс-HCM это шестой модуль. У нас на синтетике уже есть таблицы <code>corp_events</code> и <code>event_participation</code> — этот таб станет лентой ближайших событий.</p>
-        <a class="ask-pulse-btn" href="?tab=pulse&q=Какие%20корпоративные%20события%20запланированы%20на%20ближайший%20месяц%3F">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-          Спросить про события
-        </a>
-        <div class="ph-hint">📦 Backend пока reuse-ит <code>corp_events</code>. Лента — Phase H3 (опционально).</div>
+      <div class="tab-content" data-loaded="false" data-renderer="comms">
+        <h1 class="tab-h1">Корпоративные коммуникации</h1>
+        <p class="tab-sub">Лента корпоративных событий — на основе таблицы corp_events.</p>
+        <div class="skel">Загружаю афишу…</div>
       </div>
     </section>
 
@@ -1720,6 +1762,194 @@
           ${presetLink('Кому я могу делегировать часть своих функций без риска?')}
           ${presetLink('Покажи, у кого из моей команды правильное состояние для роста на грейд +1.')}
           ${presetLink('Какие внутренние вакансии стоит мне рассмотреть и почему?')}
+        </div>
+      </aside>`;
+  };
+
+  // ─── Renderer: analytics (H1) ────────────────────────────────────────
+  RENDERERS.analytics = async function(container) {
+    setSkel(container, "Загружаю обзор…");
+    let ov;
+    try {
+      ov = await fetch('/api/hcm/analytics/overview').then(r => r.json());
+    } catch (e) {
+      container.innerHTML = `<div class="skel">Не удалось загрузить: ${escapeHTML(e.message)}</div>`;
+      return;
+    }
+    const kpiHTML = `
+      <div class="kpi-strip">
+        <div class="kpi"><div class="kpi-label">штатная численность</div><div class="kpi-value">${ov.headcount_active}</div><div class="kpi-foot">активных сотрудников</div></div>
+        <div class="kpi"><div class="kpi-label">движение за окно</div><div class="kpi-value">${ov.terminations}</div><div class="kpi-foot">увольнений за ${ov.window_days} дн.</div></div>
+        <div class="kpi"><div class="kpi-label">открытые вакансии</div><div class="kpi-value">${ov.vacancies_open}</div></div>
+        <div class="kpi"><div class="kpi-label">активные опросы</div><div class="kpi-value">${ov.surveys_active}</div></div>
+        <div class="kpi"><div class="kpi-label">завершено курсов</div><div class="kpi-value">${ov.courses_completed}</div><div class="kpi-foot">за ${ov.window_days} дн.</div></div>
+        <div class="kpi"><div class="kpi-label">КЭДО в работе</div><div class="kpi-value">${ov.pending_requests}</div><div class="kpi-foot">open + processing</div></div>
+      </div>`;
+
+    container.innerHTML = `
+      <h1 class="tab-h1">Сквозная HR-аналитика</h1>
+      <p class="tab-sub">Лёгкий обзор + полный CEO-дашборд во встроенном фрейме (он же открывается прямо в <code>/dashboard</code>).</p>
+      ${kpiHTML}
+      <div class="analytics-iframe-wrap">
+        <iframe src="/dashboard" title="CEO дашборд" loading="lazy"></iframe>
+      </div>
+      <aside class="presets">
+        <h3>📎 Что спросить Пульса по аналитике</h3>
+        <div class="presets-list">
+          ${presetLink('Сделай свежий обзор по at-risk сотрудникам — кто сейчас под красной чертой?')}
+          ${presetLink('Какие отделы заметнее всего ухудшились за последний месяц?')}
+          ${presetLink('Покажи cost-breakdown эволюционных циклов и обоснуй стоимость.')}
+        </div>
+      </aside>`;
+  };
+
+  // ─── Renderer: docs / КЭДО (H2) ──────────────────────────────────────
+  RENDERERS.docs = async function(container) {
+    setSkel(container, "Загружаю каталог и календарь…");
+    // pick a manager for the team calendar
+    let catalog, calendar, mineReq;
+    try {
+      const mgrRow = await fetch(`/api/hcm/career/talent_search?grade_min=4`).then(r => r.json());
+      const managerId = (mgrRow.items && mgrRow.items[0]) ? mgrRow.items[0].emp_id : DEFAULT_EMP_ID;
+      [catalog, calendar, mineReq] = await Promise.all([
+        fetch('/api/hcm/docs/catalog').then(r => r.json()),
+        fetch(`/api/hcm/docs/team_calendar?manager_emp_id=${managerId}&year=2026&month=5`).then(r => r.json()),
+        fetch(`/api/hcm/docs/my_requests?emp_id=${DEFAULT_EMP_ID}`).then(r => r.json()),
+      ]);
+    } catch (e) {
+      container.innerHTML = `<div class="skel">Не удалось загрузить: ${escapeHTML(e.message)}</div>`;
+      return;
+    }
+    const cat = catalog.items || [];
+    const team = calendar.team || [];
+    const my = mineReq.items || [];
+
+    function inRange(start, end, day) {
+      return day >= start && day <= end;
+    }
+
+    let calHTML = '';
+    if (team.length) {
+      const monthStart = calendar.month_start;
+      const monthEnd = calendar.month_end;
+      const daysInMonth = new Date(monthEnd).getDate();
+      const days = Array.from({length: daysInMonth}, (_, i) => i + 1);
+      calHTML = `
+        <table class="cal-table">
+          <thead>
+            <tr>
+              <th>имя, должность</th>
+              ${days.map(d => `<th class="cal-day">${d}</th>`).join('')}
+            </tr>
+          </thead>
+          <tbody>
+            ${team.map(person => {
+              return `
+                <tr>
+                  <td class="cal-name">${escapeHTML(person.full_name)}<small>active</small></td>
+                  ${days.map(d => {
+                    const day = `2026-05-${String(d).padStart(2, '0')}`;
+                    const v = (person.vacations || []).find(v => inRange(v.start_date, v.end_date, day));
+                    return `<td class="cal-cell" ${v ? `data-vac="${escapeHTML(v.kind)}" title="${escapeHTML(v.kind)}: ${v.start_date}…${v.end_date}"` : ''}></td>`;
+                  }).join('')}
+                </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+        <div style="font-size:0.78rem;color:var(--p-fg-soft);margin-top:0.6rem;display:flex;gap:1rem;">
+          <span><span class="cal-cell" style="display:inline-block;background:rgba(255,174,0,0.18);width:14px;height:14px;border:1px solid var(--p-border-soft);border-radius:3px;vertical-align:middle;"></span> отпуск</span>
+          <span><span class="cal-cell" style="display:inline-block;background:rgba(255,99,99,0.18);width:14px;height:14px;border:1px solid var(--p-border-soft);border-radius:3px;vertical-align:middle;"></span> sick</span>
+          <span><span class="cal-cell" style="display:inline-block;background:rgba(167,41,255,0.18);width:14px;height:14px;border:1px solid var(--p-border-soft);border-radius:3px;vertical-align:middle;"></span> декрет</span>
+        </div>`;
+    } else {
+      calHTML = `<div class="skel">У выбранного менеджера нет прямых подчинённых для календаря.</div>`;
+    }
+
+    const catalogHTML = `
+      <div class="catalog-list">
+        ${cat.map(it => `
+          <a class="catalog-item" href="?tab=pulse&q=${encodeURIComponent('Помоги мне сформировать запрос: ' + it.title + '. Что для этого нужно?')}">
+            <h4>${escapeHTML(it.title)}</h4>
+            <small>${escapeHTML(it.subtitle)}</small>
+          </a>
+        `).join('')}
+      </div>`;
+
+    const myReqHTML = my.length ? `
+      <table class="data-table" style="margin-top:0.6rem;">
+        <thead><tr><th>тема</th><th>статус</th><th>подано</th></tr></thead>
+        <tbody>
+          ${my.slice(0, 6).map(r => `
+            <tr>
+              <td>${escapeHTML(r.subject || r.type)}</td>
+              <td>${escapeHTML(r.status)}</td>
+              <td class="muted">${escapeHTML(r.submitted_date || '')}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>` : `<div class="skel">У сотрудника нет открытых запросов.</div>`;
+
+    container.innerHTML = `
+      <h1 class="tab-h1">Работа и отдых, документооборот</h1>
+      <p class="tab-sub">Календарь команды (май 2026) + каталог обращений + мои запросы.</p>
+      <div class="profile-grid" style="grid-template-columns:1.4fr 1fr;">
+        <div>
+          <h3 style="margin:0 0 0.5rem;font-family:var(--p-font-display);font-size:1.05rem;">Календарь команды</h3>
+          ${calHTML}
+        </div>
+        <div>
+          <h3 style="margin:0 0 0.5rem;font-family:var(--p-font-display);font-size:1.05rem;">Каталог обращений</h3>
+          ${catalogHTML}
+          <h3 style="margin:1rem 0 0.5rem;font-family:var(--p-font-display);font-size:1.05rem;">Мои запросы</h3>
+          ${myReqHTML}
+        </div>
+      </div>
+      <aside class="presets">
+        <h3>📎 Что спросить Пульса про КЭДО</h3>
+        <div class="presets-list">
+          ${presetLink('Когда у моей команды в этом месяце дыры в покрытии?')}
+          ${presetLink('Кто планирует отпуск в Q3 и пересекаются ли отпуска критичных ролей?')}
+          ${presetLink('Сформируй мне запрос на справку 2-НДФЛ за прошлый год.')}
+        </div>
+      </aside>`;
+  };
+
+  // ─── Renderer: comms (H3) ────────────────────────────────────────────
+  RENDERERS.comms = async function(container) {
+    setSkel(container, "Загружаю афишу событий…");
+    let events;
+    try {
+      events = await fetch('/api/hcm/comms/events?n=12').then(r => r.json());
+    } catch (e) {
+      container.innerHTML = `<div class="skel">Не удалось загрузить: ${escapeHTML(e.message)}</div>`;
+      return;
+    }
+    const items = events.items || [];
+
+    const cardsHTML = items.length ? `
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:0.6rem;">
+        ${items.map(ev => `
+          <div class="goal-card" style="margin-bottom:0;">
+            <div style="font-size:0.7rem;color:var(--p-fg-soft);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:0.3rem;">${escapeHTML(ev.kind || '—')}</div>
+            <h3 style="margin:0 0 0.4rem;font-size:0.95rem;line-height:1.3;">${escapeHTML(ev.name)}</h3>
+            <div style="display:flex;justify-content:space-between;font-size:0.82rem;color:var(--p-fg-soft);">
+              <span>${escapeHTML(ev.date || '')}</span>
+              <span>участников: ${ev.participants || 0}</span>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    ` : `<div class="skel">События не найдены.</div>`;
+
+    container.innerHTML = `
+      <h1 class="tab-h1">Корпоративные коммуникации</h1>
+      <p class="tab-sub">Лента корпоративных событий из таблицы corp_events.</p>
+      ${cardsHTML}
+      <aside class="presets">
+        <h3>📎 Что спросить Пульса про события</h3>
+        <div class="presets-list">
+          ${presetLink('Какие корпоративные события запланированы на ближайший месяц и кому стоит туда пойти?')}
+          ${presetLink('Кто из моей команды ещё ни разу не участвовал в корп.событиях?')}
         </div>
       </aside>`;
   };

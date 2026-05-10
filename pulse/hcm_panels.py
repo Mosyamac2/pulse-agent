@@ -803,6 +803,29 @@ def get_hr_analytics_overview(*, window: int = 30,
     }
 
 
+# ===========================================================================
+# Comms — slide 2 module 6: Корпоративные коммуникации (light stub)
+# ===========================================================================
+
+def get_upcoming_events(*, n: int = 8,
+                         db: Database | None = None) -> list[dict[str, Any]]:
+    """Last {n} corp events (past + upcoming) with participation count.
+
+    Reuses existing corp_events / event_participation tables — no new
+    schema. The Phase H3 panel uses this as a simple feed.
+    """
+    db = _db(db)
+    rows = list(db.query("""
+        SELECT ce.*, COUNT(ep.id) AS participants
+        FROM corp_events ce
+        LEFT JOIN event_participation ep ON ep.event_id = ce.event_id
+        GROUP BY ce.event_id
+        ORDER BY ce.date DESC
+        LIMIT :n
+    """, {"n": max(1, min(50, n))}))
+    return rows
+
+
 __all__ = [
     # D1
     "get_recruit_summary", "list_active_vacancies", "get_vacancy_detail",
@@ -815,4 +838,6 @@ __all__ = [
     "get_profile_full", "get_org_structure",
     "list_my_hr_requests", "get_team_calendar", "get_request_catalog",
     "get_hr_analytics_overview",
+    # H3
+    "get_upcoming_events",
 ]
