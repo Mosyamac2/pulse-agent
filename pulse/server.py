@@ -239,6 +239,19 @@ def api_history(limit: int = 30) -> JSONResponse:
 # /api/employees/{emp_id} (debug)
 # ---------------------------------------------------------------------------
 
+@app.get("/api/employees/index")
+def api_employees_index() -> JSONResponse:
+    """Lightweight {emp_id, full_name} list for client-side mention detection.
+
+    Declared BEFORE /api/employees/{emp_id} so FastAPI's path matcher
+    doesn't capture "index" as a value of {emp_id}.
+    """
+    if not PATHS.db.exists():
+        raise HTTPException(503, "DB missing — run seed first.")
+    from .dashboard import get_employee_index
+    return JSONResponse({"items": get_employee_index()})
+
+
 @app.get("/api/employees/{emp_id}")
 def api_employee(emp_id: str) -> JSONResponse:
     if not PATHS.db.exists():
@@ -370,6 +383,56 @@ def api_dashboard_rejected(n: int = 5) -> JSONResponse:
 def api_dashboard_cost(window: int = 30) -> JSONResponse:
     from .dashboard import get_cost_breakdown
     return JSONResponse(get_cost_breakdown(window=window))
+
+
+# ---------------------------------------------------------------------------
+# /api/sidebar/* — chat sidebar feed (v1.9.0)
+# ---------------------------------------------------------------------------
+
+@app.get("/api/sidebar/archetypes")
+def api_sidebar_archetypes() -> JSONResponse:
+    _require_db()
+    from .dashboard import get_archetype_counts
+    return JSONResponse({"items": get_archetype_counts()})
+
+
+@app.get("/api/sidebar/departments")
+def api_sidebar_departments() -> JSONResponse:
+    _require_db()
+    from .dashboard import get_department_counts
+    return JSONResponse({"items": get_department_counts()})
+
+
+@app.get("/api/sidebar/recent_threads")
+def api_sidebar_recent(n: int = 10) -> JSONResponse:
+    from .dashboard import get_recent_threads
+    return JSONResponse({"items": get_recent_threads(n=max(1, min(50, n)))})
+
+
+# ---------------------------------------------------------------------------
+# /api/employees/{emp_id}/* — hover-card + sparkline (v1.9.0)
+# /api/employees/index and /api/employees/{emp_id} (debug) live earlier in
+# the file, declared BEFORE these so {emp_id} doesn't shadow `index`.
+# ---------------------------------------------------------------------------
+
+@app.get("/api/employees/{emp_id}/card")
+def api_employee_card(emp_id: str, window: int = 30) -> JSONResponse:
+    _require_db()
+    from .employee_card import get_employee_card
+    out = get_employee_card(emp_id, window=window)
+    if out is None:
+        raise HTTPException(404, f"emp_id {emp_id} not found")
+    return JSONResponse(out)
+
+
+@app.get("/api/employees/{emp_id}/sparkline")
+def api_employee_sparkline(emp_id: str, metric: str, window: int = 30) -> JSONResponse:
+    _require_db()
+    from .employee_card import get_sparkline
+    out = get_sparkline(emp_id, metric, window=window)
+    if out is None:
+        raise HTTPException(400, f"unknown metric: {metric}")
+    return JSONResponse(out)
 
 
 @app.on_event("startup")

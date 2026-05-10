@@ -90,7 +90,148 @@
     body { font-family: var(--p-font-body); -webkit-font-smoothing: antialiased;
            text-rendering: optimizeLegibility;
            background: var(--bg); color: var(--fg); margin: 0; }
-    main { max-width: 820px; margin: 0 auto; padding: 1rem 1rem 8rem; }
+
+    /* ─── Two-column app shell (sidebar + chat) ──────────────────── */
+    .app-shell {
+      display: grid;
+      grid-template-columns: 268px 1fr;
+      min-height: 100vh;
+    }
+    .sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      padding: 1rem 0.9rem 1.4rem;
+      background: var(--p-bg);
+      border-right: 1px solid var(--p-border-soft);
+      font-family: var(--p-font-body);
+      font-size: 0.88rem;
+    }
+    .sb-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      padding: 0.4rem 0.5rem 1.1rem;
+      border-bottom: 1px solid var(--p-border-soft);
+      margin-bottom: 0.85rem;
+    }
+    .sb-brand .dot {
+      width: 0.65rem; height: 0.65rem; border-radius: 50%;
+      background: var(--p-grad-hero);
+      box-shadow: 0 0 0 3px rgba(167, 41, 255, 0.12);
+    }
+    .sb-brand .name {
+      font-family: var(--p-font-display);
+      font-weight: 700;
+      letter-spacing: -0.015em;
+      font-size: 1.05rem;
+    }
+    .sb-brand small {
+      margin-left: auto;
+      font-family: var(--p-font-mono);
+      font-size: 0.66rem;
+      letter-spacing: 0.06em;
+      color: var(--p-fg-soft);
+    }
+    .sb-section { margin-bottom: 1.2rem; }
+    .sb-title {
+      display: flex; align-items: center; gap: 0.5rem;
+      font-family: var(--p-font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--p-fg-soft);
+      padding: 0 0.5rem 0.45rem;
+    }
+    .sb-title .sb-title-key {
+      margin-left: auto;
+      padding: 0.1rem 0.45rem;
+      border: 1px solid var(--p-border-soft);
+      border-radius: 999px;
+      letter-spacing: 0.04em;
+    }
+    .sb-list { list-style: none; padding: 0; margin: 0; }
+    .sb-list li { margin: 0; }
+    .sb-item {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.42rem 0.55rem;
+      border-radius: var(--p-r-sm);
+      cursor: pointer;
+      transition: background 0.12s ease, color 0.12s ease;
+      color: var(--p-fg);
+      width: 100%; border: none; background: none;
+      text-align: left;
+      font: inherit;
+    }
+    .sb-item:hover { background: var(--p-tint); color: var(--p-accent); }
+    .sb-item .sb-label {
+      flex: 1;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .sb-item .sb-count {
+      font-family: var(--p-font-mono);
+      font-size: 0.74rem;
+      color: var(--p-fg-soft);
+      letter-spacing: 0.02em;
+    }
+    .sb-item .sb-bullet {
+      width: 0.5rem; height: 0.5rem; border-radius: 50%;
+      background: currentColor; opacity: 0.32; flex-shrink: 0;
+    }
+    .sb-recent .sb-item {
+      flex-direction: column; align-items: flex-start; gap: 0.15rem;
+      padding: 0.45rem 0.55rem;
+    }
+    .sb-recent .sb-q {
+      font-size: 0.86rem; line-height: 1.3;
+      color: var(--p-fg);
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .sb-recent .sb-meta {
+      font-family: var(--p-font-mono);
+      font-size: 0.66rem; letter-spacing: 0.04em;
+      color: var(--p-fg-soft);
+    }
+    .sb-quick .sb-item { font-size: 0.86rem; }
+    .sb-empty {
+      font-style: italic; color: var(--p-fg-soft);
+      padding: 0.4rem 0.55rem; font-size: 0.84rem;
+    }
+
+    /* ─── Mobile: sidebar drawer ─────────────────────────────────── */
+    .sb-toggle {
+      display: none;
+      position: fixed; top: 0.7rem; left: 0.7rem; z-index: 95;
+      width: 2.4rem; height: 2.4rem;
+      border-radius: 50%; border: 1px solid var(--p-border);
+      background: var(--p-bg); box-shadow: var(--p-shadow-sm);
+      cursor: pointer; padding: 0;
+      align-items: center; justify-content: center;
+      color: var(--p-fg);
+    }
+    .sb-toggle svg { width: 1.1rem; height: 1.1rem; }
+    @media (max-width: 800px) {
+      .app-shell { grid-template-columns: 1fr; }
+      .sidebar {
+        position: fixed; left: 0; top: 0; bottom: 0; width: 280px;
+        z-index: 80;
+        transform: translateX(-100%);
+        transition: transform 0.22s ease;
+        box-shadow: 4px 0 12px rgba(0,0,0,0.06);
+      }
+      .sidebar.open { transform: translateX(0); }
+      .sb-toggle { display: inline-flex; }
+      .sidebar-backdrop {
+        position: fixed; inset: 0; background: rgba(11, 18, 32, 0.32);
+        opacity: 0; pointer-events: none; transition: opacity 0.2s ease;
+        z-index: 70;
+      }
+      .sidebar-backdrop.show { opacity: 1; pointer-events: auto; }
+    }
+
+    main { max-width: 820px; margin: 0 auto; padding: 1rem 1.4rem 8rem; }
     h1 {
       display: flex; align-items: baseline; gap: 0.7rem; flex-wrap: wrap;
       font-family: var(--p-font-display);
@@ -179,10 +320,13 @@
                   font: inherit; font-family: var(--p-font-body); }
     .meta input:focus { outline: none; border-color: var(--p-accent);
                          box-shadow: 0 0 0 3px rgba(0,102,255,0.10); }
-    form#composer { position: fixed; left: 0; right: 0; bottom: 0;
+    form#composer { position: fixed; left: 268px; right: 0; bottom: 0;
                      padding: 0.85rem; background: var(--p-bg);
                      border-top: 1px solid var(--p-border-soft);
                      box-shadow: 0 -2px 12px rgba(0,0,0,0.04); }
+    @media (max-width: 800px) {
+      form#composer { left: 0; }
+    }
     form#composer .row { max-width: 820px; margin: 0 auto;
                           display: flex; gap: 0.55rem; }
     textarea { flex: 1; padding: 0.7rem 0.85rem; border: 1px solid var(--p-border);
@@ -455,14 +599,243 @@
       }
       .editor-note-btn .note-label small { display: none; }
     }
+
+    /* ─── Mention chips inside chat bubbles ─────────────────────── */
+    .emp-chip {
+      display: inline-flex; align-items: center; gap: 0.3rem;
+      padding: 0.05rem 0.45rem 0.08rem;
+      background: var(--p-tint);
+      border: 1px solid var(--p-tint-3);
+      border-radius: 999px;
+      color: var(--p-accent);
+      cursor: pointer;
+      transition: background 0.12s ease, border-color 0.12s ease;
+      white-space: nowrap;
+    }
+    .emp-chip:hover {
+      background: var(--p-tint-2);
+      border-color: var(--p-accent);
+    }
+    .emp-chip.flag-risk     { color: var(--p-bad);    border-color: rgba(201,33,64,0.35); background: rgba(201,33,64,0.06); }
+    .emp-chip.flag-burnout  { color: var(--p-bad);    border-color: rgba(201,33,64,0.35); background: rgba(201,33,64,0.06); }
+    .emp-chip .chip-flag {
+      width: 0.42rem; height: 0.42rem; border-radius: 50%;
+      background: currentColor; flex-shrink: 0;
+    }
+
+    /* ─── Hover-card popover ────────────────────────────────────── */
+    .hover-card {
+      position: fixed;
+      z-index: 120;
+      width: 320px;
+      background: var(--p-bg);
+      border: 1px solid var(--p-border-soft);
+      border-radius: var(--p-r-lg);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.10);
+      padding: 0;
+      opacity: 0;
+      transform: translateY(-4px);
+      transition: opacity 0.16s ease, transform 0.16s ease;
+      pointer-events: none;
+      font-family: var(--p-font-body);
+    }
+    .hover-card.show {
+      opacity: 1; transform: translateY(0); pointer-events: auto;
+    }
+    .hc-head {
+      padding: 0.85rem 1rem 0.6rem;
+      background: var(--p-tint);
+      border-radius: var(--p-r-lg) var(--p-r-lg) 0 0;
+      border-bottom: 1px solid var(--p-border-soft);
+    }
+    .hc-name {
+      font-family: var(--p-font-display);
+      font-weight: 700;
+      font-size: 1.02rem;
+      letter-spacing: -0.01em;
+      color: var(--p-fg);
+      line-height: 1.2;
+      margin: 0;
+    }
+    .hc-role {
+      font-size: 0.84rem;
+      color: var(--p-fg-muted);
+      margin-top: 0.18rem;
+      line-height: 1.35;
+    }
+    .hc-archetype {
+      display: inline-block;
+      margin-top: 0.45rem;
+      font-family: var(--p-font-mono);
+      font-size: 0.66rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 0.1rem 0.5rem;
+      border-radius: 999px;
+      background: var(--p-bg);
+      border: 1px solid var(--p-border-soft);
+      color: var(--p-fg-muted);
+    }
+    .hc-archetype.tenure {
+      margin-left: 0.35rem;
+      color: var(--p-fg-soft);
+    }
+    .hc-metrics {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.5rem;
+      padding: 0.85rem 1rem 0.5rem;
+    }
+    .hc-metric {
+      background: var(--p-surface);
+      border-radius: var(--p-r-sm);
+      padding: 0.5rem 0.6rem;
+    }
+    .hc-metric .hc-m-label {
+      font-family: var(--p-font-mono);
+      font-size: 0.62rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--p-fg-soft);
+    }
+    .hc-metric .hc-m-value {
+      font-family: var(--p-font-display);
+      font-weight: 700;
+      font-size: 1.05rem;
+      letter-spacing: -0.01em;
+      margin-top: 0.18rem;
+      font-feature-settings: "tnum","lnum";
+    }
+    .hc-metric .hc-m-tag {
+      font-size: 0.7rem;
+      color: var(--p-fg-muted);
+      margin-top: 0.05rem;
+    }
+    .hc-metric.sev-bad   .hc-m-value { color: var(--p-bad); }
+    .hc-metric.sev-good  .hc-m-value { color: var(--p-good); }
+    .hc-metric.sev-flat  .hc-m-value { color: var(--p-fg); }
+
+    .hc-flags {
+      padding: 0 1rem 0.45rem;
+      display: flex; flex-wrap: wrap; gap: 0.35rem;
+    }
+    .hc-flag {
+      font-family: var(--p-font-mono);
+      font-size: 0.62rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 0.1rem 0.5rem;
+      border-radius: 999px;
+    }
+    .hc-flag.risk    { color: var(--p-bad); background: rgba(201,33,64,0.08); }
+    .hc-flag.burnout { color: var(--p-bad); background: rgba(201,33,64,0.08); }
+    .hc-flag.attr    { color: var(--p-purple); background: rgba(167,41,255,0.08); }
+    .hc-foot {
+      padding: 0.7rem 1rem 0.85rem;
+      border-top: 1px solid var(--p-border-soft);
+      display: flex; justify-content: space-between; align-items: center; gap: 0.6rem;
+    }
+    .hc-foot .hc-id {
+      font-family: var(--p-font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.04em;
+      color: var(--p-fg-soft);
+    }
+    .hc-ask {
+      font-family: var(--p-font-body);
+      font-weight: 500;
+      font-size: 0.84rem;
+      padding: 0.42rem 0.85rem;
+      border-radius: var(--p-r-sm);
+      background: var(--p-accent);
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .hc-ask:hover { background: var(--p-accent-deep); }
+
+    /* ─── Inline sparklines (markdown table cells) ──────────────── */
+    .sparkline {
+      display: inline-block;
+      vertical-align: middle;
+      margin-left: 0.35rem;
+      height: 0.85rem;
+      width: 3.4rem;
+    }
+    .sparkline path { fill: none; stroke: var(--p-accent); stroke-width: 1.2; }
+    .sparkline.sev-bad  path { stroke: var(--p-bad); }
+    .sparkline.sev-good path { stroke: var(--p-good); }
+    .sparkline circle { fill: var(--p-accent); }
+    .sparkline.sev-bad  circle { fill: var(--p-bad); }
+    .sparkline.sev-good circle { fill: var(--p-good); }
   </style>
 </head>
 <body>
-  <main>
-    <h1>Пульс <small id="version">— загружается…</small>
-        <a class="nav-link" href="/dashboard">→ дашборд CEO</a></h1>
-    <div id="thread"></div>
-  </main>
+  <button class="sb-toggle" type="button" aria-label="Открыть навигацию" id="sb-toggle">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <path d="M4 7h16M4 12h16M4 17h16"/>
+    </svg>
+  </button>
+  <div class="sidebar-backdrop" id="sb-backdrop"></div>
+
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="sb-brand">
+        <span class="dot"></span>
+        <span class="name">Пульс</span>
+        <small id="sb-version">—</small>
+      </div>
+
+      <section class="sb-section sb-quick" id="sb-quick-section">
+        <div class="sb-title">
+          <span>Частые вопросы</span>
+          <span class="sb-title-key">quick</span>
+        </div>
+        <ul class="sb-list" id="sb-quick"></ul>
+      </section>
+
+      <section class="sb-section" id="sb-arch-section">
+        <div class="sb-title">
+          <span>Архетипы</span>
+          <span class="sb-title-key">8</span>
+        </div>
+        <ul class="sb-list" id="sb-archetypes">
+          <li class="sb-empty">…</li>
+        </ul>
+      </section>
+
+      <section class="sb-section" id="sb-dept-section">
+        <div class="sb-title">
+          <span>Отделы</span>
+          <span class="sb-title-key" id="sb-dept-count">—</span>
+        </div>
+        <ul class="sb-list" id="sb-departments">
+          <li class="sb-empty">…</li>
+        </ul>
+      </section>
+
+      <section class="sb-section sb-recent" id="sb-recent-section">
+        <div class="sb-title">
+          <span>Недавнее</span>
+          <span class="sb-title-key">recent</span>
+        </div>
+        <ul class="sb-list" id="sb-recent">
+          <li class="sb-empty">…</li>
+        </ul>
+      </section>
+    </aside>
+
+    <main>
+      <h1>Пульс <small id="version">— загружается…</small>
+          <a class="nav-link" href="/dashboard">→ дашборд CEO</a></h1>
+      <div id="thread"></div>
+    </main>
+  </div>
+
+  <!-- Hover-card popover (single instance, repositioned per chip). -->
+  <div class="hover-card" id="hover-card" role="dialog" aria-hidden="true"></div>
 
   <!-- Заметка редактору: floating button + modal letter-form (v1.6.0).
        Submits to POST /api/feedback/general which the next evolution
@@ -925,6 +1298,527 @@ q.addEventListener('keydown', (ev) => {
       sendBtn.innerHTML = orig;
     }
   });
+})();
+</script>
+
+<script>
+// ============================================================================
+// Sidebar + mention chips + hover-card + sparkline injection (v1.9.0)
+// ============================================================================
+//
+// Three behaviours wired here:
+//
+// 1) Sidebar — load /api/sidebar/{archetypes,departments,recent_threads}
+//    plus /api/employees/index (used by the mention walker), render four
+//    sections, hook click handlers that pre-fill the chat composer.
+//
+// 2) Mention walker — for each new .msg bubble in #thread, walk its text
+//    nodes and wrap occurrences of emp_NNN identifiers and known full
+//    names in interactive .emp-chip <span>s. Hover such a chip → fetch
+//    /api/employees/{id}/card and show the floating .hover-card.
+//
+// 3) Sparkline injector — for each .msg.pulse markdown table, infer
+//    {emp_id, metric} per cell via column headers + row labels, fetch
+//    /api/employees/{id}/sparkline?metric=…, render an inline SVG
+//    sparkline next to the number. Cached per (emp_id, metric).
+//
+// All work happens client-side. Existing chat code is not touched —
+// we observe #thread mutations to pick up freshly appended bubbles.
+
+(function () {
+  const QUICK_PROMPTS = [
+    {label: 'Кто в риске ухода?',
+     q:     'Покажи топ-5 сотрудников в риске ухода за последние 30 дней с интерпретацией.'},
+    {label: 'Самый «горячий» отдел',
+     q:     'В каком подразделении сейчас худший composite по sentiment и стрессу — и почему.'},
+    {label: 'Кто больше всех перегружен',
+     q:     'Покажи топ-5 сотрудников по средним рабочим часам за 30 дней — кому пора снять нагрузку.'},
+    {label: 'Топ по стрессу',
+     q:     'Покажи топ-10 по стрессу за 30 дней. Кто из них ещё и спит мало?'},
+    {label: 'Лидеры по фокусу',
+     q:     'Покажи топ-10 по focus_score за 30 дней — у кого получается работать в потоке.'},
+    {label: 'Свежий отчёт CEO',
+     q:     'Сделай мне brief за 30 дней: 3 темы, на которые мне как CEO стоит обратить внимание.'},
+  ];
+
+  const sb = {
+    archetypes: document.getElementById('sb-archetypes'),
+    depts:      document.getElementById('sb-departments'),
+    deptCount:  document.getElementById('sb-dept-count'),
+    quick:      document.getElementById('sb-quick'),
+    recent:     document.getElementById('sb-recent'),
+    version:    document.getElementById('sb-version'),
+  };
+  const composer = document.getElementById('composer');
+  const qInput   = document.getElementById('q');
+
+  function setComposer(text) {
+    if (!qInput) return;
+    qInput.value = text;
+    qInput.focus();
+    const len = qInput.value.length;
+    qInput.setSelectionRange(len, len);
+  }
+
+  // ─── Sidebar render ────────────────────────────────────────────────────
+
+  function renderQuick() {
+    sb.quick.innerHTML = QUICK_PROMPTS.map(p => `
+      <li>
+        <button class="sb-item" data-q="${escapeAttr(p.q)}">
+          <span class="sb-bullet"></span>
+          <span class="sb-label">${escapeHtml(p.label)}</span>
+        </button>
+      </li>
+    `).join('');
+  }
+
+  function renderArchetypes(items) {
+    if (!items.length) {
+      sb.archetypes.innerHTML = '<li class="sb-empty">нет данных</li>';
+      return;
+    }
+    sb.archetypes.innerHTML = items.map(a => `
+      <li>
+        <button class="sb-item" data-q="${escapeAttr(`Расскажи про архетип «${a.archetype}» — кто к нему относится, какой у этих людей профиль, и стоит ли мне обращать на них внимание.`)}">
+          <span class="sb-label">${escapeHtml(a.archetype)}</span>
+          <span class="sb-count">${a.count}</span>
+        </button>
+      </li>
+    `).join('');
+  }
+
+  function renderDepartments(items) {
+    if (!items.length) {
+      sb.depts.innerHTML = '<li class="sb-empty">нет данных</li>';
+      sb.deptCount.textContent = '0';
+      return;
+    }
+    sb.deptCount.textContent = String(items.length);
+    sb.depts.innerHTML = items.map(d => `
+      <li>
+        <button class="sb-item" data-q="${escapeAttr(`Что происходит в подразделении «${d.name}» за последние 30 дней — какие метрики просели и почему.`)}">
+          <span class="sb-label">${escapeHtml(d.name)}</span>
+          <span class="sb-count">${d.count}</span>
+        </button>
+      </li>
+    `).join('');
+  }
+
+  function renderRecent(items) {
+    if (!items.length) {
+      sb.recent.innerHTML = '<li class="sb-empty">пока пусто</li>';
+      return;
+    }
+    sb.recent.innerHTML = items.map(t => {
+      const ts = (t.ts || '').slice(11, 16);  // HH:MM
+      const day = (t.ts || '').slice(0, 10);
+      return `
+      <li>
+        <button class="sb-item" data-q="${escapeAttr(t.question)}">
+          <span class="sb-q">${escapeHtml(t.question)}</span>
+          <span class="sb-meta">${escapeHtml(day)} ${escapeHtml(ts)}</span>
+        </button>
+      </li>`;
+    }).join('');
+  }
+
+  // Single delegated click for all sidebar items.
+  document.getElementById('sidebar').addEventListener('click', (ev) => {
+    const btn = ev.target.closest('.sb-item');
+    if (!btn) return;
+    const q = btn.getAttribute('data-q');
+    if (!q) return;
+    setComposer(q);
+    closeSidebarMobile();
+  });
+
+  // ─── Mobile drawer ─────────────────────────────────────────────────────
+
+  const sidebar  = document.getElementById('sidebar');
+  const backdrop = document.getElementById('sb-backdrop');
+  const toggle   = document.getElementById('sb-toggle');
+  function openSidebarMobile()  { sidebar.classList.add('open');  backdrop.classList.add('show'); }
+  function closeSidebarMobile() { sidebar.classList.remove('open'); backdrop.classList.remove('show'); }
+  toggle.addEventListener('click', () => {
+    sidebar.classList.contains('open') ? closeSidebarMobile() : openSidebarMobile();
+  });
+  backdrop.addEventListener('click', closeSidebarMobile);
+
+  // ─── Helpers ───────────────────────────────────────────────────────────
+
+  function escapeHtml(s) {
+    if (s == null) return '';
+    return String(s).replace(/[&<>"']/g, c => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;',
+    }[c]));
+  }
+  function escapeAttr(s) { return escapeHtml(s); }
+
+  async function getJson(url) {
+    const r = await fetch(url);
+    if (!r.ok) throw new Error(`${url} → ${r.status}`);
+    return r.json();
+  }
+
+  // ─── Mention walker ────────────────────────────────────────────────────
+  //
+  // Detects emp_NNN identifiers and full names from /api/employees/index.
+  // A name match wins over an emp_id match if they overlap (so "Иванов
+  // Иван (emp_034)" doesn't get split awkwardly). Walks all text-bearing
+  // nodes inside `.msg` bubbles, replaces matches with .emp-chip spans
+  // carrying data-emp-id (resolved via the index). Idempotent — chips
+  // already wrapped are skipped.
+
+  let employeeIndex = [];      // [{emp_id, full_name}]
+  let nameToEmp    = new Map();  // "Иванов Иван" → "emp_034"
+  let mentionRegex = null;
+
+  function buildMentionRegex(items) {
+    nameToEmp.clear();
+    const names = [];
+    for (const e of items) {
+      nameToEmp.set(e.full_name, e.emp_id);
+      // Escape regex meta chars in the full name
+      names.push(e.full_name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+    }
+    // Sort longest-first so "Иванов Иван Сергеевич" matches before "Иванов Иван"
+    names.sort((a, b) => b.length - a.length);
+    const namesPart = names.length ? names.join('|') : '__never_match__';
+    // Combined: emp_NNN OR a known full name (case-sensitive, names are
+    // canonical). Use word boundaries via lookarounds so "emp_034" isn't
+    // accidentally caught inside "femp_034x".
+    mentionRegex = new RegExp(`\\b(emp_\\d{3})\\b|(${namesPart})`, 'g');
+  }
+
+  function walkAndWrapMentions(root) {
+    if (!mentionRegex) return;
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode(n) {
+        // Skip text inside chips/script/style and inside table headers (those
+        // are picked up by sparkline injector via cell context, not chips).
+        const p = n.parentElement;
+        if (!p) return NodeFilter.FILTER_REJECT;
+        if (p.closest('.emp-chip, code, pre, script, style')) {
+          return NodeFilter.FILTER_REJECT;
+        }
+        if (!mentionRegex.test(n.nodeValue)) return NodeFilter.FILTER_REJECT;
+        mentionRegex.lastIndex = 0;
+        return NodeFilter.FILTER_ACCEPT;
+      },
+    });
+    const targets = [];
+    let n; while ((n = walker.nextNode())) targets.push(n);
+    for (const node of targets) {
+      const text = node.nodeValue;
+      const frag = document.createDocumentFragment();
+      let last = 0; let m;
+      mentionRegex.lastIndex = 0;
+      while ((m = mentionRegex.exec(text))) {
+        if (m.index > last) frag.appendChild(document.createTextNode(text.slice(last, m.index)));
+        const empId = m[1] || nameToEmp.get(m[2]);
+        if (!empId) {
+          frag.appendChild(document.createTextNode(m[0]));
+        } else {
+          const chip = document.createElement('span');
+          chip.className = 'emp-chip';
+          chip.dataset.empId = empId;
+          chip.textContent = m[0];
+          frag.appendChild(chip);
+        }
+        last = m.index + m[0].length;
+      }
+      if (last < text.length) frag.appendChild(document.createTextNode(text.slice(last)));
+      node.parentNode.replaceChild(frag, node);
+    }
+  }
+
+  // ─── Hover-card popover ────────────────────────────────────────────────
+
+  const hc = document.getElementById('hover-card');
+  let hcTimer = null;
+  let hcCache = new Map();
+
+  async function loadCard(empId) {
+    if (hcCache.has(empId)) return hcCache.get(empId);
+    try {
+      const data = await getJson(`/api/employees/${empId}/card?window=30`);
+      hcCache.set(empId, data);
+      return data;
+    } catch (_) { return null; }
+  }
+
+  function severityClass(sev) {
+    if (sev <= -1.0) return 'sev-bad';
+    if (sev >=  1.0) return 'sev-good';
+    return 'sev-flat';
+  }
+
+  function renderCard(card) {
+    const role = [card.position, card.unit_name].filter(Boolean).join(' · ');
+    const tenure = card.tenure_years != null ? `${card.tenure_years} г. в компании` : '';
+    const flagsHtml = [];
+    if (card.at_risk_flag_count >= 3) flagsHtml.push(`<span class="hc-flag risk">at-risk · ${card.at_risk_flag_count}/4</span>`);
+    if (card.burnout_flag_count >= 3) flagsHtml.push(`<span class="hc-flag burnout">burnout · ${card.burnout_flag_count}/4</span>`);
+    if (card.attrition_probability != null && card.attrition_probability >= 0.5) {
+      flagsHtml.push(`<span class="hc-flag attr">attrition ${Math.round(card.attrition_probability * 100)}%</span>`);
+    }
+    const metricsHtml = (card.metrics || []).map(m => {
+      const cls = severityClass(m.severity);
+      const val = m.value == null ? '—' : (
+        m.key === 'focus_score' || m.key === 'stress_index' || m.key === 'peer_sentiment'
+          ? m.value.toFixed(2)
+          : m.value.toFixed(1)
+      );
+      return `
+        <div class="hc-metric ${cls}">
+          <div class="hc-m-label">${escapeHtml(m.label)}</div>
+          <div class="hc-m-value">${val}</div>
+        </div>
+      `;
+    }).join('');
+    return `
+      <div class="hc-head">
+        <div class="hc-name">${escapeHtml(card.full_name)}</div>
+        <div class="hc-role">${escapeHtml(role)}</div>
+        ${card.archetype ? `<span class="hc-archetype">${escapeHtml(card.archetype)}</span>` : ''}
+        ${tenure ? `<span class="hc-archetype tenure">${escapeHtml(tenure)}</span>` : ''}
+      </div>
+      ${metricsHtml ? `<div class="hc-metrics">${metricsHtml}</div>` : ''}
+      ${flagsHtml.length ? `<div class="hc-flags">${flagsHtml.join('')}</div>` : ''}
+      <div class="hc-foot">
+        <span class="hc-id">${escapeHtml(card.emp_id)}</span>
+        <button class="hc-ask" data-emp-id="${escapeAttr(card.emp_id)}" data-name="${escapeAttr(card.full_name)}">
+          Спросить Пульс подробнее
+        </button>
+      </div>
+    `;
+  }
+
+  function positionCard(chip) {
+    const r = chip.getBoundingClientRect();
+    const pad = 6;
+    const w = hc.offsetWidth || 320;
+    const h = hc.offsetHeight || 200;
+    let left = r.left + r.width / 2 - w / 2;
+    let top  = r.bottom + pad;
+    if (left + w > window.innerWidth - 8)  left = window.innerWidth - w - 8;
+    if (left < 8) left = 8;
+    if (top + h > window.innerHeight - 8) top = r.top - h - pad;
+    hc.style.left = `${left}px`;
+    hc.style.top  = `${top}px`;
+  }
+
+  async function showCard(chip) {
+    const empId = chip.dataset.empId;
+    if (!empId) return;
+    clearTimeout(hcTimer);
+    const card = await loadCard(empId);
+    if (!card) return;
+    hc.innerHTML = renderCard(card);
+    hc.setAttribute('aria-hidden', 'false');
+    hc.classList.add('show');
+    positionCard(chip);
+  }
+  function hideCard() {
+    clearTimeout(hcTimer);
+    hcTimer = setTimeout(() => {
+      hc.classList.remove('show');
+      hc.setAttribute('aria-hidden', 'true');
+    }, 180);
+  }
+  hc.addEventListener('mouseenter', () => clearTimeout(hcTimer));
+  hc.addEventListener('mouseleave', hideCard);
+  hc.addEventListener('click', (ev) => {
+    const ask = ev.target.closest('.hc-ask');
+    if (!ask) return;
+    const name = ask.dataset.name;
+    const id   = ask.dataset.empId;
+    setComposer(`Расскажи подробно про ${name} (${id}) — что у него происходит за последние 30 дней и стоит ли мне как CEO вмешиваться.`);
+    hideCard();
+    closeSidebarMobile();
+  });
+  document.body.addEventListener('mouseenter', (ev) => {
+    const chip = ev.target.closest && ev.target.closest('.emp-chip');
+    if (!chip) return;
+    showCard(chip);
+  }, true);
+  document.body.addEventListener('mouseleave', (ev) => {
+    if (ev.target && ev.target.closest && ev.target.closest('.emp-chip')) hideCard();
+  }, true);
+
+  // ─── Sparkline injector ────────────────────────────────────────────────
+  //
+  // For each <table> inside .msg.pulse:
+  //   - read column headers, resolve known metric labels (стресс, sleep_h, …)
+  //   - read first cell of each row to find emp_NNN OR a known full name
+  //   - for matching cell, if cell text starts with a number → fetch
+  //     sparkline and inject inline SVG.
+
+  const METRIC_HEADERS = {
+    'стресс':'stress_index','стресс_index':'stress_index','stress':'stress_index','stress_index':'stress_index',
+    'сон':'sleep_h','sleep':'sleep_h','sleep_h':'sleep_h',
+    'фокус':'focus_score','focus':'focus_score','focus_score':'focus_score',
+    'sentiment':'peer_sentiment','peer_sentiment':'peer_sentiment',
+    'часы':'hours_logged','hours':'hours_logged','hours_logged':'hours_logged',
+    'задачи':'tasks_done','tasks':'tasks_done','tasks_done':'tasks_done',
+  };
+
+  function normalizeHeader(s) {
+    return (s || '').trim().toLowerCase().split(/[\s,()/:]+/)[0];
+  }
+
+  const sparkCache = new Map();   // `${emp}|${metric}` → spark data
+  async function loadSpark(emp, metric) {
+    const key = `${emp}|${metric}`;
+    if (sparkCache.has(key)) return sparkCache.get(key);
+    try {
+      const d = await getJson(`/api/employees/${emp}/sparkline?metric=${metric}&window=30`);
+      sparkCache.set(key, d);
+      return d;
+    } catch (_) { return null; }
+  }
+
+  function buildSparkSVG(values, direction) {
+    const nums = values.filter(v => v != null);
+    if (nums.length < 2) return '';
+    const min = Math.min(...nums);
+    const max = Math.max(...nums);
+    const W = 56, H = 14, pad = 1.5;
+    const xStep = nums.length > 1 ? (W - pad * 2) / (nums.length - 1) : 0;
+    const yScale = v => {
+      if (max === min) return H / 2;
+      return pad + (H - pad * 2) * (1 - (v - min) / (max - min));
+    };
+    let i = 0;
+    const points = nums.map(v => `${(pad + i++ * xStep).toFixed(1)},${yScale(v).toFixed(1)}`);
+    const lastX = (pad + (nums.length - 1) * xStep).toFixed(1);
+    const lastY = yScale(nums[nums.length - 1]).toFixed(1);
+    const last = nums[nums.length - 1];
+    // Severity for stroke colour: compare last to median.
+    const sorted = [...nums].sort((a,b) => a - b);
+    const median = sorted[Math.floor(sorted.length / 2)];
+    const above = last > median;
+    let sevCls = '';
+    if (direction === 'lower_is_better') sevCls = above ? 'sev-bad' : 'sev-good';
+    else if (direction === 'higher_is_better') sevCls = above ? 'sev-good' : 'sev-bad';
+    return `<svg class="sparkline ${sevCls}" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M${points.join(' L')}"/>
+      <circle cx="${lastX}" cy="${lastY}" r="1.4"/>
+    </svg>`;
+  }
+
+  async function injectSparklines(bubble) {
+    const tables = bubble.querySelectorAll('table');
+    for (const t of tables) {
+      const headerRow = t.querySelector('thead tr') || t.querySelector('tr');
+      if (!headerRow) continue;
+      const headerCells = Array.from(headerRow.children);
+      const colMetrics = headerCells.map(th => METRIC_HEADERS[normalizeHeader(th.textContent)] || null);
+      // Skip if no recognised metric column.
+      if (!colMetrics.some(Boolean)) continue;
+      const bodyRows = Array.from(t.querySelectorAll('tbody tr')) ;
+      const rows = bodyRows.length ? bodyRows : Array.from(t.querySelectorAll('tr')).slice(1);
+      for (const row of rows) {
+        const cells = Array.from(row.children);
+        if (!cells.length) continue;
+        const firstCell = cells[0];
+        const empMatch = firstCell.textContent.match(/emp_\d{3}/);
+        let emp = empMatch ? empMatch[0] : null;
+        if (!emp) {
+          // Try full-name match
+          const txt = firstCell.textContent.trim();
+          // Also peek at chip if mention walker already wrapped it
+          const chip = firstCell.querySelector('.emp-chip');
+          if (chip) emp = chip.dataset.empId;
+          else if (nameToEmp.has(txt)) emp = nameToEmp.get(txt);
+          else {
+            // last-ditch: longest known name contained in cell text
+            for (const [name, id] of nameToEmp) {
+              if (txt.includes(name)) { emp = id; break; }
+            }
+          }
+        }
+        if (!emp) continue;
+        for (let i = 1; i < cells.length; i++) {
+          const metric = colMetrics[i];
+          if (!metric) continue;
+          const cell = cells[i];
+          if (cell.querySelector('.sparkline')) continue;
+          const cellText = cell.textContent.trim();
+          if (!/^-?\d+([.,]\d+)?$/.test(cellText.split(/\s+/)[0].replace(',', '.'))) continue;
+          const spark = await loadSpark(emp, metric);
+          if (!spark || !spark.values || spark.values.length < 2) continue;
+          const svg = buildSparkSVG(spark.values, spark.direction);
+          if (svg) cell.insertAdjacentHTML('beforeend', svg);
+        }
+      }
+    }
+  }
+
+  // ─── Per-bubble post-processing pipeline ──────────────────────────────
+
+  const processed = new WeakSet();
+  function processBubble(node) {
+    if (!node || processed.has(node)) return;
+    processed.add(node);
+    walkAndWrapMentions(node);
+    if (node.classList.contains('pulse')) injectSparklines(node);
+  }
+
+  // Watch #thread for new .msg children.
+  const thread = document.getElementById('thread');
+  if (thread) {
+    new MutationObserver((muts) => {
+      for (const mu of muts) {
+        for (const n of mu.addedNodes) {
+          if (n.nodeType !== 1) continue;
+          // Direct .msg or wrapper containing one.
+          if (n.classList && n.classList.contains('msg')) processBubble(n);
+          else n.querySelectorAll && n.querySelectorAll('.msg').forEach(processBubble);
+        }
+        // Also if existing nodes had children added (markdown render done in place).
+        if (mu.target && mu.target.classList && mu.target.classList.contains('msg')) {
+          // Re-process — mention regex is idempotent (skips existing chips).
+          if (processed.has(mu.target)) {
+            walkAndWrapMentions(mu.target);
+            if (mu.target.classList.contains('pulse')) injectSparklines(mu.target);
+          } else {
+            processBubble(mu.target);
+          }
+        }
+      }
+    }).observe(thread, {childList: true, subtree: true});
+    // Process anything already there (history).
+    thread.querySelectorAll('.msg').forEach(processBubble);
+  }
+
+  // ─── Boot ─────────────────────────────────────────────────────────────
+
+  (async () => {
+    renderQuick();
+    try {
+      const h = await getJson('/health');
+      if (sb.version) sb.version.textContent = 'v' + h.version;
+    } catch (_) {}
+
+    const [arch, depts, recent, idx] = await Promise.all([
+      getJson('/api/sidebar/archetypes').catch(() => ({items: []})),
+      getJson('/api/sidebar/departments').catch(() => ({items: []})),
+      getJson('/api/sidebar/recent_threads?n=8').catch(() => ({items: []})),
+      getJson('/api/employees/index').catch(() => ({items: []})),
+    ]);
+    renderArchetypes(arch.items || []);
+    renderDepartments(depts.items || []);
+    renderRecent(recent.items || []);
+    employeeIndex = idx.items || [];
+    buildMentionRegex(employeeIndex);
+    // Re-process existing thread now that we have the index.
+    thread.querySelectorAll('.msg').forEach(b => {
+      walkAndWrapMentions(b);
+      if (b.classList.contains('pulse')) injectSparklines(b);
+    });
+  })();
 })();
 </script>
 </body>

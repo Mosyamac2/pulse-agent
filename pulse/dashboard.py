@@ -780,6 +780,84 @@ def get_cost_breakdown(*, window: int = 30,
     }
 
 
+# ---------------------------------------------------------------------------
+# Sidebar aggregations (v1.9.0) — feed the chat sidebar
+# ---------------------------------------------------------------------------
+
+def get_archetype_counts(*, db: Database | None = None) -> list[dict[str, Any]]:
+    """All 8 archetypes with active-employee counts. Stable ordering by count desc."""
+    db = _db(db)
+    rows = list(db.query("""
+      SELECT archetype, COUNT(*) AS n
+      FROM employees
+      WHERE status = 'active' AND archetype IS NOT NULL
+      GROUP BY archetype
+      ORDER BY n DESC
+    """))
+    return [{"archetype": r["archetype"], "count": int(r["n"])} for r in rows]
+
+
+def get_department_counts(*, db: Database | None = None) -> list[dict[str, Any]]:
+    """Active-employee count per department (unit). Sorted by count desc."""
+    db = _db(db)
+    rows = list(db.query("""
+      SELECT u.unit_id, u.name, COUNT(e.emp_id) AS n
+      FROM units u
+      LEFT JOIN employees e
+        ON e.unit_id = u.unit_id AND e.status = 'active'
+      GROUP BY u.unit_id, u.name
+      HAVING n > 0
+      ORDER BY n DESC, u.name
+    """))
+    return [{"unit_id": r["unit_id"], "name": r["name"], "count": int(r["n"])}
+            for r in rows]
+
+
+def get_recent_threads(*, n: int = 10,
+                         path: Path | None = None) -> list[dict[str, Any]]:
+    """Last N chat turns from data/logs/chat.jsonl, newest first."""
+    p = path or (PATHS.logs / "chat.jsonl")
+    if not p.exists():
+        return []
+    lines = [ln for ln in p.read_text(encoding="utf-8").splitlines() if ln.strip()]
+    items: list[dict[str, Any]] = []
+    for ln in lines[-n * 2:][::-1]:  # walk from tail
+        try:
+            r = json.loads(ln)
+        except json.JSONDecodeError:
+            continue
+        q = r.get("question") or ""
+        a = r.get("answer") or ""
+        if not q:
+            continue
+        items.append({
+            "ts": r.get("ts"),
+            "message_id": r.get("message_id"),
+            "question": q[:200],
+            "answer_preview": a[:140].replace("\n", " "),
+        })
+        if len(items) >= n:
+            break
+    return items
+
+
+def get_employee_index(*, db: Database | None = None) -> list[dict[str, Any]]:
+    """Lightweight {emp_id, full_name} list for client-side mention detection.
+
+    Only active employees. The chat loads this once on init and uses it to
+    wrap mentions of "Иванов Иван" / "Иван Иванов" / "emp_034" in
+    interactive chips.
+    """
+    db = _db(db)
+    rows = list(db.query("""
+      SELECT emp_id, full_name
+      FROM employees
+      WHERE status = 'active' AND full_name IS NOT NULL
+      ORDER BY full_name
+    """))
+    return [{"emp_id": r["emp_id"], "full_name": r["full_name"]} for r in rows]
+
+
 __all__ = [
     "AT_RISK_FLAGS", "AT_RISK_MIN_FLAGS",
     "BURNOUT_FLAGS", "BURNOUT_MIN_FLAGS",
@@ -792,4 +870,8 @@ __all__ = [
     "get_evolution_log",
     "get_rejected_suggestions",
     "get_cost_breakdown",
+    "get_archetype_counts",
+    "get_department_counts",
+    "get_recent_threads",
+    "get_employee_index",
 ]
