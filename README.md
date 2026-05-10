@@ -1,6 +1,6 @@
 # Пульс — самоэволюционирующий HR‑агент
 
-[![version](https://img.shields.io/badge/version-1.5.0-blue)](VERSION)
+[![version](https://img.shields.io/badge/version-1.6.0-blue)](VERSION)
 
 Пульс — становящийся цифровой ассистент сотрудника крупного банка. Помогает отслеживать «оптимальное боевое состояние»: эффективность, нагрузку, риск выгорания, маршруты роста. Идеологически наследник [Ouroboros](https://github.com/joi-lab/ouroboros-desktop), но без desktop‑овой инфраструктуры и с одним LLM‑бэкендом — Claude Agent SDK через OAuth Max‑подписку.
 
@@ -34,6 +34,8 @@ UI открывается на `http://VM:8080`.
 - `docs/DEVELOPMENT.md` — как разрабатывать.
 
 ## Changelog
+
+- `v1.6.0` — **«Заметка редактору» + конституционный гейт.** В UI добавлен отдельный плавающий виджет (правый верхний угол): `POST /api/feedback/general` принимает свободный текст (4-4000 симв.) и пишет в `data/logs/general_feedback.jsonl`. Перед попаданием в эволюционный цикл каждое предложение проходит **alignment check** — отдельный Opus-вызов `kind="alignment_check"` с промптом `prompts/ALIGNMENT_CHECK.md`, который оценивает совместимость с BIBLE.md + текущим SYSTEM.md + последними 30 строками improvement-backlog + identity/scratchpad. Вердикт: `aligned` → суггестия превращается в синтетический dislike-сигнал и идёт в общий `aggregate_feedback`; `needs_modification`/`rejected` → пишется в `data/memory/knowledge/rejected_suggestions.md` с обоснованием по конкретному принципу. Никаких отказов по «слишком сложно» — только по конституционным конфликтам. Эстетика виджета: «editorial morning brief» (Fraunces + Newsreader + JetBrains Mono, parchment + ink + oxblood). UI остаётся chat-ориентированным, виджет не трогает существующие стили чата.
 
 - `v1.5.0` — **настоящая самоэволюция**: после успешного `commit_evolution` Pulse автоматически пушит ветку + тег на GitHub origin. `pulse/git_ops.py::push_to_origin_with_tags` читает `PULSE_GITHUB_PAT` из env, инжектит токен в URL только для одного `git push`, не персистится в `.git/config`. Без PAT — пуш пропускается с логом `evolution_push_skipped`, цикл считается успешным локально. Параллельно: исправлен truncation `intent[:240]` (мульти-словесный обрыв в subject коммитов v0.2.0/v1.4.1) — лимит поднят до 1000, и теперь `commit_evolution` строит Git-conventional message: краткий subject (≤72 символа, по первому предложению или word-boundary), полный intent в body, плюс trailers `Self-Evolved-By: pulse evolution_cycle (autonomous)` + `Co-Authored-By: Claude Opus 4.7`. На GitHub теперь видно, какие коммиты пришли от автономной эволюции, а какие — от человека.
 

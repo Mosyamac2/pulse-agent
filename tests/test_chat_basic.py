@@ -142,6 +142,36 @@ def test_feedback_validation(app_with_db: TestClient):
     assert r.status_code == 422
 
 
+def test_general_feedback_endpoint(app_with_db: TestClient):
+    """v1.6.0: free-form note posted to /api/feedback/general lands in
+    data/logs/general_feedback.jsonl and is later picked up by the
+    evolution cycle's alignment check."""
+    r = app_with_db.post("/api/feedback/general",
+                          json={"text": "Хочу видеть больше визуализаций по командам"})
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["ok"] is True
+    assert body["id"].startswith("gen_")
+    assert "ts" in body
+    from pulse.config import PATHS
+    p = PATHS.logs / "general_feedback.jsonl"
+    assert p.exists()
+    rec = json.loads(p.read_text(encoding="utf-8").strip().splitlines()[-1])
+    assert rec["text"] == "Хочу видеть больше визуализаций по командам"
+    assert rec["evaluated"] is False
+    assert rec["id"] == body["id"]
+
+
+def test_general_feedback_too_short(app_with_db: TestClient):
+    r = app_with_db.post("/api/feedback/general", json={"text": "ok"})
+    assert r.status_code == 422  # Field min_length=4
+
+
+def test_general_feedback_too_long(app_with_db: TestClient):
+    r = app_with_db.post("/api/feedback/general", json={"text": "x" * 5000})
+    assert r.status_code == 422
+
+
 def test_history_endpoint(app_with_db: TestClient):
     app_with_db.post("/api/chat", json={"question": "первый"})
     app_with_db.post("/api/chat", json={"question": "второй"})

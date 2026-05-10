@@ -6,6 +6,9 @@ Endpoints:
   POST /api/chat                 → chat turn, returns {message_id, answer}
   POST /api/chat/stream          → same turn as SSE (status/tool_call/text/done)
   POST /api/feedback             → record like/dislike + optional comment
+  POST /api/feedback/general     → free-form note for Pulse (since v1.6.0)
+                                    — goes through alignment check before
+                                    entering the evolution cycle
   GET  /api/history?limit=N      → last N chat turns
   GET  /api/employees/{emp_id}   → debug: full row from `employees`
   GET  /api/evolution            → status (Phase 8 will add POST /api/evolution)
@@ -15,6 +18,7 @@ from __future__ import annotations
 
 import json
 import logging
+import secrets
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -147,6 +151,45 @@ def api_feedback(req: FeedbackRequest) -> JSONResponse:
     with (PATHS.logs / "feedback.jsonl").open("a", encoding="utf-8") as f:
         f.write(json.dumps(rec, ensure_ascii=False) + "\n")
     return JSONResponse({"ok": True, "recorded_ts": rec["ts"]})
+
+
+# ---------------------------------------------------------------------------
+# /api/feedback/general — free-form note to Pulse (v1.6.0)
+# ---------------------------------------------------------------------------
+
+class GeneralFeedbackRequest(BaseModel):
+    text: str = Field(..., min_length=4, max_length=4000)
+    contact: str | None = Field(default=None, max_length=200)
+
+
+@app.post("/api/feedback/general")
+def api_feedback_general(req: GeneralFeedbackRequest) -> JSONResponse:
+    """Append a free-form note to data/logs/general_feedback.jsonl.
+
+    Unlike /api/feedback (which is tied to a specific message_id), these
+    are open suggestions about Pulse itself — desired behaviour, missing
+    capabilities, tone notes. Each entry is processed by the next
+    evolution_cycle: an explicit alignment check (Opus call against
+    BIBLE/SYSTEM/backlog/memory) decides whether to fold the note into
+    the cycle as a synthesized dislike-class signal, or to log it as a
+    rejected suggestion with reasoning. See pulse/evolution.py
+    `evaluate_general_alignment`.
+    """
+    PATHS.ensure()
+    text = req.text.strip()
+    if not text:
+        raise HTTPException(400, "empty note")
+    rec = {
+        "ts": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "id": "gen_" + secrets.token_hex(4),
+        "text": text,
+        "contact": (req.contact or "").strip() or None,
+        "evaluated": False,
+    }
+    with (PATHS.logs / "general_feedback.jsonl").open("a", encoding="utf-8") as f:
+        f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+    log.info("general feedback recorded: id=%s text_len=%d", rec["id"], len(text))
+    return JSONResponse({"ok": True, "id": rec["id"], "ts": rec["ts"]})
 
 
 # ---------------------------------------------------------------------------

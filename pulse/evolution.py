@@ -200,6 +200,142 @@ def aggregate_feedback() -> FeedbackAggregate:
 
 
 # ---------------------------------------------------------------------------
+# Step A.1 (since v1.6.0) — general feedback through alignment check
+# ---------------------------------------------------------------------------
+#
+# Open-ended suggestions arrive via POST /api/feedback/general and land in
+# data/logs/general_feedback.jsonl. They are *not* tied to any chat turn,
+# so they can't be classified by the existing feedback-comment classifier.
+# Instead each note is evaluated against BIBLE.md / SYSTEM.md / improvement-
+# backlog.md / data/memory/* — if compatible, it is folded into the cycle
+# as a synthesized dislike-record so classify/plan see the same shape they
+# already understand. Conflicts are appended to
+# data/memory/knowledge/rejected_suggestions.md with reasoning, so the user
+# can see what got rejected and why instead of having proposals silently
+# disappear.
+
+def aggregate_general_suggestions() -> tuple[list[dict[str, Any]], int]:
+    """Read new entries from general_feedback.jsonl since last_general_offset.
+
+    Returns (entries, new_offset). Offset persistence is the caller's
+    responsibility — we save it after evaluation so we never spend
+    Opus tokens evaluating the same note twice.
+    """
+    p = PATHS.logs / "general_feedback.jsonl"
+    state = load_state()
+    last_off = int(state.get("evolution", {}).get("last_general_offset", 0))
+    if not p.exists():
+        return [], last_off
+    size = p.stat().st_size
+    if size <= last_off:
+        return [], last_off
+    with p.open("r", encoding="utf-8") as f:
+        f.seek(last_off)
+        chunk = f.read()
+    new_off = last_off + len(chunk.encode("utf-8"))
+    entries: list[dict[str, Any]] = []
+    for ln in chunk.splitlines():
+        if not ln.strip():
+            continue
+        try:
+            entries.append(json.loads(ln))
+        except json.JSONDecodeError:
+            continue
+    return entries, new_off
+
+
+def _parse_alignment_yaml(raw: str) -> dict[str, str]:
+    """Very lenient YAML extractor for ALIGNMENT_CHECK.md output.
+
+    We don't bring in PyYAML for one prompt; the Opus output is small and
+    structured. Falls back to verdict='rejected' if parsing fails — being
+    over-cautious is the safe default for a constitutional gate.
+    """
+    out = {"verdict": "rejected", "reasoning": "",
+            "addresses_class": "", "duplicate_of_backlog": "",
+            "modification_hint": "", "constitutional_conflict": ""}
+    block = raw
+    m = re.search(r"```(?:yaml)?\s*\n(.*?)\n```", raw, re.DOTALL)
+    if m:
+        block = m.group(1)
+    cur_key: str | None = None
+    cur_lines: list[str] = []
+    keys = "verdict|reasoning|addresses_class|duplicate_of_backlog|modification_hint|constitutional_conflict"
+    for ln in block.splitlines():
+        m = re.match(rf"^\s*({keys}):\s*(.*)$", ln)
+        if m:
+            if cur_key:
+                out[cur_key] = "\n".join(cur_lines).strip()
+            cur_key, val = m.group(1), m.group(2).strip()
+            cur_lines = []
+            if val and val not in ("|", '"|"'):
+                cur_lines = [val.strip(' \'"')]
+        else:
+            if cur_key:
+                cur_lines.append(ln.lstrip())
+    if cur_key:
+        out[cur_key] = "\n".join(cur_lines).strip()
+    v = out["verdict"].lower().strip().strip('|').strip().strip(' \'"')
+    out["verdict"] = v if v in ("aligned", "needs_modification", "rejected") else "rejected"
+    return out
+
+
+async def evaluate_general_alignment(suggestion_text: str) -> dict[str, str]:
+    """Opus call against ALIGNMENT_CHECK.md template.
+
+    Returns the parsed verdict dict. Pulls full BIBLE, current SYSTEM.md,
+    last 30 backlog lines, and identity+scratchpad. Single-Opus, kind=
+    'alignment_check' so it shows up as its own row in budget.jsonl.
+    """
+    template = read_text(PATHS.prompts / "ALIGNMENT_CHECK.md")
+    bible = read_text(PATHS.bible)
+    system_md = read_text(PATHS.prompts / "SYSTEM.md")
+    backlog_lines = [ln for ln in read_text(backlog_path()).splitlines() if ln.strip()]
+    backlog_tail = "\n".join(backlog_lines[-30:])
+    memory_blob = (
+        read_text(PATHS.memory / "identity.md")
+        + "\n\n--- scratchpad.md ---\n"
+        + read_text(PATHS.memory / "scratchpad.md")
+    )
+    prompt = (template
+        .replace("{bible}", bible)
+        .replace("{system_md}", system_md)
+        .replace("{backlog_tail}", backlog_tail)
+        .replace("{memory}", memory_blob)
+        .replace("{suggestion_text}", suggestion_text))
+    raw = await _query_simple(prompt, model="opus", kind="alignment_check")
+    return _parse_alignment_yaml(raw)
+
+
+def _append_rejected_suggestion(entry: dict[str, Any], alignment: dict[str, str]) -> None:
+    """Log non-aligned suggestion to data/memory/knowledge/rejected_suggestions.md.
+
+    The file is human-readable so the user can audit what Pulse turned
+    down and why. Append-only — we never edit prior entries.
+    """
+    p = PATHS.knowledge / "rejected_suggestions.md"
+    PATHS.ensure()
+    if not p.exists():
+        p.write_text("# rejected_suggestions.md — отклонённые / требующие переформулирования\n\n"
+                       "Список общих предложений (POST /api/feedback/general), которые "
+                       "alignment-проверка отвергла или попросила переформулировать. "
+                       "Каждый отказ объясняется конкретным принципом.\n",
+                      encoding="utf-8")
+    with p.open("a", encoding="utf-8") as f:
+        f.write(f"\n## {entry['id']} — {entry['ts']}\n\n")
+        f.write(f"**Предложение пользователя:**\n\n> {entry['text']}\n\n")
+        f.write(f"**Вердикт:** `{alignment['verdict']}`\n\n")
+        if alignment.get("reasoning"):
+            f.write(f"**Обоснование:** {alignment['reasoning']}\n\n")
+        if alignment.get("constitutional_conflict"):
+            f.write(f"**Конфликт с принципом:** {alignment['constitutional_conflict']}\n\n")
+        if alignment.get("modification_hint"):
+            f.write(f"**Подсказка для переформулирования:** {alignment['modification_hint']}\n\n")
+        if alignment.get("duplicate_of_backlog"):
+            f.write(f"**Дубликат backlog #{alignment['duplicate_of_backlog']}**\n\n")
+
+
+# ---------------------------------------------------------------------------
 # Step B — classify complaints
 # ---------------------------------------------------------------------------
 
@@ -618,6 +754,42 @@ async def evolution_cycle(*, force: bool = False,
     try:
         _log_event("evolution_started", forced=force)
         agg = aggregate_feedback()
+
+        # Step A.1 (v1.6.0): general suggestions through alignment gate.
+        # Each note is evaluated against BIBLE+SYSTEM+backlog+memory by an
+        # Opus call (`alignment_check`). Aligned notes are converted to
+        # synthesized dislike-records so the existing classifier picks
+        # them up; conflicts are appended to rejected_suggestions.md.
+        general_entries, general_new_offset = aggregate_general_suggestions()
+        for entry in general_entries:
+            try:
+                alignment = await evaluate_general_alignment(entry["text"])
+            except Exception as ex:  # noqa: BLE001
+                log.warning("alignment_check failed for %s: %s", entry.get("id"), ex)
+                continue
+            _log_event("general_suggestion_evaluated", id=entry.get("id"),
+                        verdict=alignment["verdict"],
+                        reasoning=alignment.get("reasoning", "")[:300])
+            if alignment["verdict"] == "aligned":
+                agg.new_downvotes.append({
+                    "ts": entry.get("ts"),
+                    "message_id": entry.get("id"),
+                    "verdict": "down",
+                    "comment": entry["text"],
+                    "question": "(general suggestion submitted via /api/feedback/general)",
+                    "answer": "",
+                    "tools_called": [],
+                    "addresses_class": alignment.get("addresses_class") or "",
+                    "source": "general_feedback",
+                })
+            else:
+                _append_rejected_suggestion(entry, alignment)
+        # Persist general-feedback offset immediately so we never re-evaluate.
+        if general_entries:
+            state = load_state()
+            state.setdefault("evolution", {})["last_general_offset"] = general_new_offset
+            save_state(state)
+
         if not force and len(agg.new_downvotes) < SETTINGS.downvote_threshold:
             return CycleResult(triggered=False,
                                 skipped_reason=f"only {len(agg.new_downvotes)} new downvotes "

@@ -195,19 +195,22 @@ acceptance: |
 
 
 def test_human_escalation(tmp_repo: Path, monkeypatch):
+    """Since v1.4.0 the human-review gate fires only when the plan touches
+    PROTECTED_PATHS (BIBLE.md, prompts/SAFETY.md, pulse/data_engine/schema.py).
+    Other targets — even Python ones — auto-apply per the lifted policy."""
     plan = """```yaml
-intent: "глубокая правка кода"
+intent: "правка схемы БД"
 class_addressed: "fb-class-007"
 escalate_to_human: true
 requires_human_review: true
 diff_targets:
-  - "pulse/llm.py"
+  - "pulse/data_engine/schema.py"
 plan: |
-  Нужно править Python-код
+  Нужно править схему БД
 expected_effect: |
-  Невозможно в v0.1
+  Невозможно без явного согласия
 risks: |
-  P3 нарушение
+  Может сломать синтетику
 acceptance: |
   X
 ```"""
@@ -221,6 +224,37 @@ acceptance: |
     from pulse.improvement_backlog import list_entries
     items = list_entries()
     assert any(it.human_review for it in items)
+
+
+def test_v140_bypass_for_non_protected_paths(tmp_repo: Path, monkeypatch):
+    """A plan with escalate_to_human=true but no protected paths should
+    bypass the gate (v1.4.0 policy). It might still fail elsewhere, but
+    skipped_reason must NOT be 'escalated_to_human'."""
+    plan = """```yaml
+intent: "small UI tweak"
+class_addressed: "fb-class-008"
+escalate_to_human: true
+requires_human_review: true
+diff_targets:
+  - "web/index.html"
+  - "pulse/llm.py"
+plan: |
+  Frontend touch + harmless internal refactor
+expected_effect: |
+  Markdown renders correctly
+risks: |
+  None — gated by self-test
+acceptance: |
+  X
+```"""
+    _stub_llm(monkeypatch, plan_yaml=plan)
+    from pulse import evolution
+    monkeypatch.setattr(evolution, "run_self_test",
+                         lambda: evolution.SelfTestResult(pytest_ok=True, protected_paths_touched=[]))
+    res = asyncio.get_event_loop().run_until_complete(
+        evolution.evolution_cycle(force=True, sdk_apply=False)
+    )
+    assert res.skipped_reason != "escalated_to_human"
 
 
 def test_anti_oscillator(tmp_repo: Path, monkeypatch):

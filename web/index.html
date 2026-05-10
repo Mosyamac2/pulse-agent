@@ -4,6 +4,13 @@
   <meta charset="utf-8">
   <title>Пульс</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Editorial fonts (Fraunces display + Newsreader body + JetBrains Mono).
+       Loaded from Google Fonts via the xray HTTPS proxy that's already in
+       env. If the request fails (offline VM), font-face simply falls back
+       to the system serif/mono chains below — UI stays functional. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..900;1,9..144,400..700&family=Newsreader:ital,opsz,wght@0,6..72,300..700;1,6..72,300..600&family=JetBrains+Mono:wght@400;500&display=swap">
   <style>
     :root {
       color-scheme: light dark;
@@ -14,6 +21,23 @@
       --border: #d0d0d0;
       --accent: #1f6feb;
       --muted: #5f6368;
+
+      /* Editorial palette (since v1.6.0 — used by the Заметка редактору
+         widget and is the design-token base for the v1.7.0+ full UI
+         redesign). Off-white parchment + deep ink + oxblood accent. */
+      --ed-paper:      #f7f4ec;
+      --ed-paper-dim:  #ede9dc;
+      --ed-paper-edge: #e3dec9;
+      --ed-ink:        #1a1816;
+      --ed-ink-soft:   #4a463f;
+      --ed-rule:       #c9c2ad;
+      --ed-oxblood:    #7a1c1c;
+      --ed-oxblood-fade: #a04545;
+      --ed-mark:       #f2e4a8;
+
+      --ed-display: 'Fraunces', 'Hoefler Text', 'Iowan Old Style', Georgia, serif;
+      --ed-body:    'Newsreader', 'Georgia', 'Iowan Old Style', serif;
+      --ed-mono:    'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
     }
     @media (prefers-color-scheme: dark) {
       :root {
@@ -24,6 +48,16 @@
         --border: #2c2e35;
         --accent: #4c8bf5;
         --muted: #9aa0a6;
+
+        --ed-paper:      #16140f;
+        --ed-paper-dim:  #1f1d18;
+        --ed-paper-edge: #2a261e;
+        --ed-ink:        #e8e3d3;
+        --ed-ink-soft:   #aaa39a;
+        --ed-rule:       #3a342a;
+        --ed-oxblood:    #d4685e;
+        --ed-oxblood-fade: #b06c4f;
+        --ed-mark:       #5a4d1a;
       }
     }
     body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -116,6 +150,254 @@
     details.trace { margin-top: 0.5rem; font-size: 0.78rem; color: var(--muted); }
     details.trace summary { cursor: pointer; user-select: none; }
     details.trace .activity { margin-top: 0.3rem; }
+
+    /* ===========================================================
+       Заметка редактору — editorial-aesthetic feedback widget
+       (since v1.6.0). Floating button → modal dialog styled like
+       a personal letter to the editor of a daily brief. Uses only
+       the --ed-* design tokens so the rest of the chat UI is
+       unchanged until v1.7.0 redesigns it wholesale.
+       =========================================================== */
+    .editor-note-btn {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      z-index: 90;
+      background: var(--ed-paper-dim);
+      border: 1px solid var(--ed-rule);
+      color: var(--ed-ink);
+      padding: 0.55rem 0.95rem;
+      font-family: var(--ed-display);
+      font-size: 0.78rem;
+      font-style: italic;
+      font-weight: 500;
+      letter-spacing: 0.015em;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      box-shadow: 2px 2px 0 var(--ed-rule);
+      transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+    }
+    .editor-note-btn:hover {
+      transform: translate(-1px, -1px);
+      box-shadow: 3px 3px 0 var(--ed-oxblood);
+      background: var(--ed-paper);
+    }
+    .editor-note-btn:active {
+      transform: translate(2px, 2px);
+      box-shadow: 0 0 0 var(--ed-rule);
+    }
+    .editor-note-btn .seal {
+      font-size: 1.05rem;
+      color: var(--ed-oxblood);
+      font-style: normal;
+    }
+    .editor-note-btn .note-label {
+      text-align: left;
+      line-height: 1.05;
+      letter-spacing: 0.01em;
+    }
+    .editor-note-btn .note-label small {
+      font-family: var(--ed-mono);
+      font-style: normal;
+      font-size: 0.6rem;
+      text-transform: uppercase;
+      letter-spacing: 0.13em;
+      color: var(--ed-ink-soft);
+      display: block;
+      margin-top: 0.1rem;
+    }
+
+    .editor-note-dialog {
+      border: 1px solid var(--ed-rule);
+      background: var(--ed-paper);
+      color: var(--ed-ink);
+      padding: 0;
+      border-radius: 0;
+      box-shadow:
+        0 0 0 1px var(--ed-rule),
+        8px 8px 0 var(--ed-ink-soft);
+      max-width: 580px;
+      width: calc(100% - 4rem);
+      font-family: var(--ed-body);
+      /* Subtle paper grain so the modal does not read as a slab of #f7f4ec. */
+      background-image:
+        radial-gradient(circle at 18% 22%, rgba(122,28,28,0.025) 0, transparent 40%),
+        radial-gradient(circle at 82% 78%, rgba(26,24,22,0.04) 0, transparent 50%);
+    }
+    .editor-note-dialog::backdrop {
+      background: rgba(20, 18, 14, 0.55);
+      backdrop-filter: blur(1.5px);
+    }
+    .editor-note-header {
+      padding: 1.25rem 1.6rem 0.85rem;
+      border-bottom: 1px solid var(--ed-rule);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.35rem;
+      text-align: center;
+    }
+    .editor-note-header .masthead {
+      font-family: var(--ed-display);
+      font-size: 1.45rem;
+      font-weight: 600;
+      font-style: italic;
+      color: var(--ed-oxblood);
+      letter-spacing: 0.015em;
+      line-height: 1;
+    }
+    .editor-note-header .dateline {
+      font-family: var(--ed-mono);
+      font-size: 0.66rem;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: var(--ed-ink-soft);
+    }
+    .editor-note-header .rule-set {
+      width: 80%;
+      max-width: 280px;
+      border-top: 1px solid var(--ed-rule);
+      border-bottom: 1px solid var(--ed-rule);
+      padding: 0.18rem 0;
+      font-family: var(--ed-display);
+      font-style: italic;
+      font-size: 0.78rem;
+      color: var(--ed-ink-soft);
+      letter-spacing: 0.05em;
+    }
+    .editor-note-dialog textarea {
+      width: 100%;
+      min-height: 220px;
+      box-sizing: border-box;
+      border: none;
+      background: transparent;
+      font-family: var(--ed-body);
+      font-size: 1.02rem;
+      line-height: 1.6;
+      padding: 1.25rem 1.6rem;
+      resize: vertical;
+      color: var(--ed-ink);
+      outline: none;
+    }
+    .editor-note-dialog textarea::placeholder {
+      color: var(--ed-ink-soft);
+      font-style: italic;
+      opacity: 0.78;
+    }
+    .editor-note-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.7rem 1.6rem 1.05rem;
+      border-top: 1px solid var(--ed-rule);
+      background: var(--ed-paper-dim);
+      gap: 1rem;
+    }
+    .editor-note-footer .meta {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+      font-family: var(--ed-mono);
+      font-size: 0.7rem;
+      color: var(--ed-ink-soft);
+      letter-spacing: 0.04em;
+    }
+    .editor-note-footer .meta .gate {
+      font-family: var(--ed-display);
+      font-style: italic;
+      letter-spacing: 0;
+      color: var(--ed-ink-soft);
+      font-size: 0.74rem;
+    }
+    .editor-note-footer .actions {
+      display: flex;
+      gap: 0.55rem;
+    }
+    .editor-note-footer button {
+      font-family: var(--ed-display);
+      font-size: 0.88rem;
+      font-style: italic;
+      background: transparent;
+      border: 1px solid var(--ed-rule);
+      padding: 0.45rem 0.95rem;
+      color: var(--ed-ink);
+      cursor: pointer;
+      letter-spacing: 0.01em;
+      transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    }
+    .editor-note-footer button:hover {
+      background: var(--ed-paper);
+      border-color: var(--ed-ink-soft);
+    }
+    .editor-note-footer .send-btn {
+      background: var(--ed-ink);
+      color: var(--ed-paper);
+      border-color: var(--ed-ink);
+    }
+    .editor-note-footer .send-btn:hover {
+      background: var(--ed-oxblood);
+      border-color: var(--ed-oxblood);
+      color: var(--ed-paper);
+    }
+    .editor-note-footer .send-btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+    .editor-note-footer .send-btn .stamp {
+      margin-right: 0.35rem;
+      font-style: normal;
+    }
+
+    .editor-note-toast {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      z-index: 110;
+      background: var(--ed-ink);
+      color: var(--ed-paper);
+      padding: 0.95rem 1.2rem 0.95rem 1rem;
+      font-family: var(--ed-body);
+      font-size: 0.96rem;
+      line-height: 1.35;
+      border-left: 4px solid var(--ed-oxblood);
+      max-width: 360px;
+      opacity: 0;
+      transform: translateY(-6px);
+      transition: opacity 0.28s ease, transform 0.28s ease;
+      pointer-events: none;
+    }
+    .editor-note-toast.show {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+    .editor-note-toast strong {
+      font-family: var(--ed-display);
+      font-style: italic;
+      font-weight: 600;
+      display: block;
+      margin-bottom: 0.2rem;
+      letter-spacing: 0.01em;
+    }
+    .editor-note-toast .stamp-name {
+      font-family: var(--ed-mono);
+      color: var(--ed-oxblood-fade);
+      font-size: 0.72rem;
+      letter-spacing: 0.06em;
+      display: block;
+    }
+
+    @media (max-width: 600px) {
+      .editor-note-btn {
+        top: 0.6rem;
+        right: 0.6rem;
+        padding: 0.45rem 0.7rem;
+        font-size: 0.72rem;
+      }
+      .editor-note-btn .note-label small { display: none; }
+    }
   </style>
 </head>
 <body>
@@ -123,6 +405,41 @@
     <h1>Пульс <small id="version">— загружается…</small></h1>
     <div id="thread"></div>
   </main>
+
+  <!-- Заметка редактору: floating button + modal letter-form (v1.6.0).
+       Submits to POST /api/feedback/general which the next evolution
+       cycle will pass through evaluate_general_alignment(). -->
+  <button id="editor-note-btn" class="editor-note-btn" type="button"
+          aria-label="Открыть заметку редактору">
+    <span class="seal">✦</span>
+    <span class="note-label">заметка<small>редактору</small></span>
+  </button>
+
+  <dialog id="editor-note-dialog" class="editor-note-dialog">
+    <form method="dialog">
+      <header class="editor-note-header">
+        <span class="dateline">от читателя</span>
+        <span class="masthead">Редакции Пульса</span>
+        <span class="rule-set">общие пожелания, замечания, наблюдения</span>
+      </header>
+      <textarea id="editor-note-text"
+                placeholder="Что Пульсу стоит делать иначе? Какой паттерн вы заметили? Что важно для вас, но он этого ещё не понимает? Пишите свободно — это не про конкретный ответ, это про общее направление. Перед попаданием в эволюционный шаг текст пройдёт сверку с конституцией, системным промптом, бэклогом и памятью Пульса."
+                maxlength="4000"></textarea>
+      <footer class="editor-note-footer">
+        <span class="meta">
+          <span><span id="char-count">0</span>/4000</span>
+          <span class="gate">проверяется на соответствие BIBLE.md</span>
+        </span>
+        <div class="actions">
+          <button type="button" id="editor-note-cancel">отозвать</button>
+          <button type="button" id="editor-note-send" class="send-btn">
+            <span class="stamp">✉</span>отправить в эволюцию
+          </button>
+        </div>
+      </footer>
+    </form>
+  </dialog>
+  <div id="editor-note-toast" class="editor-note-toast" role="status" aria-live="polite"></div>
   <form id="composer">
     <div class="row">
       <textarea id="q" placeholder="Спроси что-нибудь про сотрудника… (Ctrl+Enter — отправить)"
@@ -439,6 +756,98 @@ q.addEventListener('keydown', (ev) => {
       session.history.push({ question: it.question, answer: it.answer || '' });
     }
   } catch (e) { /* ignore */ }
+})();
+</script>
+
+<script>
+// === Заметка редактору ====================================================
+// Editor-note widget plumbing. Independent IIFE so a parse error here
+// can't break the chat above.
+(function () {
+  const btn = document.getElementById('editor-note-btn');
+  const dialog = document.getElementById('editor-note-dialog');
+  const textarea = document.getElementById('editor-note-text');
+  const charCount = document.getElementById('char-count');
+  const sendBtn = document.getElementById('editor-note-send');
+  const cancelBtn = document.getElementById('editor-note-cancel');
+  const toast = document.getElementById('editor-note-toast');
+  if (!btn || !dialog || !textarea) return;
+
+  function openDialog() {
+    if (typeof dialog.showModal === 'function') {
+      dialog.showModal();
+    } else {
+      dialog.setAttribute('open', 'open');
+    }
+    setTimeout(function () { textarea.focus(); }, 60);
+  }
+
+  function closeDialog() {
+    if (typeof dialog.close === 'function') {
+      try { dialog.close(); } catch (_) {}
+    }
+    dialog.removeAttribute('open');
+  }
+
+  function showToast(headline, body) {
+    if (!toast) return;
+    toast.innerHTML = '<strong></strong><span class="stamp-name"></span>';
+    toast.querySelector('strong').textContent = headline;
+    toast.querySelector('.stamp-name').textContent = body || '';
+    toast.classList.add('show');
+    clearTimeout(toast._t);
+    toast._t = setTimeout(function () { toast.classList.remove('show'); }, 4800);
+  }
+
+  btn.addEventListener('click', openDialog);
+  cancelBtn.addEventListener('click', function () {
+    closeDialog();
+  });
+
+  textarea.addEventListener('input', function () {
+    if (charCount) charCount.textContent = String(textarea.value.length);
+  });
+
+  // Ctrl/Cmd+Enter sends.
+  textarea.addEventListener('keydown', function (ev) {
+    if ((ev.ctrlKey || ev.metaKey) && ev.key === 'Enter') {
+      ev.preventDefault();
+      sendBtn.click();
+    }
+  });
+
+  sendBtn.addEventListener('click', async function () {
+    const text = textarea.value.trim();
+    if (text.length < 4) {
+      showToast('Слишком коротко', 'минимум 4 символа');
+      return;
+    }
+    sendBtn.disabled = true;
+    const orig = sendBtn.innerHTML;
+    sendBtn.innerHTML = '<span class="stamp">✦</span>отправляю…';
+    try {
+      const r = await fetch('/api/feedback/general', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: text }),
+      });
+      if (!r.ok) {
+        const errTxt = await r.text();
+        throw new Error(errTxt || ('HTTP ' + r.status));
+      }
+      const data = await r.json();
+      showToast('Принято в редакцию',
+                'id ' + data.id + ' · попадёт в ближайший цикл эволюции');
+      textarea.value = '';
+      if (charCount) charCount.textContent = '0';
+      closeDialog();
+    } catch (e) {
+      showToast('Не доставлено', (e && e.message) ? e.message.slice(0, 120) : 'неизвестная ошибка');
+    } finally {
+      sendBtn.disabled = false;
+      sendBtn.innerHTML = orig;
+    }
+  });
 })();
 </script>
 </body>
