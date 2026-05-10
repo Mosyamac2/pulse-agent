@@ -785,7 +785,13 @@ def get_cost_breakdown(*, window: int = 30,
 # ---------------------------------------------------------------------------
 
 def get_archetype_counts(*, db: Database | None = None) -> list[dict[str, Any]]:
-    """All 8 archetypes with active-employee counts. Stable ordering by count desc."""
+    """All 8 archetypes with active-employee counts. Stable ordering by count desc.
+
+    Each row carries a Russian `label` (from employee_card.ARCHETYPE_RU) so
+    the sidebar / hover-card show user-readable names instead of snake_case
+    fixture identifiers.
+    """
+    from .employee_card import archetype_ru
     db = _db(db)
     rows = list(db.query("""
       SELECT archetype, COUNT(*) AS n
@@ -794,7 +800,9 @@ def get_archetype_counts(*, db: Database | None = None) -> list[dict[str, Any]]:
       GROUP BY archetype
       ORDER BY n DESC
     """))
-    return [{"archetype": r["archetype"], "count": int(r["n"])} for r in rows]
+    return [{"archetype": r["archetype"],
+             "label": archetype_ru(r["archetype"]),
+             "count": int(r["n"])} for r in rows]
 
 
 def get_department_counts(*, db: Database | None = None) -> list[dict[str, Any]]:

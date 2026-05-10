@@ -134,7 +134,20 @@
       letter-spacing: 0.06em;
       color: var(--p-fg-soft);
     }
-    .sb-section { margin-bottom: 1.2rem; }
+    .sb-rail-toggle {
+      width: 1.6rem; height: 1.6rem;
+      border-radius: 50%;
+      border: 1px solid var(--p-border-soft);
+      background: var(--p-bg);
+      color: var(--p-fg-muted);
+      cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 0;
+      transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+    }
+    .sb-rail-toggle:hover { color: var(--p-accent); border-color: var(--p-accent); }
+    .sb-rail-toggle svg { width: 0.85rem; height: 0.85rem; }
+    .sb-section { margin-bottom: 0.8rem; }
     .sb-title {
       display: flex; align-items: center; gap: 0.5rem;
       font-family: var(--p-font-mono);
@@ -142,14 +155,44 @@
       letter-spacing: 0.18em;
       text-transform: uppercase;
       color: var(--p-fg-soft);
-      padding: 0 0.5rem 0.45rem;
+      padding: 0.3rem 0.5rem 0.45rem;
+      cursor: pointer;
+      user-select: none;
+      border-radius: var(--p-r-sm);
+      transition: background 0.12s ease, color 0.12s ease;
     }
+    .sb-title:hover { background: var(--p-tint); color: var(--p-fg-muted); }
+    .sb-title .sb-chev {
+      display: inline-block;
+      transition: transform 0.18s ease;
+      font-family: var(--p-font-mono);
+      width: 0.85rem; flex-shrink: 0;
+      text-align: center;
+    }
+    .sb-section.collapsed .sb-chev { transform: rotate(-90deg); }
+    .sb-section.collapsed .sb-list { display: none; }
     .sb-title .sb-title-key {
       margin-left: auto;
       padding: 0.1rem 0.45rem;
       border: 1px solid var(--p-border-soft);
       border-radius: 999px;
       letter-spacing: 0.04em;
+    }
+
+    /* Collapsed-rail mode: whole sidebar shrinks to 56 px column. */
+    .app-shell.rail { grid-template-columns: 56px 1fr; }
+    .app-shell.rail form#composer { left: 56px; }
+    .app-shell.rail .sidebar { padding: 1rem 0.4rem; }
+    .app-shell.rail .sidebar .sb-section,
+    .app-shell.rail .sidebar .sb-brand .name,
+    .app-shell.rail .sidebar .sb-brand small { display: none; }
+    .app-shell.rail .sidebar .sb-brand {
+      flex-direction: column; padding: 0.4rem 0; border: none; gap: 0.6rem; margin-bottom: 0.5rem;
+    }
+    @media (max-width: 800px) {
+      /* On mobile we don't show the rail at all — drawer handles it. */
+      .app-shell.rail { grid-template-columns: 1fr; }
+      .app-shell.rail form#composer { left: 0; }
     }
     .sb-list { list-style: none; padding: 0; margin: 0; }
     .sb-list li { margin: 0; }
@@ -714,6 +757,56 @@
     .hc-metric.sev-bad   .hc-m-value { color: var(--p-bad); }
     .hc-metric.sev-good  .hc-m-value { color: var(--p-good); }
     .hc-metric.sev-flat  .hc-m-value { color: var(--p-fg); }
+    .hc-metric .hc-m-peer {
+      font-family: var(--p-font-mono);
+      font-size: 0.62rem;
+      letter-spacing: 0.04em;
+      color: var(--p-fg-soft);
+      margin-top: 0.18rem;
+    }
+
+    /* Tooltip for metric labels — pure CSS, fires on hover. */
+    .hc-m-label[data-tip] {
+      position: relative;
+      cursor: help;
+      border-bottom: 1px dotted var(--p-fg-soft);
+      display: inline-block;
+    }
+    .hc-m-label[data-tip]::after {
+      content: attr(data-tip);
+      position: absolute;
+      left: 0; top: calc(100% + 6px);
+      width: 240px;
+      padding: 0.55rem 0.7rem;
+      background: var(--p-fg);
+      color: var(--p-bg);
+      font-family: var(--p-font-body);
+      font-size: 0.78rem;
+      font-weight: 400;
+      line-height: 1.45;
+      letter-spacing: 0;
+      text-transform: none;
+      border-radius: var(--p-r-sm);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(-4px);
+      transition: opacity 0.16s ease, transform 0.16s ease;
+      z-index: 130;
+      white-space: normal;
+    }
+    .hc-m-label[data-tip]:hover::after {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .hc-peer-note {
+      padding: 0 1rem 0.55rem;
+      font-family: var(--p-font-mono);
+      font-size: 0.64rem;
+      letter-spacing: 0.04em;
+      color: var(--p-fg-soft);
+    }
 
     .hc-flags {
       padding: 0 1rem 0.45rem;
@@ -786,18 +879,27 @@
         <span class="dot"></span>
         <span class="name">Пульс</span>
         <small id="sb-version">—</small>
+        <button class="sb-rail-toggle" type="button" id="sb-rail-toggle"
+                aria-label="Свернуть сайдбар" title="Свернуть сайдбар">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path class="sb-rail-icon-collapse" d="M15 6l-6 6 6 6"/>
+          </svg>
+        </button>
       </div>
 
-      <section class="sb-section sb-quick" id="sb-quick-section">
-        <div class="sb-title">
+      <section class="sb-section sb-quick" id="sb-quick-section" data-key="quick">
+        <div class="sb-title" data-toggle>
+          <span class="sb-chev">▾</span>
           <span>Частые вопросы</span>
           <span class="sb-title-key">quick</span>
         </div>
         <ul class="sb-list" id="sb-quick"></ul>
       </section>
 
-      <section class="sb-section" id="sb-arch-section">
-        <div class="sb-title">
+      <section class="sb-section collapsed" id="sb-arch-section" data-key="arch">
+        <div class="sb-title" data-toggle>
+          <span class="sb-chev">▾</span>
           <span>Архетипы</span>
           <span class="sb-title-key">8</span>
         </div>
@@ -806,8 +908,9 @@
         </ul>
       </section>
 
-      <section class="sb-section" id="sb-dept-section">
-        <div class="sb-title">
+      <section class="sb-section collapsed" id="sb-dept-section" data-key="dept">
+        <div class="sb-title" data-toggle>
+          <span class="sb-chev">▾</span>
           <span>Отделы</span>
           <span class="sb-title-key" id="sb-dept-count">—</span>
         </div>
@@ -816,8 +919,9 @@
         </ul>
       </section>
 
-      <section class="sb-section sb-recent" id="sb-recent-section">
-        <div class="sb-title">
+      <section class="sb-section sb-recent" id="sb-recent-section" data-key="recent">
+        <div class="sb-title" data-toggle>
+          <span class="sb-chev">▾</span>
           <span>Недавнее</span>
           <span class="sb-title-key">recent</span>
         </div>
@@ -943,11 +1047,40 @@ function appendUser(text) {
   d.scrollIntoView({ behavior: 'smooth', block: 'end' });
 }
 
+// Render assistant content as Markdown via marked + DOMPurify; fall back to
+// plain text if either lib failed to load (offline VM, ad-blocker). Re-runs
+// itself once libraries become available — `body.dataset.mdSource` keeps the
+// raw markdown so we can re-render in place.
+function renderAssistantMarkdown(body, text) {
+  const ready = (typeof window.marked === 'object' || typeof window.marked === 'function')
+                && typeof window.DOMPurify === 'object';
+  body.dataset.mdSource = text || '';
+  if (!ready) {
+    body.textContent = text || '';
+    body.classList.remove('md');
+    if (window.__pulseMdReady && !body.dataset.mdDeferred) {
+      body.dataset.mdDeferred = '1';
+      window.__pulseMdReady.then(() => renderAssistantMarkdown(body, body.dataset.mdSource));
+    }
+    return;
+  }
+  try {
+    const html = window.marked.parse(text || '', { gfm: true, breaks: false });
+    const clean = window.DOMPurify.sanitize(html, { USE_PROFILES: { html: true } });
+    body.innerHTML = clean;
+    body.classList.add('md');
+  } catch (e) {
+    console.warn('markdown render failed; falling back to text', e);
+    body.textContent = text || '';
+    body.classList.remove('md');
+  }
+}
+
 function appendPulse(text, msgId) {
   const wrap = document.createElement('div');
   const body = document.createElement('div');
   body.className = 'msg pulse';
-  body.textContent = text;
+  renderAssistantMarkdown(body, text);
   wrap.appendChild(body);
 
   const meta = document.createElement('div');
@@ -1137,7 +1270,9 @@ async function ask(question) {
     session.history.push({ question, answer: finalEv.answer || '' });
 
     // Replace the activity log with the final answer; keep the trace under <details>.
-    body.textContent = finalEv.answer || '(пустой ответ)';
+    body.innerHTML = '';
+    body.classList.remove('md');
+    renderAssistantMarkdown(body, finalEv.answer || '(пустой ответ)');
     if (traceSteps.length) {
       const det = document.createElement('details');
       det.className = 'trace';
@@ -1378,14 +1513,18 @@ q.addEventListener('keydown', (ev) => {
       sb.archetypes.innerHTML = '<li class="sb-empty">нет данных</li>';
       return;
     }
-    sb.archetypes.innerHTML = items.map(a => `
+    sb.archetypes.innerHTML = items.map(a => {
+      const label = a.label || a.archetype;
+      const q = `Расскажи про архетип «${label}» (${a.archetype}) — кто к нему относится, какой у этих людей профиль, и стоит ли мне обращать на них внимание.`;
+      return `
       <li>
-        <button class="sb-item" data-q="${escapeAttr(`Расскажи про архетип «${a.archetype}» — кто к нему относится, какой у этих людей профиль, и стоит ли мне обращать на них внимание.`)}">
-          <span class="sb-label">${escapeHtml(a.archetype)}</span>
+        <button class="sb-item" data-q="${escapeAttr(q)}" title="${escapeAttr(a.archetype)}">
+          <span class="sb-label">${escapeHtml(label)}</span>
           <span class="sb-count">${a.count}</span>
         </button>
       </li>
-    `).join('');
+    `;
+    }).join('');
   }
 
   function renderDepartments(items) {
@@ -1444,6 +1583,61 @@ q.addEventListener('keydown', (ev) => {
     sidebar.classList.contains('open') ? closeSidebarMobile() : openSidebarMobile();
   });
   backdrop.addEventListener('click', closeSidebarMobile);
+
+  // ─── Section collapse + global rail ───────────────────────────────────
+  // Each section header (data-toggle) flips .collapsed on its parent .sb-section.
+  // The brand-row chevron flips .rail on .app-shell, shrinking the sidebar to
+  // a 56-px column. State is persisted in localStorage.
+
+  const SB_STATE_KEY = 'pulse.sidebar.v1';
+  function loadSbState() {
+    try { return JSON.parse(localStorage.getItem(SB_STATE_KEY) || '{}') || {}; }
+    catch (_) { return {}; }
+  }
+  function saveSbState(s) {
+    try { localStorage.setItem(SB_STATE_KEY, JSON.stringify(s)); }
+    catch (_) {}
+  }
+  const sbState = loadSbState();
+
+  // Apply persisted per-section state (overrides defaults baked in markup).
+  document.querySelectorAll('.sb-section[data-key]').forEach(sec => {
+    const key = sec.dataset.key;
+    if (sbState.sections && key in sbState.sections) {
+      sec.classList.toggle('collapsed', !!sbState.sections[key]);
+    }
+  });
+
+  sidebar.addEventListener('click', (ev) => {
+    const t = ev.target.closest('[data-toggle]');
+    if (!t) return;
+    const sec = t.closest('.sb-section');
+    if (!sec) return;
+    const collapsed = sec.classList.toggle('collapsed');
+    sbState.sections = sbState.sections || {};
+    sbState.sections[sec.dataset.key] = collapsed;
+    saveSbState(sbState);
+  });
+
+  // Global rail toggle.
+  const appShell = document.querySelector('.app-shell');
+  const railBtn = document.getElementById('sb-rail-toggle');
+  function applyRail(rail) {
+    appShell.classList.toggle('rail', !!rail);
+    if (railBtn) {
+      railBtn.title = rail ? 'Развернуть сайдбар' : 'Свернуть сайдбар';
+      railBtn.setAttribute('aria-label', railBtn.title);
+      const path = railBtn.querySelector('path');
+      if (path) path.setAttribute('d', rail ? 'M9 6l6 6-6 6' : 'M15 6l-6 6 6 6');
+    }
+  }
+  applyRail(!!sbState.rail);
+  railBtn && railBtn.addEventListener('click', (ev) => {
+    ev.stopPropagation();
+    sbState.rail = !appShell.classList.contains('rail');
+    applyRail(sbState.rail);
+    saveSbState(sbState);
+  });
 
   // ─── Helpers ───────────────────────────────────────────────────────────
 
@@ -1554,37 +1748,63 @@ q.addEventListener('keydown', (ev) => {
     return 'sev-flat';
   }
 
+  function fmtMetric(m) {
+    if (m.value == null) return '—';
+    if (m.key === 'focus_score' || m.key === 'stress_index' || m.key === 'peer_sentiment') {
+      return m.value.toFixed(2);
+    }
+    return m.value.toFixed(1);
+  }
+  function fmtPeer(value, key) {
+    if (value == null) return '';
+    if (key === 'focus_score' || key === 'stress_index' || key === 'peer_sentiment') {
+      return value.toFixed(2);
+    }
+    return value.toFixed(1);
+  }
+
   function renderCard(card) {
     const role = [card.position, card.unit_name].filter(Boolean).join(' · ');
     const tenure = card.tenure_years != null ? `${card.tenure_years} г. в компании` : '';
+    const archeLabel = card.archetype_label || card.archetype;
     const flagsHtml = [];
-    if (card.at_risk_flag_count >= 3) flagsHtml.push(`<span class="hc-flag risk">at-risk · ${card.at_risk_flag_count}/4</span>`);
-    if (card.burnout_flag_count >= 3) flagsHtml.push(`<span class="hc-flag burnout">burnout · ${card.burnout_flag_count}/4</span>`);
+    if (card.at_risk_flag_count >= 3) flagsHtml.push(`<span class="hc-flag risk">в красной зоне · ${card.at_risk_flag_count}/4</span>`);
+    if (card.burnout_flag_count >= 3) flagsHtml.push(`<span class="hc-flag burnout">выгорание · ${card.burnout_flag_count}/4</span>`);
     if (card.attrition_probability != null && card.attrition_probability >= 0.5) {
-      flagsHtml.push(`<span class="hc-flag attr">attrition ${Math.round(card.attrition_probability * 100)}%</span>`);
+      flagsHtml.push(`<span class="hc-flag attr">риск ухода ${Math.round(card.attrition_probability * 100)}%</span>`);
     }
+    const peerN = card.peer_group ? card.peer_group.n_peers : 0;
     const metricsHtml = (card.metrics || []).map(m => {
       const cls = severityClass(m.severity);
-      const val = m.value == null ? '—' : (
-        m.key === 'focus_score' || m.key === 'stress_index' || m.key === 'peer_sentiment'
-          ? m.value.toFixed(2)
-          : m.value.toFixed(1)
-      );
+      const tooltip = m.tooltip ? `data-tip="${escapeAttr(m.tooltip)}"` : '';
+      const peerVal = card.peer_group && card.peer_group.metrics
+                        ? card.peer_group.metrics[m.key]
+                        : null;
+      const peerLine = (peerN > 0 && peerVal != null)
+        ? `<div class="hc-m-peer">peers · ${escapeHtml(fmtPeer(peerVal, m.key))}</div>`
+        : (peerN > 0
+              ? '<div class="hc-m-peer">peers · нет данных</div>'
+              : '');
       return `
         <div class="hc-metric ${cls}">
-          <div class="hc-m-label">${escapeHtml(m.label)}</div>
-          <div class="hc-m-value">${val}</div>
+          <div class="hc-m-label" ${tooltip}>${escapeHtml(m.label)}</div>
+          <div class="hc-m-value">${fmtMetric(m)}</div>
+          ${peerLine}
         </div>
       `;
     }).join('');
+    const peerNote = peerN > 0
+      ? `<div class="hc-peer-note">peers — та же роль и грейд, ${peerN} чел.</div>`
+      : '';
     return `
       <div class="hc-head">
         <div class="hc-name">${escapeHtml(card.full_name)}</div>
         <div class="hc-role">${escapeHtml(role)}</div>
-        ${card.archetype ? `<span class="hc-archetype">${escapeHtml(card.archetype)}</span>` : ''}
+        ${archeLabel ? `<span class="hc-archetype">${escapeHtml(archeLabel)}</span>` : ''}
         ${tenure ? `<span class="hc-archetype tenure">${escapeHtml(tenure)}</span>` : ''}
       </div>
       ${metricsHtml ? `<div class="hc-metrics">${metricsHtml}</div>` : ''}
+      ${peerNote}
       ${flagsHtml.length ? `<div class="hc-flags">${flagsHtml.join('')}</div>` : ''}
       <div class="hc-foot">
         <span class="hc-id">${escapeHtml(card.emp_id)}</span>

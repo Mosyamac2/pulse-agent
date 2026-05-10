@@ -80,3 +80,40 @@ def test_resolve_metric_coverage():
     assert resolve_metric("focus_score") == "focus_score"
     assert resolve_metric("Sleep, h/day") == "sleep_h"
     assert resolve_metric("гарбидж") is None
+
+
+def test_archetype_ru_translates_known(db):
+    from pulse.employee_card import archetype_ru
+    assert archetype_ru("newbie_enthusiast") == "Новичок-энтузиаст"
+    assert archetype_ru("toxic_high_performer") == "Токсичный лидер"
+    # Unknown archetype passes through (forward-compat)
+    assert archetype_ru("future_archetype_v9") == "future_archetype_v9"
+    assert archetype_ru(None) is None
+
+
+def test_card_carries_archetype_label_and_metric_tooltips(db):
+    from pulse.employee_card import get_employee_card
+    out = get_employee_card("emp_001", db=db)
+    assert out is not None
+    if out["archetype"]:
+        assert out["archetype_label"] is not None
+    for m in out["metrics"]:
+        assert m["tooltip"], f"tooltip missing for {m['key']}"
+
+
+def test_card_includes_peer_group_means(db):
+    from pulse.employee_card import get_employee_card
+    out = get_employee_card("emp_001", db=db)
+    assert out is not None
+    pg = out["peer_group"]
+    assert pg["position_id"] is not None
+    assert pg["grade_level"] is not None
+    assert isinstance(pg["n_peers"], int)
+    # Peer-mean dict has the same keys as metrics whenever peers have data
+    if pg["n_peers"] > 0 and pg["metrics"]:
+        for k in pg["metrics"]:
+            assert k in {"stress_index","sleep_h","focus_score","peer_sentiment"}
+    # Each metric row references peer_mean (None or float)
+    for m in out["metrics"]:
+        pm = m.get("peer_mean")
+        assert pm is None or isinstance(pm, (int, float))

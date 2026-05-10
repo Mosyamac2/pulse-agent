@@ -30,6 +30,15 @@ def test_archetype_counts_are_8_or_fewer(db):
     assert total >= 1
     counts = [r["count"] for r in rows]
     assert counts == sorted(counts, reverse=True)
+    # Russian label is attached
+    for r in rows:
+        assert r["label"], f"label missing for {r['archetype']}"
+        # cyrillic characters present whenever archetype is a known fixture key
+        if r["archetype"] in {"newbie_enthusiast","tired_midfielder",
+                                "star_perfectionist","quiet_rear_guard",
+                                "drifting_veteran","toxic_high_performer",
+                                "isolated_newbie","overwhelmed_manager"}:
+            assert any("Ѐ" <= ch <= "ӿ" for ch in r["label"])
 
 
 def test_department_counts_filter_empty_units(db):
