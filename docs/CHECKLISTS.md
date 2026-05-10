@@ -9,7 +9,7 @@
 | 1 | `version_sync` | `VERSION` ≡ `pyproject.toml::version` ≡ `README.md` badge ≡ `docs/ARCHITECTURE.md` header. |
 | 2 | `version_bump` | `VERSION` увеличен относительно предыдущего коммита. |
 | 3 | `tag_present` | git tag `v{VERSION}` создаётся. |
-| 4 | `protected_paths` | Нет правок в `BIBLE.md`, `pulse/safety.py`, `pulse/data_engine/schema.py`, `pulse/*.py` (в v0.1) без флага `runtime_mode=pro`. |
+| 4 | `protected_paths` | Нет правок в immune core (`BIBLE.md`, `prompts/SAFETY.md`, `pulse/data_engine/schema.py`) без флага `runtime_mode=pro`. С v1.0.0 остальной `pulse/*.py` редактируется свободно (фильтрами служат self-test и Opus commit-review). |
 | 5 | `tests_pass` | `pytest -q` зелёный. |
 | 6 | `architecture_doc` | Если структурное изменение (новый файл в `pulse/` или `prompts/`) — `docs/ARCHITECTURE.md` обновлена. |
 | 7 | `intent_clarity` | Сообщение коммита: формат `vX.Y.Z: <однострочный intent>` |

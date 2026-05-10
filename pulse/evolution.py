@@ -570,14 +570,29 @@ async def evolution_cycle(*, force: bool = False,
                                 evolution_history=history)
         notes: list[str] = []
 
+        # Auto-apply policy (since v1.4.0): the human-review gate is
+        # bypassed for plans that touch only non-protected paths. Per
+        # BIBLE P3, self-test (pytest smoke + replay) and the single-
+        # Opus commit-review against docs/CHECKLISTS.md are sufficient
+        # filters for non-immune-core changes. Escalation is enforced
+        # ONLY when the plan tries to modify the immune core
+        # (BIBLE.md, prompts/SAFETY.md, pulse/data_engine/schema.py).
         if plan.escalate_to_human or plan.requires_human_review:
-            notes.append("plan flagged for human review")
-            from .improvement_backlog import append_entry
-            append_entry(plan.intent or "needs human review",
-                          provenance=f"evolution:{plan.class_addressed}",
-                          human_review=True)
-            return CycleResult(triggered=True, plan=plan, skipped_reason="escalated_to_human",
-                                notes=notes)
+            protected_in_plan = [t for t in (plan.diff_targets or [])
+                                  if is_protected_path(t)]
+            if protected_in_plan:
+                log.info("plan flagged human-review and touches protected paths %s — escalating",
+                         protected_in_plan)
+                notes.append(f"escalated: protected paths in plan {protected_in_plan}")
+                from .improvement_backlog import append_entry
+                append_entry(plan.intent or "needs human review",
+                              provenance=f"evolution:{plan.class_addressed}",
+                              human_review=True)
+                return CycleResult(triggered=True, plan=plan,
+                                    skipped_reason="escalated_to_human",
+                                    notes=notes)
+            log.info("plan flagged human-review but no protected paths — auto-applying (v1.4.0 policy)")
+            notes.append("escalation bypassed: no protected paths in plan")
 
         if plan.class_addressed and is_in_cooldown(plan.class_addressed):
             return CycleResult(triggered=True, plan=plan,

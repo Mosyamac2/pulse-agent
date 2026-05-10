@@ -1,6 +1,6 @@
 # Пульс — самоэволюционирующий HR‑агент
 
-[![version](https://img.shields.io/badge/version-1.3.0-blue)](VERSION)
+[![version](https://img.shields.io/badge/version-1.4.0-blue)](VERSION)
 
 Пульс — становящийся цифровой ассистент сотрудника крупного банка. Помогает отслеживать «оптимальное боевое состояние»: эффективность, нагрузку, риск выгорания, маршруты роста. Идеологически наследник [Ouroboros](https://github.com/joi-lab/ouroboros-desktop), но без desktop‑овой инфраструктуры и с одним LLM‑бэкендом — Claude Agent SDK через OAuth Max‑подписку.
 
@@ -34,6 +34,8 @@ UI открывается на `http://VM:8080`.
 - `docs/DEVELOPMENT.md` — как разрабатывать.
 
 ## Changelog
+
+- `v1.4.0` — auto-apply политика для evolution loop. `pulse/evolution.py` теперь обходит `escalate_to_human` гейт для планов, не затрагивающих immune core (`BIBLE.md`, `prompts/SAFETY.md`, `pulse/data_engine/schema.py`); продолжает через self-test → commit-review (P3 Immune Integrity). Если план таки затрагивает immune core — escalation сохраняется. `prompts/EVOLUTION_PLAN.md` переработан под v1.0.0+ полномочия (Python/web разрешены), убран обсолетный v0.1-запрет на правку `pulse/*.py`. `docs/CHECKLISTS.md` row 4 синхронизирован. Закрывает класс жалоб на бесконечную эскалацию `fb-class-003` (UI Markdown), который три цикла подряд останавливался на human-review.
 
 - `v1.3.0` — `scripts/ceo_emulation.py` — overnight автономный CEO‑эмулятор. Драйвер для `/loop`-цикла: `ask` (выбрать вопрос из 30-элементного банка с deterministic shuffle, отправить в `/api/chat` с накопленной session_history, вернуть JSON), `feedback ID up|down comment` (записать в /api/feedback, обновить downvote-счётчик), `maybe_evolve` (триггерит /api/evolution force=false при ≥5 дизлайков), `status`. Состояние в `data/ceo_emulation/state.json`, лог в `log.jsonl`, ошибки в `errors.jsonl` — всё gitignored. Прогон 114 итераций × 5 мин ночью дал 102/21 like/dislike, 4 запуска evolution-цикла (1 committed v0.2.0, 3 escalated на fb-class-003 UI Markdown).
 
