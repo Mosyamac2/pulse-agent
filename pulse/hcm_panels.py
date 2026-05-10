@@ -412,9 +412,407 @@ def get_my_assessment(emp_id: str, *, period: str | None = None,
     }
 
 
+# ===========================================================================
+# Career — slide 7 (Поиск талантов и делегирования) + slide 12 (Моя карьера)
+# ===========================================================================
+
+def get_my_career(emp_id: str, *,
+                    db: Database | None = None) -> dict[str, Any]:
+    """Profile + talent_pool_status + recommendations stub.
+
+    Used to render slide 12: «карьерный статус», список рекомендованных
+    внутренних вакансий рассчитывается отдельно через `list_internal_vacancies`.
+    """
+    db = _db(db)
+    emp = list(db.query(
+        "SELECT * FROM employees WHERE emp_id = :e", {"e": emp_id}
+    ))
+    if not emp:
+        return {}
+    tps = list(db.query(
+        "SELECT * FROM talent_pool_status WHERE emp_id = :e", {"e": emp_id}
+    ))
+    pos = list(db.query(
+        "SELECT * FROM positions WHERE position_id = :p",
+        {"p": emp[0]["position_id"]},
+    ))
+    unit = list(db.query(
+        "SELECT * FROM units WHERE unit_id = :u",
+        {"u": emp[0]["unit_id"]},
+    ))
+    return {
+        "employee":           emp[0],
+        "position":           pos[0] if pos else None,
+        "unit":               unit[0] if unit else None,
+        "talent_pool_status": tps[0] if tps else None,
+    }
+
+
+def list_internal_vacancies(emp_id: str, *,
+                              db: Database | None = None) -> list[dict[str, Any]]:
+    """Vacancies an employee could realistically apply to.
+
+    Heuristic: status='active' AND (is_internal_only=1 OR position grade
+    is within ±1 of the employee's grade_level). Skip vacancies the
+    employee already manages.
+    """
+    db = _db(db)
+    emp = list(db.query(
+        "SELECT grade_level FROM employees WHERE emp_id = :e", {"e": emp_id}
+    ))
+    if not emp:
+        return []
+    g = int(emp[0]["grade_level"])
+
+    rows = list(db.query("""
+        SELECT v.*, u.name AS unit_name, p.title AS position_title,
+               p.grade_level AS position_grade,
+               (SELECT COUNT(*) FROM candidates c WHERE c.vacancy_id=v.vacancy_id) AS candidates_count
+        FROM vacancies v
+        LEFT JOIN positions p ON p.position_id = v.position_id
+        LEFT JOIN units u     ON u.unit_id     = v.unit_id
+        WHERE v.status='active' AND v.hiring_manager_id != :e
+        ORDER BY v.opened_date DESC
+    """, {"e": emp_id}))
+    out = []
+    for r in rows:
+        pg = int(r.get("position_grade") or 0)
+        if r["is_internal_only"] == 1 or abs(pg - g) <= 1:
+            out.append(r)
+    return out
+
+
+def list_talent_search_results(query: dict[str, Any], *,
+                                 db: Database | None = None) -> list[dict[str, Any]]:
+    """Slide 7 «Поиск талантов» — extended search with filters.
+
+    Supported filters in `query`:
+      position_title (substring), grade_min, grade_max, unit_id,
+      open_to_offers (1/0), min_recommended_by_count.
+    """
+    db = _db(db)
+    where_parts = ["e.status='active'"]
+    params: dict[str, Any] = {}
+
+    if (g_min := query.get("grade_min")) is not None:
+        where_parts.append("e.grade_level >= :gmin")
+        params["gmin"] = int(g_min)
+    if (g_max := query.get("grade_max")) is not None:
+        where_parts.append("e.grade_level <= :gmax")
+        params["gmax"] = int(g_max)
+    if (u := query.get("unit_id")):
+        where_parts.append("e.unit_id = :u")
+        params["u"] = u
+    if (pt := query.get("position_title")):
+        where_parts.append("LOWER(p.title) LIKE :pt")
+        params["pt"] = f"%{pt.lower()}%"
+    if (oto := query.get("open_to_offers")) is not None:
+        where_parts.append("t.open_to_offers = :oto")
+        params["oto"] = int(bool(oto))
+    if (mrc := query.get("min_recommended_by_count")) is not None:
+        where_parts.append("t.recommended_by_count >= :mrc")
+        params["mrc"] = int(mrc)
+
+    where = " AND ".join(where_parts)
+    rows = list(db.query(f"""
+        SELECT e.emp_id, e.full_name, e.archetype, e.grade_level,
+               p.title  AS position_title,
+               u.name   AS unit_name,
+               t.open_to_offers, t.recommended_by_count, t.career_track_preference
+        FROM employees e
+        LEFT JOIN positions p ON p.position_id = e.position_id
+        LEFT JOIN units u     ON u.unit_id     = e.unit_id
+        LEFT JOIN talent_pool_status t ON t.emp_id = e.emp_id
+        WHERE {where}
+        ORDER BY t.recommended_by_count DESC, e.full_name
+        LIMIT 50
+    """, params))
+    return rows
+
+
+def list_delegations(emp_id: str, *,
+                       db: Database | None = None) -> dict[str, list[dict[str, Any]]]:
+    """Slide 7 right side: «вы делегируете» / «вам делегировали» split."""
+    db = _db(db)
+    out_from = list(db.query("""
+        SELECT d.*, e.full_name AS counterparty_name
+        FROM delegations d JOIN employees e ON e.emp_id = d.to_emp_id
+        WHERE d.from_emp_id = :e
+        ORDER BY d.status, d.start_date DESC
+    """, {"e": emp_id}))
+    out_to = list(db.query("""
+        SELECT d.*, e.full_name AS counterparty_name
+        FROM delegations d JOIN employees e ON e.emp_id = d.from_emp_id
+        WHERE d.to_emp_id = :e
+        ORDER BY d.status, d.start_date DESC
+    """, {"e": emp_id}))
+    return {"i_delegate": out_from, "delegated_to_me": out_to}
+
+
+# ===========================================================================
+# Profile — slide 5: Профиль сотрудника + Структура компании
+# ===========================================================================
+
+def get_profile_full(emp_id: str, *,
+                       db: Database | None = None) -> dict[str, Any]:
+    """Full profile card backing slide 5 left panel.
+
+    Joins employee + family + position + unit + last 3 career_history
+    rows + last 3 performance_reviews + course_enrollments summary +
+    peer_feedback summary.
+    """
+    db = _db(db)
+    emp = list(db.query(
+        "SELECT * FROM employees WHERE emp_id = :e", {"e": emp_id}
+    ))
+    if not emp:
+        return {}
+    pos = list(db.query(
+        "SELECT * FROM positions WHERE position_id = :p",
+        {"p": emp[0]["position_id"]},
+    ))
+    unit = list(db.query(
+        "SELECT * FROM units WHERE unit_id = :u",
+        {"u": emp[0]["unit_id"]},
+    ))
+    family = list(db.query(
+        "SELECT * FROM family WHERE emp_id = :e", {"e": emp_id}
+    ))
+    career = list(db.query(
+        "SELECT * FROM career_history WHERE emp_id = :e "
+        "ORDER BY start_date DESC LIMIT 5", {"e": emp_id}
+    ))
+    perf = list(db.query(
+        "SELECT * FROM performance_reviews WHERE emp_id = :e "
+        "ORDER BY period DESC LIMIT 3", {"e": emp_id}
+    ))
+    enroll = list(db.query("""
+        SELECT status, COUNT(*) c FROM course_enrollments
+        WHERE emp_id = :e GROUP BY status
+    """, {"e": emp_id}))
+    enroll_dict = {r["status"]: r["c"] for r in enroll}
+    peer = list(db.query("""
+        SELECT AVG(sentiment_score) avg_sentiment, COUNT(*) n
+        FROM peer_feedback WHERE emp_id = :e
+    """, {"e": emp_id}))
+
+    return {
+        "employee":            emp[0],
+        "position":            pos[0] if pos else None,
+        "unit":                unit[0] if unit else None,
+        "family":              family[0] if family else None,
+        "career_history":      career,
+        "performance_reviews": perf,
+        "course_summary": {
+            "completed":   enroll_dict.get("completed", 0),
+            "in_progress": enroll_dict.get("in_progress", 0),
+            "dropped":     enroll_dict.get("dropped", 0),
+        },
+        "peer_summary": {
+            "avg_sentiment": round(float(peer[0]["avg_sentiment"] or 0.0), 3) if peer else None,
+            "n":             int(peer[0]["n"] or 0) if peer else 0,
+        },
+    }
+
+
+def get_org_structure(unit_id: str | None = None, *,
+                        db: Database | None = None) -> dict[str, Any]:
+    """Org tree for slide 5 right panel.
+
+    Without unit_id: returns the root + first-level units, each annotated
+    with headcount / leader / vacancies count. With unit_id: returns that
+    unit and its direct children.
+    """
+    db = _db(db)
+
+    def _annotate(u: dict) -> dict:
+        # leader = highest-grade active employee in this unit
+        leaders = list(db.query("""
+            SELECT emp_id, full_name, position_id, grade_level
+            FROM employees WHERE unit_id = :u AND status='active'
+            ORDER BY grade_level DESC, full_name LIMIT 1
+        """, {"u": u["unit_id"]}))
+        head = list(db.query("""
+            SELECT COUNT(*) c FROM employees
+            WHERE unit_id = :u AND status='active'
+        """, {"u": u["unit_id"]}))
+        vacs = list(db.query("""
+            SELECT COUNT(*) c FROM vacancies
+            WHERE unit_id = :u AND status IN ('active', 'in_review')
+        """, {"u": u["unit_id"]}))
+        return {
+            **u,
+            "headcount":      head[0]["c"] if head else 0,
+            "open_vacancies": vacs[0]["c"] if vacs else 0,
+            "leader":         leaders[0] if leaders else None,
+        }
+
+    if unit_id is None:
+        roots = list(db.query("SELECT * FROM units WHERE level=0"))
+        if not roots:
+            return {"root": None, "children": []}
+        root = roots[0]
+        children = list(db.query(
+            "SELECT * FROM units WHERE parent_unit_id = :p ORDER BY name",
+            {"p": root["unit_id"]},
+        ))
+        return {
+            "root":     _annotate(root),
+            "children": [_annotate(c) for c in children],
+        }
+    rows = list(db.query("SELECT * FROM units WHERE unit_id = :u", {"u": unit_id}))
+    if not rows:
+        return {"root": None, "children": []}
+    children = list(db.query(
+        "SELECT * FROM units WHERE parent_unit_id = :p ORDER BY name",
+        {"p": unit_id},
+    ))
+    return {
+        "root":     _annotate(rows[0]),
+        "children": [_annotate(c) for c in children],
+    }
+
+
+# ===========================================================================
+# Docs (КЭДО) — slide 13: Работа и отдых, документооборот
+# ===========================================================================
+
+def list_my_hr_requests(emp_id: str, *,
+                          db: Database | None = None) -> list[dict[str, Any]]:
+    """All HR requests for one employee, newest first."""
+    db = _db(db)
+    return list(db.query("""
+        SELECT * FROM hr_requests WHERE emp_id = :e
+        ORDER BY submitted_date DESC
+    """, {"e": emp_id}))
+
+
+def get_team_calendar(manager_emp_id: str, year: int, month: int, *,
+                        db: Database | None = None) -> dict[str, Any]:
+    """Vacation/sick grid for the manager's direct subordinates over one
+    month. Each subordinate gets their `vacations` rows that overlap the
+    month window.
+    """
+    db = _db(db)
+    mgrs = list(db.query("SELECT * FROM employees WHERE emp_id = :e", {"e": manager_emp_id}))
+    if not mgrs:
+        return {"month_start": None, "month_end": None, "team": []}
+    mgr = mgrs[0]
+    month_start = date(year, month, 1)
+    month_end = (date(year + (1 if month == 12 else 0),
+                      1 if month == 12 else month + 1,
+                      1) - timedelta(days=1))
+
+    subs = list(db.query("""
+        SELECT emp_id, full_name FROM employees
+        WHERE unit_id = :u AND grade_level < :gl AND status='active'
+        ORDER BY full_name
+    """, {"u": mgr["unit_id"], "gl": mgr["grade_level"]}))
+
+    team: list[dict[str, Any]] = []
+    for s in subs:
+        vacs = list(db.query("""
+            SELECT kind, start_date, end_date FROM vacations
+            WHERE emp_id = :e
+              AND (start_date <= :me AND end_date >= :ms)
+            ORDER BY start_date
+        """, {"e": s["emp_id"], "me": month_end.isoformat(), "ms": month_start.isoformat()}))
+        team.append({**s, "vacations": vacs})
+
+    return {
+        "month_start": month_start.isoformat(),
+        "month_end":   month_end.isoformat(),
+        "manager":     mgr,
+        "team":        team,
+    }
+
+
+def get_request_catalog() -> list[dict[str, Any]]:
+    """Static catalog mirroring slide 13 right panel («каталог обращений»).
+
+    Pure data; no DB read. The UI shows these as clickable items that
+    open `Спросите Пульса` overlay with a pre-filled prompt.
+    """
+    return [
+        {"key": "employer_request",
+          "title": "обращение к работодателю",
+          "subtitle": "по любому вопросу"},
+        {"key": "salary_certificate",
+          "title": "справки с места работы",
+          "subtitle": "для визы, для суда, реквизиты, должность"},
+        {"key": "payroll",
+          "title": "заявление о счёте для перечисления зарплаты и прочих выплат",
+          "subtitle": "зарплата, прочие выплаты"},
+        {"key": "2-NDFL",
+          "title": "справка 2-НДФЛ",
+          "subtitle": "кредит, доход, вычет"},
+        {"key": "work_book_copy",
+          "title": "копия трудовой книжки",
+          "subtitle": "стаж"},
+        {"key": "other",
+          "title": "вопрос о выплатах",
+          "subtitle": "зарплата, прочие выплаты"},
+    ]
+
+
+# ===========================================================================
+# Analytics overview — slide 10 right + slide 14 (Сквозная HR-аналитика)
+# ===========================================================================
+
+def get_hr_analytics_overview(*, window: int = 30,
+                                 db: Database | None = None) -> dict[str, Any]:
+    """Light-weight overview to back the analytics tab landing card.
+
+    The full CEO dashboard lives in pulse/dashboard.py and is reused via
+    iframe in Phase H. Here we only return a few extra HR-specific
+    counters that complement the dashboard ones.
+    """
+    db = _db(db)
+    today = _today_iso()
+    cutoff = (date.fromisoformat(today) - timedelta(days=window)).isoformat()
+
+    headcount = list(db.query(
+        "SELECT COUNT(*) c FROM employees WHERE status='active'"
+    ))
+    terminated = list(db.query(
+        "SELECT COUNT(*) c FROM employees WHERE status='terminated' AND term_date >= :c",
+        {"c": cutoff},
+    ))
+    vacancies_open = list(db.query(
+        "SELECT COUNT(*) c FROM vacancies WHERE status IN ('active', 'in_review')"
+    ))
+    completed_courses = list(db.query("""
+        SELECT COUNT(*) c FROM course_enrollments
+        WHERE status='completed' AND end_date >= :c
+    """, {"c": cutoff}))
+    surveys_active = list(db.query(
+        "SELECT COUNT(*) c FROM surveys_meta WHERE status='active'"
+    ))
+    pending_requests = list(db.query(
+        "SELECT COUNT(*) c FROM hr_requests WHERE status IN ('open', 'processing')"
+    ))
+
+    return {
+        "window_days":       window,
+        "headcount_active":  headcount[0]["c"] if headcount else 0,
+        "terminations":      terminated[0]["c"] if terminated else 0,
+        "vacancies_open":    vacancies_open[0]["c"] if vacancies_open else 0,
+        "courses_completed": completed_courses[0]["c"] if completed_courses else 0,
+        "surveys_active":    surveys_active[0]["c"] if surveys_active else 0,
+        "pending_requests":  pending_requests[0]["c"] if pending_requests else 0,
+    }
+
+
 __all__ = [
+    # D1
     "get_recruit_summary", "list_active_vacancies", "get_vacancy_detail",
     "get_goals_summary", "list_my_goals", "list_team_goals",
     "get_learning_feed", "get_my_courses",
     "get_assessment_campaigns", "get_my_assessment",
+    # D2
+    "get_my_career", "list_internal_vacancies",
+    "list_talent_search_results", "list_delegations",
+    "get_profile_full", "get_org_structure",
+    "list_my_hr_requests", "get_team_calendar", "get_request_catalog",
+    "get_hr_analytics_overview",
 ]

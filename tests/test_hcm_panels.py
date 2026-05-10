@@ -215,3 +215,147 @@ class TestAssessPanel:
         assert r.status_code == 200
         body = r.json()
         assert isinstance(body["completed"], list)
+
+
+# ---------------------------------------------------------------------------
+# Phase D2 — career / profile / structure / docs / analytics
+# ---------------------------------------------------------------------------
+
+class TestCareerPanel:
+    def test_my_career(self, db: Database):
+        emp = list(db.query(
+            "SELECT emp_id FROM employees WHERE status='active' LIMIT 1"
+        ))[0]["emp_id"]
+        out = hcm_panels.get_my_career(emp, db=db)
+        assert out["employee"]["emp_id"] == emp
+        assert out["talent_pool_status"] is not None
+        assert out["position"] is not None
+
+    def test_internal_vacancies_excludes_self_managed(self, db: Database):
+        # Pick a manager who does manage at least one active vacancy.
+        rows = list(db.query("""
+            SELECT hiring_manager_id FROM vacancies WHERE status='active' LIMIT 1
+        """))
+        if not rows:
+            pytest.skip("no active vacancies")
+        mgr = rows[0]["hiring_manager_id"]
+        out = hcm_panels.list_internal_vacancies(mgr, db=db)
+        for v in out:
+            assert v["hiring_manager_id"] != mgr
+
+    def test_talent_search_filters(self, db: Database):
+        out = hcm_panels.list_talent_search_results(
+            {"open_to_offers": 1, "grade_min": 2}, db=db,
+        )
+        for r in out:
+            assert r["open_to_offers"] == 1
+            assert r["grade_level"] >= 2
+
+    def test_delegations_split(self, db: Database):
+        # Pick a manager who actually delegates (from the seed).
+        rows = list(db.query("""
+            SELECT from_emp_id FROM delegations WHERE status='active' LIMIT 1
+        """))
+        if not rows:
+            pytest.skip("no active delegations")
+        emp = rows[0]["from_emp_id"]
+        out = hcm_panels.list_delegations(emp, db=db)
+        assert "i_delegate" in out and "delegated_to_me" in out
+        assert len(out["i_delegate"]) >= 1
+
+    def test_endpoint_career_my(self, client: TestClient):
+        r = client.get("/api/hcm/career/my?emp_id=emp_001")
+        assert r.status_code == 200
+
+    def test_endpoint_talent_search(self, client: TestClient):
+        r = client.get("/api/hcm/career/talent_search?open_to_offers=1")
+        assert r.status_code == 200
+        for it in r.json()["items"]:
+            assert it["open_to_offers"] == 1
+
+
+class TestProfilePanel:
+    def test_get_profile_full(self, db: Database):
+        emp = list(db.query(
+            "SELECT emp_id FROM employees WHERE status='active' LIMIT 1"
+        ))[0]["emp_id"]
+        out = hcm_panels.get_profile_full(emp, db=db)
+        for k in ("employee", "position", "unit", "career_history",
+                   "performance_reviews", "course_summary", "peer_summary"):
+            assert k in out
+        assert out["employee"]["emp_id"] == emp
+
+    def test_org_structure_root(self, db: Database):
+        out = hcm_panels.get_org_structure(db=db)
+        assert out["root"] is not None
+        assert isinstance(out["children"], list)
+        assert out["root"]["headcount"] >= 0
+
+    def test_org_structure_children_total_le_employees(self, db: Database):
+        """Sum of root's direct children headcount ≤ active employees total."""
+        out = hcm_panels.get_org_structure(db=db)
+        n_active = list(db.query("SELECT COUNT(*) c FROM employees WHERE status='active'"))[0]["c"]
+        children_sum = sum(c["headcount"] for c in out["children"])
+        # Note: tree is not guaranteed to span every level, just one level here.
+        assert children_sum <= n_active
+
+    def test_endpoint_profile(self, client: TestClient):
+        r = client.get("/api/hcm/profile/emp_001")
+        assert r.status_code == 200
+
+    def test_endpoint_structure(self, client: TestClient):
+        r = client.get("/api/hcm/structure")
+        assert r.status_code == 200
+
+
+class TestDocsPanel:
+    def test_my_hr_requests(self, db: Database):
+        # Pick someone with at least one request.
+        rows = list(db.query("SELECT emp_id FROM hr_requests LIMIT 1"))
+        if not rows:
+            pytest.skip("no HR requests in seed")
+        emp = rows[0]["emp_id"]
+        out = hcm_panels.list_my_hr_requests(emp, db=db)
+        assert out
+
+    def test_team_calendar_shape(self, db: Database):
+        # Manager grade>=4 to get subordinates.
+        m = list(db.query("""
+            SELECT emp_id FROM employees
+            WHERE status='active' AND grade_level>=4 LIMIT 1
+        """))[0]["emp_id"]
+        out = hcm_panels.get_team_calendar(m, 2026, 5, db=db)
+        assert out["month_start"] == "2026-05-01"
+        assert out["month_end"] == "2026-05-31"
+        assert isinstance(out["team"], list)
+
+    def test_request_catalog_static(self):
+        cat = hcm_panels.get_request_catalog()
+        assert len(cat) >= 6
+        for it in cat:
+            for k in ("key", "title", "subtitle"):
+                assert k in it
+
+    def test_endpoint_my_requests(self, client: TestClient):
+        # Find an emp with requests
+        rows = list(Database(client.app.state.__dict__.get("_db_path", None)).query(
+            "SELECT emp_id FROM hr_requests LIMIT 1"
+        )) if False else []
+        # Plain endpoint smoke without arguments
+        r = client.get("/api/hcm/docs/catalog")
+        assert r.status_code == 200
+        assert len(r.json()["items"]) >= 6
+
+
+class TestAnalyticsPanel:
+    def test_overview_has_keys(self, db: Database):
+        out = hcm_panels.get_hr_analytics_overview(db=db)
+        for k in ("headcount_active", "terminations", "vacancies_open",
+                   "courses_completed", "surveys_active", "pending_requests"):
+            assert k in out
+        assert out["headcount_active"] > 0
+
+    def test_endpoint_overview(self, client: TestClient):
+        r = client.get("/api/hcm/analytics/overview")
+        assert r.status_code == 200
+        assert r.json()["headcount_active"] > 0

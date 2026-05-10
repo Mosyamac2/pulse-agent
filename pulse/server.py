@@ -516,6 +516,96 @@ def api_hcm_assess_my(emp_id: str, period: str | None = None) -> JSONResponse:
     return JSONResponse(get_my_assessment(emp_id, period=period))
 
 
+# --- Phase D2: career / profile / structure / docs / analytics ---
+
+@app.get("/api/hcm/career/my")
+def api_hcm_career_my(emp_id: str) -> JSONResponse:
+    _require_db()
+    from .hcm_panels import get_my_career
+    out = get_my_career(emp_id)
+    if not out:
+        raise HTTPException(404, f"emp {emp_id} not found")
+    return JSONResponse(out)
+
+
+@app.get("/api/hcm/career/internal_vacancies")
+def api_hcm_career_internal(emp_id: str) -> JSONResponse:
+    _require_db()
+    from .hcm_panels import list_internal_vacancies
+    return JSONResponse({"items": list_internal_vacancies(emp_id)})
+
+
+@app.get("/api/hcm/career/talent_search")
+def api_hcm_career_search(position_title: str | None = None,
+                            grade_min: int | None = None,
+                            grade_max: int | None = None,
+                            unit_id: str | None = None,
+                            open_to_offers: int | None = None,
+                            min_recommended_by_count: int | None = None) -> JSONResponse:
+    _require_db()
+    from .hcm_panels import list_talent_search_results
+    q = {
+        "position_title":           position_title,
+        "grade_min":                grade_min,
+        "grade_max":                grade_max,
+        "unit_id":                  unit_id,
+        "open_to_offers":           open_to_offers,
+        "min_recommended_by_count": min_recommended_by_count,
+    }
+    return JSONResponse({"items": list_talent_search_results(q)})
+
+
+@app.get("/api/hcm/career/delegations")
+def api_hcm_career_delegations(emp_id: str) -> JSONResponse:
+    _require_db()
+    from .hcm_panels import list_delegations
+    return JSONResponse(list_delegations(emp_id))
+
+
+@app.get("/api/hcm/profile/{emp_id}")
+def api_hcm_profile(emp_id: str) -> JSONResponse:
+    _require_db()
+    from .hcm_panels import get_profile_full
+    out = get_profile_full(emp_id)
+    if not out:
+        raise HTTPException(404, f"emp {emp_id} not found")
+    return JSONResponse(out)
+
+
+@app.get("/api/hcm/structure")
+def api_hcm_structure(unit_id: str | None = None) -> JSONResponse:
+    _require_db()
+    from .hcm_panels import get_org_structure
+    return JSONResponse(get_org_structure(unit_id))
+
+
+@app.get("/api/hcm/docs/my_requests")
+def api_hcm_docs_my_requests(emp_id: str) -> JSONResponse:
+    _require_db()
+    from .hcm_panels import list_my_hr_requests
+    return JSONResponse({"items": list_my_hr_requests(emp_id)})
+
+
+@app.get("/api/hcm/docs/team_calendar")
+def api_hcm_docs_team_calendar(manager_emp_id: str, year: int, month: int) -> JSONResponse:
+    _require_db()
+    from .hcm_panels import get_team_calendar
+    return JSONResponse(get_team_calendar(manager_emp_id, year, month))
+
+
+@app.get("/api/hcm/docs/catalog")
+def api_hcm_docs_catalog() -> JSONResponse:
+    from .hcm_panels import get_request_catalog
+    return JSONResponse({"items": get_request_catalog()})
+
+
+@app.get("/api/hcm/analytics/overview")
+def api_hcm_analytics_overview(window: int = 30) -> JSONResponse:
+    _require_db()
+    from .hcm_panels import get_hr_analytics_overview
+    return JSONResponse(get_hr_analytics_overview(window=window))
+
+
 @app.on_event("startup")
 def _start_background_loops() -> None:
     """Kick off the consciousness loop on app start. Idempotent."""
