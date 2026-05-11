@@ -520,8 +520,22 @@ async def _apply_plan_via_sdk(plan: EvolutionPlan, *, time_box_s: int = 600) -> 
     acceptance:
     {plan.acceptance}
 
-    Сделай правки. Запрещено: править .py файлы под pulse/, BIBLE.md, prompts/SAFETY.md.
-    Когда закончишь — кратко (3 строки) опиши, что именно сделал.
+    Сделай правки. Иммунное ядро — нельзя править без явного MAJOR-релиза:
+      • BIBLE.md
+      • prompts/SAFETY.md
+      • pulse/data_engine/schema.py
+    Всё остальное (включая создание новых .py файлов в pulse/, новых
+    skills/, новых tests/) — разрешено с v1.0.0 (P3 Immune Integrity:
+    self-test + commit-review служат фильтрами достаточности).
+
+    Если план явно требует новый файл (например `pulse/response_budget.py`
+    или `tests/test_*.py`) — **создавай его реально через Write-тул**, не
+    ограничивайся декларацией в SKILL.md/SYSTEM.md. commit_review проверяет
+    intent_clarity — если intent обещает файл, а его нет в diff'е, коммит
+    блокируется (это правильное поведение).
+
+    Когда закончишь — кратко (3 строки) опиши, что именно сделал и какие
+    файлы создал/изменил.
     """).strip()
 
     tool_calls = 0

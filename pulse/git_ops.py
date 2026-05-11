@@ -71,8 +71,47 @@ def diff_text(*, staged: bool = False) -> str:
 
 
 def diff_with_head(*, max_chars: int = 40_000) -> str:
+    """Diff of worktree vs HEAD, **including untracked files**.
+
+    v2.8.5+: previously this was a plain `git diff HEAD`, which by design
+    does NOT include untracked files. That created an invisible failure
+    mode in the evolution loop: when the SDK created a new file
+    (e.g. `pulse/response_budget.py` or `tests/test_*.py` per the plan),
+    the file landed on disk correctly, but `diff_with_head` returned a
+    diff that omitted it. commit_review then saw the staged-modification
+    set, noticed the plan-claimed new file was missing, and (correctly,
+    given its limited view) flagged `intent_clarity` and blocked the
+    commit. The cycle's actual work was then wiped by `rollback_workdir`.
+
+    Fix: stage untracked files with `--intent-to-add` (which inserts an
+    empty placeholder in the index, so `git diff HEAD` shows them as
+    "new file" additions), capture the diff, then revert the index
+    state so the caller sees exactly the worktree they passed in. The
+    intent-to-add marker is purely for inspection — no actual content
+    is staged.
+    """
     r = repo()
-    txt = r.git.diff("HEAD")
+    untracked = [p for p in r.untracked_files
+                  if not p.startswith(('.git/',))]
+    if untracked:
+        try:
+            r.git.add("--intent-to-add", "--", *untracked)
+        except GitCommandError as ex:
+            log.warning("intent-to-add failed for %s untracked: %s",
+                         len(untracked), ex)
+            untracked = []  # disarm the reset below
+    try:
+        txt = r.git.diff("HEAD")
+    finally:
+        if untracked:
+            # Revert the intent-to-add markers so the index is bit-for-bit
+            # what it was before this read. Errors here are non-fatal — the
+            # worst case is a tiny index pollution that `commit_all_with_msg`
+            # (which does `git add -A`) would normalize anyway.
+            try:
+                r.git.reset("HEAD", "--", *untracked)
+            except GitCommandError as ex:
+                log.warning("reset after intent-to-add failed: %s", ex)
     if len(txt) > max_chars:
         txt = txt[:max_chars] + "\n\n[diff truncated]"
     return txt

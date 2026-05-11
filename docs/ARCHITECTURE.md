@@ -1,4 +1,4 @@
-# Pulse v2.8.4 — Architecture Map
+# Pulse v2.8.5 — Architecture Map
 
 Это операционная карта Пульса. Single source of truth для разработки, отладки и саморевью.
 
