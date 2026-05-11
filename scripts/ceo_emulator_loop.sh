@@ -21,7 +21,7 @@ trap 'echo "[$(date -Iseconds)] STOP signal received, exiting loop"; exit 0' INT
 ROOT="/home/mosyamac/pulse-agent"
 PYTHON="$ROOT/.venv/bin/python"
 SCRIPT="$ROOT/scripts/ceo_emulation.py"
-SLEEP_SECONDS="${SLEEP_SECONDS:-300}"
+SLEEP_SECONDS="${SLEEP_SECONDS:-60}"
 
 cd "$ROOT" || exit 1
 

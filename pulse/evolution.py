@@ -61,7 +61,7 @@ log = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 LOCK_FILE = "evolution.lock"
-COOLDOWN_DAYS = 7
+COOLDOWN_DAYS = 3                  # v2.7.14: shortened from 7 — more aggressive
 ANTI_OSCILLATOR_WINDOW = 3
 DEFAULT_REPLAY_QUESTIONS = 5
 SELF_TEST_TIMEOUT_S = 240
@@ -782,7 +782,38 @@ async def evolution_cycle(*, force: bool = False,
                     "addresses_class": alignment.get("addresses_class") or "",
                     "source": "general_feedback",
                 })
+            elif alignment["verdict"] == "needs_modification":
+                # v2.7.14: auto-accept reformulated version. The alignment-check
+                # itself produced a constitution-compatible rewrite in
+                # `modification_hint`; we use that as the canonical signal
+                # instead of putting the note on hold for human confirmation.
+                # The original is still logged to rejected_suggestions.md for
+                # auditability, but the reformulated text flows into the
+                # downvote pile so the cycle can fire immediately.
+                hint = (alignment.get("modification_hint") or "").strip()
+                if hint:
+                    agg.new_downvotes.append({
+                        "ts": entry.get("ts"),
+                        "message_id": entry.get("id") + "_reformulated"
+                                       if entry.get("id") else None,
+                        "verdict": "down",
+                        "comment": hint,
+                        "question": "(general suggestion auto-reformulated by alignment-check)",
+                        "answer": "",
+                        "tools_called": [],
+                        "addresses_class": alignment.get("addresses_class") or "",
+                        "source": "general_feedback_reformulated",
+                        "original_text": entry["text"],
+                    })
+                    _log_event("general_suggestion_auto_reformulated",
+                               id=entry.get("id"),
+                               original_preview=entry["text"][:120],
+                               hint_preview=hint[:120])
+                # Always also log to the audit file so the human can see what
+                # was reformulated and why — even though no confirmation is needed.
+                _append_rejected_suggestion(entry, alignment)
             else:
+                # rejected — constitutional conflict, no auto-accept path
                 _append_rejected_suggestion(entry, alignment)
         # Persist general-feedback offset immediately so we never re-evaluate.
         if general_entries:

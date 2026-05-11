@@ -87,7 +87,7 @@ class Settings:
     host: str = field(default_factory=lambda: os.environ.get("PULSE_HOST", "127.0.0.1"))
     port: int = field(default_factory=lambda: _env_int("PULSE_PORT", 8080))
     evolution_interval_h: int = field(default_factory=lambda: _env_int("PULSE_EVOLUTION_INTERVAL_HOURS", 12))
-    downvote_threshold: int = field(default_factory=lambda: _env_int("PULSE_DOWNVOTE_THRESHOLD", 5))
+    downvote_threshold: int = field(default_factory=lambda: _env_int("PULSE_DOWNVOTE_THRESHOLD", 2))
     daily_tick_interval_h: int = field(default_factory=lambda: _env_int("PULSE_DAILY_TICK_INTERVAL_HOURS", 24))
     budget_daily_usd: float = field(default_factory=lambda: _env_float("PULSE_BUDGET_DAILY_USD", 20.0))
     log_level: str = field(default_factory=lambda: os.environ.get("PULSE_LOG_LEVEL", "INFO").upper())

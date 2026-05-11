@@ -25,19 +25,23 @@ log = logging.getLogger(__name__)
 # Model aliases the SDK accepts (short forms). The full IDs are kept for budget bookkeeping.
 MODEL_HEAVY = "claude-opus-4-7"          # Opus 4.7 — plan, review, evolution, deep self-review
 MODEL_LIGHT = "claude-sonnet-4-6"        # Sonnet 4.6 — chat, consciousness, safety
+MODEL_TINY  = "claude-haiku-4-5-20251001"  # Haiku 4.5 — CEO-emulator, lightweight scoring tasks
 
 # Short aliases passed to ClaudeAgentOptions(model=...)
 MODEL_ALIASES: dict[str, str] = {
-    "opus": MODEL_HEAVY,
+    "opus":   MODEL_HEAVY,
     "sonnet": MODEL_LIGHT,
+    "haiku":  MODEL_TINY,
     MODEL_HEAVY: MODEL_HEAVY,
     MODEL_LIGHT: MODEL_LIGHT,
+    MODEL_TINY:  MODEL_TINY,
 }
 
 # USD per million tokens — for advisory budget tracking only. Max plan is flat-rate.
 PRICES_USD_PER_MTOK: dict[str, dict[str, float]] = {
     MODEL_HEAVY:  {"in": 15.0, "out": 75.0, "cache_in": 1.5,  "cache_out": 18.75},
     MODEL_LIGHT:  {"in": 3.0,  "out": 15.0, "cache_in": 0.3,  "cache_out": 3.75},
+    MODEL_TINY:   {"in": 1.0,  "out": 5.0,  "cache_in": 0.1,  "cache_out": 1.25},
 }
 
 
@@ -184,6 +188,7 @@ def _extract_usage(msg: Any, model: str) -> Usage | None:
 __all__ = [
     "MODEL_HEAVY",
     "MODEL_LIGHT",
+    "MODEL_TINY",
     "PRICES_USD_PER_MTOK",
     "Usage",
     "normalize_model",
