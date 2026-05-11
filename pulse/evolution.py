@@ -471,11 +471,19 @@ async def make_plan(*, feedback_classes_md: str, evolution_history: list[dict]) 
 # ---------------------------------------------------------------------------
 
 async def _apply_plan_via_sdk(plan: EvolutionPlan, *, time_box_s: int = 600) -> dict[str, Any]:
-    """Run a fresh SDK session in `permission_mode='acceptEdits'`. The agent
-    edits files itself based on the plan body. We never write to disk from
-    here directly — the SDK's built-in Edit/Write/Read do.
+    """Run a fresh SDK session in `permission_mode='bypassPermissions'`.
 
-    Returns {ok: bool, reason: str, tool_calls: int}.
+    v2.10.3+: switched from `acceptEdits` to `bypassPermissions`. The
+    `acceptEdits` mode only auto-accepts built-in file-edit tools
+    (Read, Edit, Write, MultiEdit). MCP tools (mcp__pulse-tools__*)
+    and any other custom tool calls still required permission approval.
+    But this SDK invocation runs as a subprocess with no stdin/TTY, so
+    a permission prompt has nothing to answer it → the subprocess
+    silently hangs until our 600s timeout (or returns 0 tool_calls).
+    `bypassPermissions` skips the check entirely — safe here because
+    every change is gated downstream by self-test + commit-review.
+
+    Returns {ok: bool, reason: str, tool_calls: int, tool_names: list, tail: str}.
     """
     from claude_agent_sdk import ClaudeSDKClient  # type: ignore
 
@@ -515,7 +523,7 @@ async def _apply_plan_via_sdk(plan: EvolutionPlan, *, time_box_s: int = 600) -> 
         allowed_tools=builtin + evolution_allowed_tools(),
         mcp_servers={"pulse-tools": build_evolution_server()},
         model="claude-opus-4-7",
-        permission_mode="acceptEdits",
+        permission_mode="bypassPermissions",
         max_turns=15,
         cwd=str(PATHS.repo),
     )
