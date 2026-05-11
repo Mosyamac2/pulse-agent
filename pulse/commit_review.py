@@ -48,8 +48,16 @@ def _commit_review_prompt() -> str:
 
 
 def build_prompt(*, diff: str, new_version: str, commit_message: str,
-                  intent: str = "", acceptance: str = "", replay_score: float | None = None) -> str:
-    """Substitute placeholders in COMMIT_REVIEW.md and return the final prompt body."""
+                  intent: str = "", acceptance: str = "",
+                  replay_score: float | None = None,
+                  class_attempt_count: int = 0,
+                  recent_class_attempts: str = "") -> str:
+    """Substitute placeholders in COMMIT_REVIEW.md and return the final prompt body.
+
+    v2.8.3+: `class_attempt_count` and `recent_class_attempts` plumbed
+    through so the reviewer can grade prompt-only fixes by attempt
+    number (first attempt = legitimate iteration, third+ = P2 violation).
+    """
     template = _commit_review_prompt() or "Проверь коммит против чек-листа."
     replay = "—" if replay_score is None else f"{replay_score:.2f}"
     bible = _read(PATHS.bible)
@@ -64,6 +72,9 @@ def build_prompt(*, diff: str, new_version: str, commit_message: str,
         .replace("{intent}", intent or "—")
         .replace("{acceptance}", acceptance or "—")
         .replace("{replay_score}", replay)
+        .replace("{class_attempt_count}", str(class_attempt_count))
+        .replace("{recent_class_attempts}",
+                  recent_class_attempts or "(no prior attempts on this class)")
     )
 
 
@@ -108,11 +119,19 @@ def parse_verdict(raw: str) -> Verdict:
 
 async def review(*, diff: str, new_version: str, commit_message: str,
                  intent: str = "", acceptance: str = "",
-                 replay_score: float | None = None) -> Verdict:
-    """One Opus call, parsed verdict. Tests stub `_query_simple`."""
+                 replay_score: float | None = None,
+                 class_attempt_count: int = 0,
+                 recent_class_attempts: str = "") -> Verdict:
+    """One Opus call, parsed verdict. Tests stub `_query_simple`.
+
+    v2.8.3+: optional class-attempt context lets the reviewer grade
+    P2 (Meta-over-Patch) by attempt count rather than as a hard veto.
+    """
     prompt = build_prompt(
         diff=diff, new_version=new_version, commit_message=commit_message,
         intent=intent, acceptance=acceptance, replay_score=replay_score,
+        class_attempt_count=class_attempt_count,
+        recent_class_attempts=recent_class_attempts,
     )
     raw = await _query_simple(prompt, model="opus", kind="commit_review")
     return parse_verdict(raw)

@@ -664,9 +664,21 @@ async def commit_evolution(plan: EvolutionPlan, replay_score: float | None = Non
     # Pass only the subject line to commit_review for compactness — the
     # body is mostly trailers and would dilute Opus's attention.
     review_subject = msg.splitlines()[0]
+
+    # v2.8.3+: feed commit_review the attempt counter for this class, so it
+    # can apply the P2 class-test as a graduated check instead of an
+    # absolute veto. Without this, the reviewer was blocking honest
+    # prompt-only fixes even on a class's FIRST attempt — which made user
+    # feedback structurally impossible to act on through SYSTEM.md.
+    class_attempt_count, recent_class_attempts = _summarize_class_history(
+        plan.class_addressed
+    )
+
     verdict = await commit_review.review(
         diff=diff, new_version=str(new_version), commit_message=review_subject,
         intent=plan.intent, acceptance=plan.acceptance, replay_score=replay_score,
+        class_attempt_count=class_attempt_count,
+        recent_class_attempts=recent_class_attempts,
     )
     if verdict.is_block:
         rollback_workdir()
@@ -713,6 +725,29 @@ def _push_history_and_check_oscillation(plan: EvolutionPlan, *, version: str) ->
         if all(c == plan.class_addressed for c in recent):
             return True
     return False
+
+
+def _summarize_class_history(class_id: str | None) -> tuple[int, str]:
+    """Return (attempt_count, rendered_history) for `class_id`.
+
+    Used by commit_review to grade prompt-only fixes by attempt: first
+    attempt at a class is treated as a healthy iteration; third+ is a P2
+    violation. Reads `state.evolution.history` (kept to last 20 cycles).
+    """
+    if not class_id:
+        return 0, "(no class id on this plan)"
+    state = load_state()
+    history: list[dict] = state.get("evolution", {}).get("history", []) or []
+    matching = [h for h in history if h.get("class_addressed") == class_id]
+    if not matching:
+        return 0, "(no prior attempts on this class)"
+    lines = []
+    for h in matching[-5:]:
+        ts = h.get("ts", "")
+        v = h.get("version", "?")
+        intent = (h.get("intent") or "").strip().replace("\n", " ")[:160]
+        lines.append(f"  - {ts} → v{v} · {intent}")
+    return len(matching), "\n".join(lines)
 
 
 def is_in_cooldown(class_id: str) -> bool:
