@@ -581,7 +581,13 @@ async def _apply_plan_via_sdk(plan: EvolutionPlan, *, time_box_s: int = 600) -> 
     {{что покрывает добавленный/изменённый код}}.»
     """).strip()
 
+    # v2.10.2+: capture tool-call names AND any tail text so we can see in
+    # journalctl whether the SDK actually wrote files or returned silently.
+    # Previously this function returned but never logged — making "SDK
+    # ran but produced 0 tool_calls" indistinguishable from "SDK never ran".
     tool_calls = 0
+    tool_names: list[str] = []
+    last_text_tail = ""
     try:
         async with asyncio.timeout(time_box_s):
             async with ClaudeSDKClient(options=options) as client:
@@ -590,13 +596,46 @@ async def _apply_plan_via_sdk(plan: EvolutionPlan, *, time_box_s: int = 600) -> 
                     content = getattr(msg, "content", None)
                     if content and not isinstance(content, str):
                         for block in content:
-                            if getattr(block, "name", None):
+                            name = getattr(block, "name", None)
+                            if name:
                                 tool_calls += 1
-        return {"ok": True, "reason": "applied", "tool_calls": tool_calls}
+                                tool_names.append(str(name))
+                            text = getattr(block, "text", None)
+                            if isinstance(text, str) and text.strip():
+                                last_text_tail = text[-400:]
+        # Compact summary so we don't bloat journalctl per cycle.
+        names_summary = ", ".join(tool_names[:20])
+        if len(tool_names) > 20:
+            names_summary += f", …(+{len(tool_names) - 20} more)"
+        log.info(
+            "evolution.apply OK class=%s diff_targets=%s tool_calls=%d tools=[%s] tail=%r",
+            plan.class_addressed, plan.diff_targets, tool_calls,
+            names_summary, last_text_tail[:200],
+        )
+        return {"ok": True, "reason": f"applied (tool_calls={tool_calls})",
+                 "tool_calls": tool_calls,
+                 "tool_names": tool_names,
+                 "tail": last_text_tail}
     except asyncio.TimeoutError:
-        return {"ok": False, "reason": f"timed out after {time_box_s}s", "tool_calls": tool_calls}
+        log.warning(
+            "evolution.apply TIMEOUT class=%s after %ds tool_calls=%d tools=[%s] tail=%r",
+            plan.class_addressed, time_box_s, tool_calls,
+            ", ".join(tool_names[:20]), last_text_tail[:200],
+        )
+        return {"ok": False, "reason": f"timed out after {time_box_s}s",
+                 "tool_calls": tool_calls,
+                 "tool_names": tool_names,
+                 "tail": last_text_tail}
     except Exception as ex:
-        return {"ok": False, "reason": f"sdk error: {ex}", "tool_calls": tool_calls}
+        log.warning(
+            "evolution.apply ERROR class=%s exc=%s tool_calls=%d tools=[%s] tail=%r",
+            plan.class_addressed, ex, tool_calls,
+            ", ".join(tool_names[:20]), last_text_tail[:200],
+        )
+        return {"ok": False, "reason": f"sdk error: {ex}",
+                 "tool_calls": tool_calls,
+                 "tool_names": tool_names,
+                 "tail": last_text_tail}
 
 
 # ---------------------------------------------------------------------------
