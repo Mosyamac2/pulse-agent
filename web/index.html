@@ -3,6 +3,30 @@
 <head>
   <meta charset="utf-8">
   <title>Пульс</title>
+  <!-- v2.8.4: paint-blocking embedded-mode setup.
+       BEFORE any CSS is parsed and BEFORE async fetches start, we mark
+       the document so CSS rules `html[data-embedded="true"] .sidebar
+       {display:none}` apply during initial paint. Previously the marker
+       was set only AFTER /health and /api/history fetched (~600ms+ when
+       history is large), causing a visible flash of the legacy chat
+       sidebar inside the app.html iframe — the "duplicating left bar"
+       bug. Also injects <base target="_top"> when embedded so any
+       <a href> Pulse may render in answers navigates the OUTER window
+       (app-shell) instead of reloading the iframe to /. Belt-and-
+       suspenders for a Markdown deep-link path we haven't seen yet. -->
+  <script>
+    (function () {
+      try {
+        var p = new URLSearchParams(window.location.search);
+        if (p.get('embedded') === '1') {
+          document.documentElement.dataset.embedded = 'true';
+          var b = document.createElement('base');
+          b.target = '_top';
+          (document.head || document.documentElement).appendChild(b);
+        }
+      } catch (_) {}
+    })();
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" type="image/png" href="/static/favicon.png">
   <!-- Pulse-HCM design system (v1.8.0): SB Sans Text/Display preferred (installed
@@ -109,14 +133,17 @@
       font-family: var(--p-font-body);
       font-size: 0.88rem;
     }
-    /* Embedded mode (v2.7.1+): когда чат загружен в iframe из app.html
-       (`/chat?embedded=1`), скрываем внутренний sidebar — module rail из
-       app.html уже служит навигацией, второй sidebar выглядел бы
-       избыточно. Composer (#composer) тоже теряет смещение слева. */
-    body[data-embedded="true"] .app-shell { grid-template-columns: 1fr; }
-    body[data-embedded="true"] .sidebar { display: none; }
-    body[data-embedded="true"] form#composer { left: 0; }
-    body[data-embedded="true"] .app-shell.rail form#composer { left: 0; }
+    /* Embedded mode (v2.7.1+, v2.8.4 paint-blocking): когда чат загружен
+       в iframe из app.html (`/chat?embedded=1`), скрываем внутренний
+       sidebar — module rail из app.html уже служит навигацией. Маркер
+       ставится на <html> синхронно в <head> (см. v2.8.4 inline-script
+       выше), поэтому CSS применяется при первичной отрисовке, без
+       flash'а сайдбара. Селекторы переехали с body на html по этой же
+       причине. */
+    html[data-embedded="true"] .app-shell { grid-template-columns: 1fr; }
+    html[data-embedded="true"] .sidebar { display: none; }
+    html[data-embedded="true"] form#composer { left: 0; }
+    html[data-embedded="true"] .app-shell.rail form#composer { left: 0; }
     .sb-brand {
       display: flex;
       align-items: center;
@@ -1566,10 +1593,13 @@ q.addEventListener('keydown', (ev) => {
   // We do not auto-submit — CEO may want to tweak phrasing first.
   try {
     const params = new URLSearchParams(window.location.search);
-    // v2.7.1+: embedded=1 means we're loaded inside the app.html iframe.
-    // Mark the body so CSS hides the now-redundant inner sidebar.
-    if (params.get('embedded') === '1') {
-      document.body.dataset.embedded = 'true';
+    // v2.8.4: the embedded marker is now set synchronously at the top of
+    // <head> on document.documentElement (so CSS applies during initial
+    // paint). The async setter below is kept as a defensive no-op fallback
+    // in case the paint-blocking script failed for any reason.
+    if (params.get('embedded') === '1'
+        && document.documentElement.dataset.embedded !== 'true') {
+      document.documentElement.dataset.embedded = 'true';
     }
     const prefill = params.get('q');
     if (prefill) {
