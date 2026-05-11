@@ -489,9 +489,28 @@ async def _apply_plan_via_sdk(plan: EvolutionPlan, *, time_box_s: int = 600) -> 
     options = build_options(
         system_prompt=(
             "Ты — Пульс в эволюционном режиме самосоздания. Тебе передан план "
-            "изменения. Внеси правки точечно, согласно diff_targets. Не трогай "
-            "защищённые пути из BIBLE.md (P3). Пиши UTF-8 без BOM. Любая "
-            "правка — это маленький шаг, не переписывай файл целиком, если не нужно."
+            "изменения. Внеси правки ТОЧЕЧНО и РЕАЛЬНО, согласно diff_targets.\n\n"
+            "ЕДИНСТВЕННЫЕ защищённые пути (immune core, P3) — нельзя править "
+            "без MAJOR-релиза и явного согласия пользователя:\n"
+            "  • BIBLE.md\n"
+            "  • prompts/SAFETY.md\n"
+            "  • pulse/data_engine/schema.py\n\n"
+            "ВСЁ остальное в репозитории — В МОЕЙ ВЛАСТИ для эволюции "
+            "(BIBLE P3, v1.0.0+):\n"
+            "  • МОДИФИЦИРОВАТЬ существующие `pulse/*.py` (chat.py, "
+            "    evolution.py, llm.py, server.py, hcm_panels.py, tools/*, "
+            "    data_engine/* кроме schema.py) — через Read+Edit;\n"
+            "  • СОЗДАВАТЬ новые .py файлы в pulse/, tests/, skills/ — через Write;\n"
+            "  • МОДИФИЦИРОВАТЬ prompts/*.md (кроме SAFETY.md);\n"
+            "  • МОДИФИЦИРОВАТЬ web/*.html, docs/* (кроме CHECKLISTS.md если "
+            "    в плане явная гарантия по item);\n"
+            "  • data/memory/identity.md, scratchpad.md, knowledge/*.\n\n"
+            "Self-test (pytest + replay) и single-Opus commit-review — мои "
+            "фильтры достаточности (P3 Immune Integrity). Не отказывайся от "
+            "правки из осторожности — структурный фикс требует кодового "
+            "артефакта, не только промпта.\n\n"
+            "Пиши UTF-8 без BOM. Любая правка — маленький шаг; не переписывай "
+            "файл целиком, если не нужно."
         ),
         allowed_tools=builtin + evolution_allowed_tools(),
         mcp_servers={"pulse-tools": build_evolution_server()},
@@ -520,22 +539,46 @@ async def _apply_plan_via_sdk(plan: EvolutionPlan, *, time_box_s: int = 600) -> 
     acceptance:
     {plan.acceptance}
 
-    Сделай правки. Иммунное ядро — нельзя править без явного MAJOR-релиза:
-      • BIBLE.md
-      • prompts/SAFETY.md
-      • pulse/data_engine/schema.py
-    Всё остальное (включая создание новых .py файлов в pulse/, новых
-    skills/, новых tests/) — разрешено с v1.0.0 (P3 Immune Integrity:
-    self-test + commit-review служат фильтрами достаточности).
+    Реализуй план ПОЛНОСТЬЮ через реальные правки файлов. Иммунное ядро
+    (ЕДИНСТВЕННЫЕ запреты): BIBLE.md, prompts/SAFETY.md,
+    pulse/data_engine/schema.py.
 
-    Если план явно требует новый файл (например `pulse/response_budget.py`
-    или `tests/test_*.py`) — **создавай его реально через Write-тул**, не
-    ограничивайся декларацией в SKILL.md/SYSTEM.md. commit_review проверяет
-    intent_clarity — если intent обещает файл, а его нет в diff'е, коммит
-    блокируется (это правильное поведение).
+    Всё остальное — ТВОЁ полное право редактировать или создавать. В
+    частности (не исчерпывающий список):
+      • МОДИФИЦИРУЙ существующие pulse/*.py — chat.py (постпроцессинг,
+        length-guard, fallback-синтезатор), evolution.py, llm.py,
+        hcm_panels.py, server.py, tools/*, data_engine/* (кроме schema.py);
+      • СОЗДАВАЙ новые .py модули в pulse/ (например `pulse/response_budget.py`),
+        новые тесты в tests/test_*.py, новые skills/<name>/SKILL.md;
+      • МОДИФИЦИРУЙ prompts/SYSTEM.md, EVOLUTION_*.md, COMMIT_REVIEW.md,
+        ALIGNMENT_CHECK.md (но не SAFETY.md);
+      • МОДИФИЦИРУЙ web/*.html, docs/*.md (кроме CHECKLISTS.md при явной
+        декларации по item).
 
-    Когда закончишь — кратко (3 строки) опиши, что именно сделал и какие
-    файлы создал/изменил.
+    КОНКРЕТНЫЕ ПРАВИЛА ИСПОЛНЕНИЯ:
+
+    1. Если план содержит фразу «модифицировать pulse/<file>.py» или
+       «добавить функцию X в pulse/<file>.py» — это РАЗРЕШЕНО. Открой
+       файл через Read, найди точное место, применяй Edit с
+       минимальным old_string/new_string. Не пропускай этот шаг.
+
+    2. Если план содержит «создать pulse/<new>.py» или «создать
+       tests/test_<X>.py» — используй Write-тул чтобы РЕАЛЬНО создать
+       файл с полным содержимым (функции, импорты, тесты, docstring).
+       Не ограничивайся ссылкой в SKILL.md / SYSTEM.md.
+
+    3. commit_review проверит intent_clarity: если intent обещает
+       файл/изменение, а в diff'е его нет — коммит блокируется
+       (защита от лжи самому себе). Чтобы пройти: реально достать
+       нужные файлы и применить правки.
+
+    4. Self-test (pytest tests/ -x) запустится после твоей работы.
+       Если ты создал новый код — добавь к нему тест в tests/, иначе
+       coverage falls и commit_review это заметит.
+
+    Когда закончишь — короткое резюме (3-5 строк):
+    «Изменил/создал файлы: {{список}}. Реализация: {{1 фраза}}. Тесты:
+    {{что покрывает добавленный/изменённый код}}.»
     """).strip()
 
     tool_calls = 0
